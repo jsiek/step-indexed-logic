@@ -1,18 +1,18 @@
-# step-indexed-logic
-A modal logic for reasoning about step-indexed logical relations
+# Step Indexed Logic
 
-The Step-indexed Logic (SIL) includes first-order logic (i.e., a logic
-with "and", "or", "implies", "for all", etc.). To distinguish its
-connectives from Agda's, we add a superscript "o". So "and" is written
-`×ᵒ`, "implies" is written `→ᵒ`, and so on.  SIL also includes a
-notion of time in which there is a clock counting down. The logic is
-designed in such a way that if a formula `P` is true at some time then
-`P` stays true in the future (at lower counts). So formulas are
-downward closed.  When the clock reaches zero, every formula becomes
-true.  Furthermore, the logic includes a "later" operator, written `▷ᵒ
-P`, meaning that `P` is true one clock tick in the future. When we use
-SIL to reason about the cast calculus, one clock tick will correspond
-to one reduction step.
+The Step-indexed Logic (SIL) is a modal logic for reasoning about
+step-indexed logical relations that is embedded in Agda. SIL includes
+first-order logic (i.e., a logic with "and", "or", "implies", "for
+all", etc.). To distinguish its connectives from Agda's, we add a
+superscript "o". So "and" is written `×ᵒ`, "implies" is written `→ᵒ`,
+and so on.  SIL also includes a notion of time in which there is a
+clock counting down. The logic is designed in such a way that if a
+formula `P` is true at some time then `P` stays true in the future (at
+lower counts). So formulas are downward closed.  When the clock
+reaches zero, every formula becomes true.  Furthermore, the logic
+includes a "later" operator, written `▷ᵒ P`, meaning that `P` is true
+one clock tick in the future. When we use SIL to reason about the cast
+calculus, one clock tick will correspond to one reduction step.
 
 Just as `Set` is the type of true/false formulas in Agda, `Setᵒ` is
 the type of true/false formulas in SIL. It is a record that bundles
