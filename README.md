@@ -1,6 +1,6 @@
-# Step Indexed Logic
+# Step-Indexed Logic
 
-The Step-indexed Logic (SIL) is a modal logic for reasoning about
+The Step-Indexed Logic (SIL) is a modal logic for reasoning about
 step-indexed logical relations that is embedded in Agda. SIL includes
 first-order logic (i.e., a logic with "and", "or", "implies", "for
 all", etc.). To distinguish its connectives from Agda's, we add a
@@ -266,11 +266,11 @@ X₁ : #((ƛ ($ (Num 1))) · $ (Num 0) —→* $ (Num 1)) 2
 X₁ = inj₂ (_ , (β ($̬ _) , inj₁ refl))
 ```
 
-## Proofs in Step-indexed Logic
+## Proofs in Step-Indexed Logic
 
-Just like first-orderd logic, SIL comes with rules of deduction for
-carrying out proofs. The judgement form is `𝒫 ⊢ᵒ P`, where `𝒫` is a
-list of assumptions and `P` is a formula.  The judgement `𝒫 ⊢ᵒ P` is
+Just like first-order logic, SIL comes with rules of deduction for
+carrying out proofs. The judgment form is `𝒫 ⊢ᵒ P`, where `𝒫` is a
+list of assumptions and `P` is a formula.  The judgment `𝒫 ⊢ᵒ P` is
 true iff for every time `k`, all of `𝒫` are true at `k` implies that `P`
 is true at `k`. So in Agda we have the following definition.
 
@@ -383,3 +383,10 @@ logical connectives. For example, the following rule distributes
        → 𝒫 ⊢ᵒ (▷ᵒ (P ×ᵒ Q))
          ----------------------
        → 𝒫 ⊢ᵒ (▷ᵒ P) ×ᵒ (▷ᵒ Q)
+
+<!--  LocalWords:  SIL Agda Agda's downClosed tz suc mreduce elt de
+ -->
+<!--  LocalWords:  TermInhabited RecEnv Bruijn ts laters var Num inj
+ -->
+<!--  LocalWords:  refl  iff proj const subst sucP
+ -->
