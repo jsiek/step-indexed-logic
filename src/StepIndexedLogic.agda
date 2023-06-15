@@ -1566,6 +1566,10 @@ fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A)
    → μᵒ P a ≡ᵒ # (P a) (μᵒ P , ttᵖ)
 fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
 
+fixpoint-step : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A) (k : ℕ)
+   → (#(μᵒ P a) k) ⇔ #(# (P a) (μᵒ P , ttᵖ)) k
+fixpoint-step P a k = ≡ᵒ⇒⇔{k = k} (fixpointᵒ P a)
+
 {---------------------- Proof Theory for Step Indexed Logic -------------------}
 
 Πᵒ : List Setᵒ → Setᵒ

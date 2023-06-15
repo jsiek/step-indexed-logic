@@ -1,0 +1,293 @@
+%%
+%% This is file `sample-acmsmall.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% samples.dtx  (with options: `acmsmall')
+%% 
+%% IMPORTANT NOTICE:
+%% 
+%% For the copyright see the source file.
+%% 
+%% Any modified versions of this file must be renamed
+%% with new filenames distinct from sample-acmsmall.tex.
+%% 
+%% For distribution of the original source see the terms
+%% for copying and modification in the file samples.dtx.
+%% 
+%% This generated file may be distributed as long as the
+%% original source files, as listed above, are part of the
+%% same distribution. (The sources need not necessarily be
+%% in the same archive or directory.)
+%%
+%%
+%% Commands for TeXCount
+%TC:macro \cite [option:text,text]
+%TC:macro \citep [option:text,text]
+%TC:macro \citet [option:text,text]
+%TC:envir table 0 1
+%TC:envir table* 0 1
+%TC:envir tabular [ignore] word
+%TC:envir displaymath 0 word
+%TC:envir math 0 word
+%TC:envir comment 0 0
+%%
+%%
+%% The first command in your LaTeX source must be the \documentclass
+%% command.
+%%
+%% For submission and review of your manuscript please change the
+%% command to \documentclass[manuscript, screen, review]{acmart}.
+%%
+%% When submitting camera ready or to TAPS, please change the command
+%% to \documentclass[sigconf]{acmart} or whichever template is required
+%% for your publication.
+%%
+%%
+\documentclass[acmsmall]{acmart}
+\usepackage{semantic}
+
+%%
+%% \BibTeX command to typeset BibTeX logo in the docs
+\AtBeginDocument{%
+  \providecommand\BibTeX{{%
+    Bib\TeX}}}
+
+%% Rights management information.  This information is sent to you
+%% when you complete the rights form.  These commands have SAMPLE
+%% values in them; it is your responsibility as an author to replace
+%% the commands and values with those provided to you when you
+%% complete the rights form.
+\setcopyright{acmcopyright}
+\copyrightyear{2023}
+\acmYear{2023}
+\acmDOI{XXXXXXX.XXXXXXX}
+
+
+%%
+%% These commands are for a JOURNAL article.
+%% \acmJournal{JACM}
+%% \acmVolume{37}
+%% \acmNumber{4}
+%% \acmArticle{111}
+%% \acmMonth{8}
+
+%%
+%% Submission ID.
+%% Use this when submitting an article to a sponsored event. You'll
+%% receive a unique submission ID from the organizers
+%% of the event, and this ID should be used as the parameter to this command.
+%%\acmSubmissionID{123-A56-BU3}
+
+%%
+%% For managing citations, it is recommended to use bibliography
+%% files in BibTeX format.
+%%
+%% You can then either use BibTeX with the ACM-Reference-Format style,
+%% or BibLaTeX with the acmnumeric or acmauthoryear sytles, that include
+%% support for advanced citation of software artefact from the
+%% biblatex-software package, also separately available on CTAN.
+%%
+%% Look at the sample-*-biblatex.tex files for templates showcasing
+%% the biblatex styles.
+%%
+
+%%
+%% The majority of ACM publications use numbered citations and
+%% references.  The command \citestyle{authoryear} switches to the
+%% "author year" style.
+%%
+%% If you are preparing content for an event
+%% sponsored by ACM SIGGRAPH, you must use the "author year" style of
+%% citations and references.
+%% Uncommenting
+%% the next command will enable that style.
+\citestyle{acmauthoryear}
+
+\newcommand{\sem}[1]{\llbracket #1 \rrbracket}
+\newcommand{\semV}[1]{\mathcal{V}\sem{#1}}
+\newcommand{\semE}[1]{\mathcal{E}\sem{#1}}
+\newcommand{\ba}{\begin{array}}
+\newcommand{\ea}{\end{array}}
+\newenvironment{stack}{\ba{@{}l@{}}}{\ea}
+\newenvironment{branch}{\left\{\ba{@{}l@{\qquad}l@{}}}{\ea\right\}}
+\newenvironment{syntax}{\[\ba{l@{\;\;}lcl}}{\ea\]}
+\newcommand{\dotspace}{.\,}
+\newcommand{\key}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\dyn}{\star}
+\newcommand{\Dyn}{\ensuremath{\dyn}}
+\newcommand{\Int}{\key{int}}
+\newcommand{\Bool}{\key{bool}}
+\newcommand{\lam}[1]{\lambda #1 \dotspace}
+\newcommand{\app}{\;}
+\newcommand{\reduce}{\longrightarrow}
+\newcommand{\inj}[2]{#1 \,!\, #2}
+\newcommand{\proj}[2]{#1 \,?\, #2}
+
+%%
+%% end of the preamble, start of the body of the document source.
+\begin{document}
+
+%%
+%% The "title" command has an optional parameter,
+%% allowing the author to define a "short title" to be used in page headers.
+\title{A Step-Indexed Logic in Agda}
+
+%%
+%% The "author" command and its associated commands are used to define
+%% the authors and their affiliations.
+%% Of note is the shared affiliation of the first two authors, and the
+%% "authornote" and "authornotemark" commands
+%% used to denote shared contribution to the research.
+\author{Jeremy G. Siek}
+%\authornote{Both authors contributed equally to this research.}
+\email{jsiek@indiana.edu}
+\orcid{0000-0002-9894-4856}
+%% \author{G.K.M. Tobin}
+%% \authornotemark[1]
+%% \email{webmaster@marysville-ohio.com}
+\affiliation{%
+  \institution{Indiana University}
+  \streetaddress{Luddy Hall, 700 N. Woodlawn Avenue}
+  \city{Bloomington}
+  \state{IN}
+  \country{USA}
+  \postcode{47408}
+}
+
+%% \author{Lars Th{\o}rv{\"a}ld}
+%% \affiliation{%
+%%   \institution{The Th{\o}rv{\"a}ld Group}
+%%   \streetaddress{1 Th{\o}rv{\"a}ld Circle}
+%%   \city{Hekla}
+%%   \country{Iceland}}
+%% \email{larst@affiliation.org}
+
+%%
+%% By default, the full list of authors will be used in the page
+%% headers. Often, this list is too long, and will overlap
+%% other information printed in the page headers. This command allows
+%% the author to define a more concise list
+%% of authors' names for this purpose.
+%\renewcommand{\shortauthors}{Trovato et al.}
+
+%%
+%% The abstract is a short summary of the work to be presented in the
+%% article.
+\begin{abstract}
+  Step-indexed logical relations are an important tool in the
+  metatheory of programming
+  languages~\citep{Appel:2001aa,Ahmed:2006aa}, and their application
+  can be streamlined by use of modal logics such as
+  LSLR~\citep{Dreyer:2011wl}.  The Iris~\citep{JUNG:2018aa} system
+  provides support for reasoning about step-indexed logical relations
+  in the Coq proof assistant, but there is not yet analogous support
+  in the Agda proof assistant. This paper describes how to embed a
+  step-indexed logic in Agda and application of the logic to a
+  semantic type safety proof for an internal language for the
+  Gradually-Typed Lambda Calculus.
+\end{abstract}
+
+%%
+%% The code below is generated by the tool at http://dl.acm.org/ccs.cfm.
+%% Please copy and paste the code instead of the example below.
+%%
+%\begin{CCSXML}
+%\end{CCSXML}
+
+%% \ccsdesc[500]{Computer systems organization~Embedded systems}
+%% \ccsdesc[300]{Computer systems organization~Redundancy}
+%% \ccsdesc{Computer systems organization~Robotics}
+%% \ccsdesc[100]{Networks~Network reliability}
+
+%%
+%% Keywords. The author(s) should pick words that accurately describe
+%% the work being presented. Separate the keywords with commas.
+\keywords{step-indexed logical relations, modal logic}
+
+%% \received{20 February 2007}
+%% \received[revised]{12 March 2009}
+%% \received[accepted]{5 June 2009}
+
+%%
+%% This command processes the author and affiliation and title
+%% information and builds the first part of the formatted document.
+\maketitle
+
+\section{Motivation}
+
+Logical relations provide a powerful tool for proving properties of
+programming languages, from type safety to relational parametricity,
+the gradual guarantee, and noninterference.  Initially, logical
+relations were applied to terminating languages such as the Simply
+Typed Lambda Calculus~\citep{Tait:1967aa} and System
+F~\citep{GIRARD72}, but \citet{Appel:2001aa} extended the technique to
+handle languages with nontermination by introducing a step index into
+the logical relation. After considerable experience with applying
+step-indexed logical
+relations~\citep{Ahmed:2004eu,Ahmed:2009aa,Neis:2009fk,Hur:2011aa},
+\citet{Dreyer:2011wl} designed the LSLR logic to streamline the
+reasoning about step indexes.
+
+
+
+
+
+Figure~\ref{fig:CC}
+
+\begin{figure}
+  \raggedright Syntax
+  \begin{syntax}
+    \text{Types} & A,B,C,D &::=& \Bool \mid A \to B \mid \dyn \\
+    \text{Ground Types} & G,H & ::= & \mathtt{bool} \mid \dyn \to \dyn \\
+    \text{Booleans} & b & \in & \mathbb{B} \\
+    \text{Terms} & L,M,N & ::= & x \mid b \mid \lam{x}N \mid L \app M
+      \mid \inj{M}{G} \mid \proj{M}{H} \mid \mathtt{error} \\
+      \text{Values} & V,W & ::= & \lam{x}N \mid \inj{V}{G}
+  \end{syntax}
+  Type System
+  \begin{gather*}
+    \inference{}{\Gamma \vdash x : \Gamma(x)}
+    \quad
+    \inference{}{\Gamma \vdash b : \Bool}
+    \quad
+    \inference{\Gamma, x : A \vdash N : B}
+              {\Gamma \vdash \lam{x} N : A \to B}
+    \quad              
+    \inference{\Gamma \vdash L : A \to B & \Gamma \vdash M : A}
+          {\Gamma \vdash L \app M : B} \\[2ex]
+   \inference{\Gamma \vdash M : G}
+          {\Gamma \vdash \inj{M}{G} : \dyn}
+   \quad
+   \inference{\Gamma \vdash M : \dyn}
+             {\Gamma \vdash \proj{M}{H} : H}
+   \quad
+   \inference{}
+             {\Gamma \vdash \mathtt{error} : A}
+  \end{gather*}
+Reduction
+\begin{align*}
+  (\lam{x} N)\app W & \reduce N[x:=W] \\
+  \proj{\inj{V}{G}}{G} & \reduce V \\
+  \proj{\inj{V}{G}}{H} & \reduce \texttt{error}
+       \qquad\qquad\qquad\text{if } G \neq H 
+\end{align*}
+
+  \caption{Internal language (cast calculus) for the Gradually-Typed
+    Lambda Calculus.}
+  \label{fig:CC}
+\end{figure}
+
+\begin{align*}
+    \semE{\_} &: \mathsf{Type} \to \mathsf{Term} \to \mathsf{Set} \\
+    \semE{A} M &= (\semV{A} M \lor \mathsf{reducible}\ M \lor M=\mathtt{blame})
+                \land (\forall N, (M \reduce N) \Rightarrow \rhd \semE{A} N)
+\end{align*}
+
+\bibliographystyle{ACM-Reference-Format}
+\bibliography{all}
+
+\end{document}
+\endinput
+
