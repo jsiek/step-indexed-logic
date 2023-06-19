@@ -120,7 +120,7 @@
 \newcommand{\Int}{\key{int}}
 \newcommand{\Bool}{\key{bool}}
 \newcommand{\lam}[1]{\lambda #1 \dotspace}
-\newcommand{\app}{\;}
+\newcommand{\app}{\,}
 \newcommand{\reduce}{\longrightarrow}
 \newcommand{\inj}[2]{#1 \,!\, #2}
 \newcommand{\proj}[2]{#1 \,?\, #2}
@@ -180,11 +180,11 @@
   metatheory of programming
   languages~\citep{Appel:2001aa,Ahmed:2006aa}, and their application
   can be streamlined by use of modal logics such as
-  LSLR~\citep{Dreyer:2011wl}.  The Iris~\citep{JUNG:2018aa} system
+  LSLR~\citep{Dreyer:2011wl}.  The Iris system~\citep{JUNG:2018aa}
   provides support for reasoning about step-indexed logical relations
   in the Coq proof assistant, but there is not yet analogous support
-  in the Agda proof assistant. This paper describes how to embed a
-  step-indexed logic in Agda and application of the logic to a
+  for the Agda proof assistant. This paper describes an embedding of
+  step-indexed logic in Agda and an application of the logic to a
   semantic type safety proof for an internal language for the
   Gradually-Typed Lambda Calculus.
 \end{abstract}
@@ -215,23 +215,99 @@
 %% information and builds the first part of the formatted document.
 \maketitle
 
-\section{Motivation}
+%TODO: Road Map/Outline of what's in the paper
 
-Logical relations provide a powerful tool for proving properties of
+\section{Introduction}
+
+Logical relations are a useful technique for proving properties of
 programming languages, from type safety to relational parametricity,
-the gradual guarantee, and noninterference.  Initially, logical
-relations were applied to terminating languages such as the Simply
-Typed Lambda Calculus~\citep{Tait:1967aa} and System
-F~\citep{GIRARD72}, but \citet{Appel:2001aa} extended the technique to
-handle languages with nontermination by introducing a step index into
-the logical relation. After considerable experience with applying
-step-indexed logical
+and noninterference.  Initially, logical relations were applied to
+terminating languages such as the Simply Typed Lambda
+Calculus~\citep{Tait:1967aa} and System F~\citep{GIRARD72}, but
+\citet{Appel:2001aa} extended the technique to handle languages with
+nontermination by introducing a step index into the logical
+relation. After some experience with applications of step-indexed
+logical
 relations~\citep{Ahmed:2004eu,Ahmed:2009aa,Neis:2009fk,Hur:2011aa},
 \citet{Dreyer:2011wl} designed the LSLR logic to streamline the
-reasoning about step indexes.
+reasoning about step indexes. This research program eventually
+produced Iris~\citep{JUNG:2018aa}, a system that supports a
+combination of step indexed logical relations and separation logic
+within the Coq proof
+assistant~\citep{The-Coq-Development-Team:2004kf,Huet:2016aa}.
+
+The author is interested in step-indexed logical relations for
+purposes of developing mechanized proofs in Agda of the Gradual
+Guarantee~\citep{Siek:2015ac} and Parametricity~\citep{REYNOLDS74C}
+for gradually-typed polymorphic
+languages~\citep{Ahmed:2011fk,Ahmed:2017aa,Igarashi:2017aa,New:2019ab,Labrada:2020tk}.
+To streamline such developments in Agda, we need support for a
+step-indexed logic in Agda. This paper fills that need by showing how
+to build a shallow embedding of a step-indexed logic in Agda, a system
+that we abbreviate as SIL. To evaluate the utility of SIL, we present
+a case study of proving semantic type safety of a simple cast
+calculus, i.e., an internal language for the Gradually-Typed Lambda
+Calculus (GTLC)~\citep{Siek:2006bh,Siek:2007qy}. The outcome of that
+study is that SIL streamlines the definition of logical relations and
+is helpful in many of the proofs, but there is room for improvement
+regarding the ergonomics of interactive proof development.
+Limitations in Agda's inference algorithm sometimes leads to verbosity
+in SIL proofs. It is worth noting that the authors have also proved
+the Gradual Guarantee for the GTLC using SIL and the lesssons from
+that experience confirm the findings in this paper.
+
+TODO: ROAD MAP
 
 
+\section{A Step-Indexed Logic (SIL)}
 
+Figure~\ref{fig:SIL}
+
+\begin{figure}
+  \raggedright
+Syntax
+  \begin{syntax}
+    \text{Propositions} & P,Q &::= & \top \mid \bot \mid P \land Q
+    \mid P \lor Q \mid P \Rightarrow Q \mid \forall X.P \mid \exists X.P
+    \mid \overline{M} \in R\\
+    \text{Relations} & R,S & ::= & r \mid \mu r. R \mid \{ \overline{x} \mid P \}
+  \end{syntax}
+Meaning of Propositions
+\begin{align*}
+  \sem{ P } \rho\; 0 &= \top \\
+  \sem{ \top } \rho(suc \app n) &= \top \\
+  \sem{ \bot } \rho (suc \app n) &= \bot \\
+  \sem{ P \land Q } \rho (suc \app n) &=
+    \sem{ P } \rho n \land \sem{ Q } \rho n \\
+  \sem{ P \lor Q } \rho (suc \app n) &=
+    \sem{ P } \rho n \lor \sem{ Q } \rho n \\
+  \sem{ P \Rightarrow Q } \rho (suc \app n) &=
+    \forall k \leq suc \app n,
+    \sem{ P } \rho k \implies \sem{ Q } \rho k \\
+  \sem{ \forall X.P} \rho \app (suc \app n) &= \forall a, \sem{P[a/X]} \rho (suc \app n)\\
+  \sem{ \exists X.P} \rho \app (suc \app n) &= \exists a, \sem{P[a/X]} \rho (suc \app n)\\
+  \sem{ \overline{M} \in R } \rho (suc \app n) &=
+    \sem{ R } \rho (suc \app n) \app \overline{M}\\
+  \sem{ \rhd P } \rho (suc \app n) &=
+    \sem{ P } \rho n 
+\end{align*}
+Meaning of Relations
+\begin{align*}
+  \sem{ R } \rho\, 0 \app \overline{M} &= \top \\
+  \sem{ r } \rho \app (suc \app n) \app \overline{M} &=
+    \rho(r) (suc \app n) \app \overline{M} \\
+  \sem{ \mu r. R } \rho \app (suc \app n)\app \overline{M} &=
+  F^{suc \app n}(\top) (suc \app n) \app \overline{M} \\
+  & \text{ where } F(X) = \sem{ R } \rho(r := X) \\
+  \sem{ \{ \overline{x} \mid P \} } \rho (suc \app n) \app \overline{M} &= 
+    \sem{ P[\overline{x} := \overline{M}] } \rho (suc \app n)
+\end{align*}
+  \caption{Step-Indexed Logic (SIL)}
+  \label{fig:SIL}
+\end{figure}
+
+
+\section{Case Study: Semantic Type Safety of a Cast Calculus}
 
 
 Figure~\ref{fig:CC}
@@ -278,6 +354,8 @@ Reduction
     Lambda Calculus.}
   \label{fig:CC}
 \end{figure}
+
+
 
 \begin{align*}
     \semE{\_} &: \mathsf{Type} \to \mathsf{Term} \to \mathsf{Set} \\

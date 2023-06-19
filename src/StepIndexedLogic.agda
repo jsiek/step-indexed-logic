@@ -34,11 +34,126 @@ open import Level using (Lift)
 
 open import EquivalenceRelation public
 
+downClosed : (ℕ → Set) → Set
+downClosed S = ∀ n → S n → ∀ k → k ≤ n → S k
+
+record Setᵒ : Set₁ where
+  field
+    # : (ℕ → Set)
+    down : downClosed #
+    tz : # 0
+open Setᵒ public
+
+infixr 7 _×ᵒ_
+infixr 7 _⊎ᵒ_
+infixr 6 _→ᵒ_
+infixr 8 _ᵒ
+
+⊥ᵒ : Setᵒ
+⊥ᵒ = record { # = λ { zero → ⊤ ; (suc k) → ⊥}
+            ; down = λ { zero x .zero z≤n → tt}
+            ; tz = tt
+            }
+
+⊤ᵒ : Setᵒ
+⊤ᵒ = record { # = λ k → ⊤
+            ; down = λ n _ k _ → tt
+            ; tz = tt
+            }
+
+_×ᵒ_ : Setᵒ → Setᵒ → Setᵒ
+P ×ᵒ Q = record { # = λ k → # P k × # Q k
+                ; down = λ k (Pk , Qk) j j≤k →
+                          (down P k Pk j j≤k) , (down Q k Qk j j≤k)
+                ; tz = (tz P) , (tz Q)
+                }
+                
+_⊎ᵒ_ : Setᵒ → Setᵒ → Setᵒ
+P ⊎ᵒ Q = record { # = λ k → # P k ⊎ # Q k
+                ; down = λ { k (inj₁ Pk) j j≤k → inj₁ (down P k Pk j j≤k)
+                           ; k (inj₂ Qk) j j≤k → inj₂ (down Q k Qk j j≤k)}
+                ; tz = inj₁ (tz P)
+                }
+
+_→ᵒ_ : Setᵒ → Setᵒ → Setᵒ
+P →ᵒ Q = record { # = λ k → ∀ j → j ≤ k → # P j → # Q j
+                ; down = λ k P→Q j j≤k i i≤j Pi → P→Q i (≤-trans i≤j j≤k) Pi
+                ; tz = λ { .zero z≤n _ → tz Q}
+                }
+
+Predᵒ : Set → Set₁
+Predᵒ A = A → Setᵒ
+
+∀ᵒ : ∀{A : Set} → Predᵒ A → Setᵒ
+∀ᵒ{A} P = record { # = λ k → ∀ (a : A) → # (P a) k
+                   ; down = λ n ∀Pn k k≤n a → down (P a) n (∀Pn a) k k≤n
+                   ; tz = λ a → tz (P a) }
+
+∀ᵒ-syntax = ∀ᵒ
+infix 2 ∀ᵒ-syntax
+syntax ∀ᵒ-syntax (λ x → P) = ∀ᵒ[ x ] P
+
+record Inhabited (A : Set) : Set where
+  field
+    elt : A
+open Inhabited {{...}} public
+
+∃ᵒ : ∀{A : Set}{{_ : Inhabited A}} → Predᵒ A → Setᵒ
+∃ᵒ{A} P = record { # = λ k → Σ[ a ∈ A ] # (P a) k
+                     ; down = λ n (a , Pa) k k≤n → a , (down (P a) n Pa k k≤n)
+                     ; tz = elt , tz (P elt)
+                     }
+
+∃ᵒ-syntax = ∃ᵒ
+infix 2 ∃ᵒ-syntax
+syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
+
+_ᵒ : Set → Setᵒ
+S ᵒ = record { # = λ { zero → ⊤ ; (suc k) → S }
+             ; down = λ { k Sk zero j≤k → tt
+                        ; (suc k) Sk (suc j) j≤k → Sk}
+             ; tz = tt
+             }
+
+▷ᵒ_ : Setᵒ → Setᵒ
+▷ᵒ P = record
+             { # = λ { zero → ⊤ ; (suc k) → # P k }
+             ; down = λ { zero ▷Pn .zero z≤n → tt
+                        ; (suc n) ▷Pn .zero z≤n → tt
+                        ; (suc n) ▷Pn (suc k) (s≤s k≤n) → down P n ▷Pn k k≤n}
+             ; tz = tt
+             }
+
+◁ᵒ : Setᵒ → Setᵒ
+◁ᵒ P = record { # = λ { zero → ⊤ ; (suc k) → # P (suc (suc k)) }
+              ; down = λ { zero ◁Pk .zero z≤n → tt
+                         ; (suc k) ◁Pk zero j≤k → tt
+                         ; (suc k) ◁Pk (suc j) j≤k →
+                            down P (suc (suc k)) ◁Pk (suc (suc j)) (s≤s j≤k)}
+              ; tz = tt
+              }
+
+↓ : ℕ → (ℕ → Set) → (ℕ → Set)
+-- Phil: let's switch to the following
+-- ↓ k S j = j ≤ k  ×  S j
+↓ k S zero = ⊤
+↓ k S (suc j) = suc j < k × (S (suc j))
+
+--↓ᵖ : ℕ → ∀{A : Set} → Predₒ A → Predₒ A
+--↓ᵖ k P a = ↓ k (P a)
+
+↓ᵒ : ℕ → Setᵒ → Setᵒ
+↓ᵒ k S = record { # = ↓ k (# S)
+                ; down = λ { zero x .zero z≤n → tt
+                           ; (suc n) (sn<k , Sn) zero j≤n → tt
+                           ; (suc n) (sn<k , Ssn) (suc j) (s≤s j≤n) →
+                           (≤-trans (s≤s (s≤s j≤n)) sn<k)
+                           , (down S (suc n) Ssn (suc j) (s≤s j≤n))}
+                ; tz = tt
+                }
+
 Setₒ : Set₁
 Setₒ = ℕ → Set
-
-downClosed : Setₒ → Set
-downClosed S = ∀ n → S n → ∀ k → k ≤ n → S k
 
 Predₒ : Set → Set₁
 Predₒ A = A → Setₒ
@@ -55,24 +170,6 @@ data Times : Context → Set₁ where
   ∅ : Times []
   cons : ∀{Γ}{A} → Time → Times Γ → Times (A ∷ Γ)
 
-↓ : ℕ → Setₒ → Setₒ
--- Phil: let's switch to the following
--- ↓ k S j = j ≤ k  ×  S j
-↓ k S zero = ⊤
-↓ k S (suc j) = suc j < k × (S (suc j))
-
---↓ᵖ : ℕ → ∀{A : Set} → Predₒ A → Predₒ A
---↓ᵖ k P a = ↓ k (P a)
-
-record Setᵒ : Set₁ where
-  field
-    # : Setₒ
-    down : downClosed #
-    tz : # 0
-open Setᵒ public
-
-Predᵒ : Set → Set₁
-Predᵒ A = A → Setᵒ
 
 abstract
   infix 2 _≡ᵒ_
@@ -131,104 +228,10 @@ instance
   → ∀ {a} → Q a ≡ᵒ P a
 ≡ᵖ-sym P=Q {a} = ≡ᵒ-sym P=Q
 
-infixr 7 _×ᵒ_
-infixr 7 _⊎ᵒ_
-infixr 6 _→ᵒ_
-infixr 8 _ᵒ
-
-⊥ᵒ : Setᵒ
-⊥ᵒ = record { # = λ { zero → ⊤ ; (suc k) → ⊥}
-            ; down = λ { zero x .zero z≤n → tt}
-            ; tz = tt
-            }
-
-⊤ᵒ : Setᵒ
-⊤ᵒ = record { # = λ k → ⊤
-            ; down = λ n _ k _ → tt
-            ; tz = tt
-            }
 
 ⊤ᵖ : ∀{A} → Predᵒ A
 ⊤ᵖ = (λ a → ⊤ᵒ)
 
-_×ᵒ_ : Setᵒ → Setᵒ → Setᵒ
-P ×ᵒ Q = record { # = λ k → # P k × # Q k
-                ; down = λ k (Pk , Qk) j j≤k →
-                          (down P k Pk j j≤k) , (down Q k Qk j j≤k)
-                ; tz = (tz P) , (tz Q)
-                }
-                
-_⊎ᵒ_ : Setᵒ → Setᵒ → Setᵒ
-P ⊎ᵒ Q = record { # = λ k → # P k ⊎ # Q k
-                ; down = λ { k (inj₁ Pk) j j≤k → inj₁ (down P k Pk j j≤k)
-                           ; k (inj₂ Qk) j j≤k → inj₂ (down Q k Qk j j≤k)}
-                ; tz = inj₁ (tz P)
-                }
-
-_→ᵒ_ : Setᵒ → Setᵒ → Setᵒ
-P →ᵒ Q = record { # = λ k → ∀ j → j ≤ k → # P j → # Q j
-                ; down = λ k P→Q j j≤k i i≤j Pi → P→Q i (≤-trans i≤j j≤k) Pi
-                ; tz = λ { .zero z≤n _ → tz Q}
-                }
-
-∀ᵒ : ∀{A : Set} → Predᵒ A → Setᵒ
-∀ᵒ{A} P = record { # = λ k → ∀ (a : A) → # (P a) k
-                   ; down = λ n ∀Pn k k≤n a → down (P a) n (∀Pn a) k k≤n
-                   ; tz = λ a → tz (P a) }
-
-∀ᵒ-syntax = ∀ᵒ
-infix 2 ∀ᵒ-syntax
-syntax ∀ᵒ-syntax (λ x → P) = ∀ᵒ[ x ] P
-
-record Inhabited (A : Set) : Set where
-  field
-    elt : A
-open Inhabited {{...}} public
-
-∃ᵒ : ∀{A : Set}{{_ : Inhabited A}} → Predᵒ A → Setᵒ
-∃ᵒ{A} P = record { # = λ k → Σ[ a ∈ A ] # (P a) k
-                     ; down = λ n (a , Pa) k k≤n → a , (down (P a) n Pa k k≤n)
-                     ; tz = elt , tz (P elt)
-                     }
-
-∃ᵒ-syntax = ∃ᵒ
-infix 2 ∃ᵒ-syntax
-syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
-
-_ᵒ : Set → Setᵒ
-S ᵒ = record { # = λ { zero → ⊤ ; (suc k) → S }
-             ; down = λ { k Sk zero j≤k → tt
-                        ; (suc k) Sk (suc j) j≤k → Sk}
-             ; tz = tt
-             }
-
-▷ᵒ_ : Setᵒ → Setᵒ
-▷ᵒ P = record
-             { # = λ { zero → ⊤ ; (suc k) → # P k }
-             ; down = λ { zero ▷Pn .zero z≤n → tt
-                        ; (suc n) ▷Pn .zero z≤n → tt
-                        ; (suc n) ▷Pn (suc k) (s≤s k≤n) → down P n ▷Pn k k≤n}
-             ; tz = tt
-             }
-
-◁ᵒ : Setᵒ → Setᵒ
-◁ᵒ P = record { # = λ { zero → ⊤ ; (suc k) → # P (suc (suc k)) }
-              ; down = λ { zero ◁Pk .zero z≤n → tt
-                         ; (suc k) ◁Pk zero j≤k → tt
-                         ; (suc k) ◁Pk (suc j) j≤k →
-                            down P (suc (suc k)) ◁Pk (suc (suc j)) (s≤s j≤k)}
-              ; tz = tt
-              }
-
-↓ᵒ : ℕ → Setᵒ → Setᵒ
-↓ᵒ k S = record { # = ↓ k (# S)
-                ; down = λ { zero x .zero z≤n → tt
-                           ; (suc n) (sn<k , Sn) zero j≤n → tt
-                           ; (suc n) (sn<k , Ssn) (suc j) (s≤s j≤n) →
-                           (≤-trans (s≤s (s≤s j≤n)) sn<k)
-                           , (down S (suc n) Ssn (suc j) (s≤s j≤n))}
-                ; tz = tt
-                }
 
 {-
 Product : ∀{ℓ} → List (Set ℓ) → (Set ℓ)
@@ -301,6 +304,23 @@ good-one {Γ}{A} x Now S =
 good-one {Γ}{A} x Later S =
     ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
 
+goodnesses : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-one x (timeof x ts) S
+
+_≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
+_≡ᵈ_ {[]} δ δ′ = ⊤
+_≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡ᵈ δ′
+
+congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
+congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ᵒ (S δ′)
+
+record Setˢ (Γ : Context) (ts : Times Γ) : Set₁ where
+  field
+    # : RecEnv Γ → Setᵒ 
+    good : goodnesses ts #
+    congr : congruent #
+open Setˢ public
+
 good-now : ∀{Γ}{A}{x : Γ ∋ A}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
    → good-one x (timeof x ts) S
    → timeof x ts ≡ Now
@@ -313,9 +333,6 @@ good-later : ∀{Γ}{A}{x : Γ ∋ A}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
    → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
 good-later gS eq rewrite eq = gS
 
-goodnesses : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-one x (timeof x ts) S
-
 g⇒g : ∀{Γ}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
    → goodnesses ts S
    → goodness ts S
@@ -323,17 +340,10 @@ g⇒g {[]} {ts} {S} gs = ttᵖ
 g⇒g {A ∷ Γ} {cons Now ts} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
 g⇒g {A ∷ Γ} {cons Later ts} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
 
-_≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
-_≡ᵈ_ {[]} δ δ′ = ⊤
-_≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡ᵈ δ′
-
 ≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ}
    → δ ≡ᵈ δ
 ≡ᵈ-refl {[]} {δ} = tt
 ≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ᵒ-refl refl) , ≡ᵈ-refl
-
-congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
-congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ᵒ (S δ′)
 
 cong-head : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
 cong-head {[]} S = topᵖ
@@ -345,13 +355,6 @@ cong⇒head : ∀{Γ : Context}{S : RecEnv Γ → Setᵒ}
   → cong-head S
 cong⇒head {[]} {S} congS′ = ttᵖ
 cong⇒head {A ∷ Γ} {S} congS′ P=Q δ = congS′ (P=Q , ≡ᵈ-refl{Γ}{δ})
-
-record Setˢ (Γ : Context) (ts : Times Γ) : Set₁ where
-  field
-    # : RecEnv Γ → Setᵒ 
-    good : goodnesses ts #
-    congr : congruent #
-open Setˢ public
 
 abstract
   infix 2 _≡ˢ_
