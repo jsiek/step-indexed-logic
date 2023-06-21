@@ -1,3 +1,3 @@
 name: sil
 depend: standard-library
-include: src
+include: src papers

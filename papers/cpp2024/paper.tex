@@ -47,6 +47,9 @@
 %%
 \documentclass[acmsmall]{acmart}
 \usepackage{semantic}
+\usepackage{agda}
+\usepackage{MnSymbol}
+
 
 %%
 %% \BibTeX command to typeset BibTeX logo in the docs
@@ -125,6 +128,31 @@
 \newcommand{\inj}[2]{#1 \,!\, #2}
 \newcommand{\proj}[2]{#1 \,?\, #2}
 
+\usepackage{newunicodechar}
+\newunicodechar{λ}{\ensuremath{\mathnormal\lambda}}
+\newunicodechar{←}{\ensuremath{\mathnormal\from}}
+\newunicodechar{→}{\ensuremath{\mathnormal\to}}
+\newunicodechar{∀}{\ensuremath{\mathnormal\forall}}
+\newunicodechar{∃}{\ensuremath{\exists}}
+\newunicodechar{⊥}{\ensuremath{\mathnormal\bot}}
+\newunicodechar{⊤}{\ensuremath{\mathnormal\top}}
+\newunicodechar{∷}{\ensuremath{\mathnormal::}}
+\newunicodechar{ℕ}{\ensuremath{\mathbb N}}
+\newunicodechar{≤}{\ensuremath{\leq}}
+\newunicodechar{∸}{\ensuremath{\div}}
+\newunicodechar{′}{\ensuremath{'}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{₁}{\ensuremath{_1}}
+\newunicodechar{₂}{\ensuremath{_2}}
+\newunicodechar{Σ}{\ensuremath{\Sigma}}
+\newunicodechar{⊎}{\ensuremath{\cupdot}}
+\newunicodechar{ᵖ}{\ensuremath{^p}}
+\newunicodechar{≡}{\ensuremath{\equiv}}
+\newunicodechar{≢}{\ensuremath{\not\equiv}}
+\newunicodechar{∘}{\ensuremath{\circ}}
+\newunicodechar{ᵒ}{\ensuremath{^\circ}}
+\newunicodechar{▷}{\ensuremath{\rhd}}
+
 %%
 %% end of the preamble, start of the body of the document source.
 \begin{document}
@@ -184,7 +212,7 @@
   provides support for reasoning about step-indexed logical relations
   in the Coq proof assistant, but there is not yet analogous support
   for the Agda proof assistant. This paper describes an embedding of
-  step-indexed logic in Agda and an application of the logic to a
+  a step-indexed logic in Agda and an application of the logic to a
   semantic type safety proof for an internal language for the
   Gradually-Typed Lambda Calculus.
 \end{abstract}
@@ -247,121 +275,122 @@ to build a shallow embedding of a step-indexed logic in Agda, a system
 that we abbreviate as SIL. To evaluate the utility of SIL, we present
 a case study of proving semantic type safety of a simple cast
 calculus, i.e., an internal language for the Gradually-Typed Lambda
-Calculus (GTLC)~\citep{Siek:2006bh,Siek:2007qy}. The outcome of that
-study is that SIL streamlines the definition of logical relations and
-is helpful in many of the proofs, but there is room for improvement
-regarding the ergonomics of interactive proof development.
-Limitations in Agda's inference algorithm sometimes leads to verbosity
-in SIL proofs. It is worth noting that the authors have also proved
-the Gradual Guarantee for the GTLC using SIL and the lesssons from
-that experience confirm the findings in this paper.
+Calculus (GTLC)~\citep{Siek:2006bh,Siek:2007qy}. We find that SIL
+streamlines the definition of logical relations and is helpful in many
+of the proofs, but there is room for improvement regarding the
+ergonomics of interactive proof development using SIL.  Limitations in
+Agda's inference algorithm sometimes leads to verbosity in SIL
+proofs. It is worth noting that the authors have also proved the
+Gradual Guarantee for the GTLC using SIL and the lesssons from that
+experience confirm the findings in this paper.
 
-TODO: ROAD MAP
-
-
-\section{A Step-Indexed Logic (SIL)}
-
-Figure~\ref{fig:SIL}
-
-\begin{figure}
-  \raggedright
-Syntax
-  \begin{syntax}
-    \text{Propositions} & P,Q &::= & \top \mid \bot \mid P \land Q
-    \mid P \lor Q \mid P \Rightarrow Q \mid \forall X.P \mid \exists X.P
-    \mid \overline{M} \in R\\
-    \text{Relations} & R,S & ::= & r \mid \mu r. R \mid \{ \overline{x} \mid P \}
-  \end{syntax}
-Meaning of Propositions
-\begin{align*}
-  \sem{ P } \rho\; 0 &= \top \\
-  \sem{ \top } \rho(suc \app n) &= \top \\
-  \sem{ \bot } \rho (suc \app n) &= \bot \\
-  \sem{ P \land Q } \rho (suc \app n) &=
-    \sem{ P } \rho n \land \sem{ Q } \rho n \\
-  \sem{ P \lor Q } \rho (suc \app n) &=
-    \sem{ P } \rho n \lor \sem{ Q } \rho n \\
-  \sem{ P \Rightarrow Q } \rho (suc \app n) &=
-    \forall k \leq suc \app n,
-    \sem{ P } \rho k \implies \sem{ Q } \rho k \\
-  \sem{ \forall X.P} \rho \app (suc \app n) &= \forall a, \sem{P[a/X]} \rho (suc \app n)\\
-  \sem{ \exists X.P} \rho \app (suc \app n) &= \exists a, \sem{P[a/X]} \rho (suc \app n)\\
-  \sem{ \overline{M} \in R } \rho (suc \app n) &=
-    \sem{ R } \rho (suc \app n) \app \overline{M}\\
-  \sem{ \rhd P } \rho (suc \app n) &=
-    \sem{ P } \rho n 
-\end{align*}
-Meaning of Relations
-\begin{align*}
-  \sem{ R } \rho\, 0 \app \overline{M} &= \top \\
-  \sem{ r } \rho \app (suc \app n) \app \overline{M} &=
-    \rho(r) (suc \app n) \app \overline{M} \\
-  \sem{ \mu r. R } \rho \app (suc \app n)\app \overline{M} &=
-  F^{suc \app n}(\top) (suc \app n) \app \overline{M} \\
-  & \text{ where } F(X) = \sem{ R } \rho(r := X) \\
-  \sem{ \{ \overline{x} \mid P \} } \rho (suc \app n) \app \overline{M} &= 
-    \sem{ P[\overline{x} := \overline{M}] } \rho (suc \app n)
-\end{align*}
-  \caption{Step-Indexed Logic (SIL)}
-  \label{fig:SIL}
-\end{figure}
+%TODO: ROAD MAP
 
 
-\section{Case Study: Semantic Type Safety of a Cast Calculus}
+%\section{A Step-Indexed Logic (SIL)}
+
+%% Figure~\ref{fig:SIL}
+
+%% \begin{figure}
+%%   \raggedright
+%% Syntax
+%%   \begin{syntax}
+%%     \text{Propositions} & P,Q &::= & \top \mid \bot \mid P \land Q
+%%     \mid P \lor Q \mid P \Rightarrow Q \mid \forall X.P \mid \exists X.P
+%%     \mid \overline{M} \in R\\
+%%     \text{Relations} & R,S & ::= & r \mid \mu r. R \mid \{ \overline{x} \mid P \}
+%%   \end{syntax}
+%% Meaning of Propositions
+%% \begin{align*}
+%%   \sem{ P } \rho\; 0 &= \top \\
+%%   \sem{ \top } \rho(suc \app n) &= \top \\
+%%   \sem{ \bot } \rho (suc \app n) &= \bot \\
+%%   \sem{ P \land Q } \rho (suc \app n) &=
+%%     \sem{ P } \rho n \land \sem{ Q } \rho n \\
+%%   \sem{ P \lor Q } \rho (suc \app n) &=
+%%     \sem{ P } \rho n \lor \sem{ Q } \rho n \\
+%%   \sem{ P \Rightarrow Q } \rho (suc \app n) &=
+%%     \forall k \leq suc \app n,
+%%     \sem{ P } \rho k \implies \sem{ Q } \rho k \\
+%%   \sem{ \forall X.P} \rho \app (suc \app n) &= \forall a, \sem{P[a/X]} \rho (suc \app n)\\
+%%   \sem{ \exists X.P} \rho \app (suc \app n) &= \exists a, \sem{P[a/X]} \rho (suc \app n)\\
+%%   \sem{ \overline{M} \in R } \rho (suc \app n) &=
+%%     \sem{ R } \rho (suc \app n) \app \overline{M}\\
+%%   \sem{ \rhd P } \rho (suc \app n) &=
+%%     \sem{ P } \rho n 
+%% \end{align*}
+%% Meaning of Relations
+%% \begin{align*}
+%%   \sem{ R } \rho\, 0 \app \overline{M} &= \top \\
+%%   \sem{ r } \rho \app (suc \app n) \app \overline{M} &=
+%%     \rho(r) (suc \app n) \app \overline{M} \\
+%%   \sem{ \mu r. R } \rho \app (suc \app n)\app \overline{M} &=
+%%   F^{suc \app n}(\top) (suc \app n) \app \overline{M} \\
+%%   & \text{ where } F(X) = \sem{ R } \rho(r := X) \\
+%%   \sem{ \{ \overline{x} \mid P \} } \rho (suc \app n) \app \overline{M} &= 
+%%     \sem{ P[\overline{x} := \overline{M}] } \rho (suc \app n)
+%% \end{align*}
+%%   \caption{Step-Indexed Logic (SIL)}
+%%   \label{fig:SIL}
+%% \end{figure}
 
 
-Figure~\ref{fig:CC}
+%\section{Case Study: Semantic Type Safety of a Cast Calculus}
 
-\begin{figure}
-  \raggedright Syntax
-  \begin{syntax}
-    \text{Types} & A,B,C,D &::=& \Bool \mid A \to B \mid \dyn \\
-    \text{Ground Types} & G,H & ::= & \mathtt{bool} \mid \dyn \to \dyn \\
-    \text{Booleans} & b & \in & \mathbb{B} \\
-    \text{Terms} & L,M,N & ::= & x \mid b \mid \lam{x}N \mid L \app M
-      \mid \inj{M}{G} \mid \proj{M}{H} \mid \mathtt{error} \\
-      \text{Values} & V,W & ::= & \lam{x}N \mid \inj{V}{G}
-  \end{syntax}
-  Type System
-  \begin{gather*}
-    \inference{}{\Gamma \vdash x : \Gamma(x)}
-    \quad
-    \inference{}{\Gamma \vdash b : \Bool}
-    \quad
-    \inference{\Gamma, x : A \vdash N : B}
-              {\Gamma \vdash \lam{x} N : A \to B}
-    \quad              
-    \inference{\Gamma \vdash L : A \to B & \Gamma \vdash M : A}
-          {\Gamma \vdash L \app M : B} \\[2ex]
-   \inference{\Gamma \vdash M : G}
-          {\Gamma \vdash \inj{M}{G} : \dyn}
-   \quad
-   \inference{\Gamma \vdash M : \dyn}
-             {\Gamma \vdash \proj{M}{H} : H}
-   \quad
-   \inference{}
-             {\Gamma \vdash \mathtt{error} : A}
-  \end{gather*}
-Reduction
-\begin{align*}
-  (\lam{x} N)\app W & \reduce N[x:=W] \\
-  \proj{\inj{V}{G}}{G} & \reduce V \\
-  \proj{\inj{V}{G}}{H} & \reduce \texttt{error}
-       \qquad\qquad\qquad\text{if } G \neq H 
-\end{align*}
+%% Figure~\ref{fig:CC}
 
-  \caption{Internal language (cast calculus) for the Gradually-Typed
-    Lambda Calculus.}
-  \label{fig:CC}
-\end{figure}
+%% \begin{figure}
+%%   \raggedright Syntax
+%%   \begin{syntax}
+%%     \text{Types} & A,B,C,D &::=& \Bool \mid A \to B \mid \dyn \\
+%%     \text{Ground Types} & G,H & ::= & \mathtt{bool} \mid \dyn \to \dyn \\
+%%     \text{Booleans} & b & \in & \mathbb{B} \\
+%%     \text{Terms} & L,M,N & ::= & x \mid b \mid \lam{x}N \mid L \app M
+%%       \mid \inj{M}{G} \mid \proj{M}{H} \mid \mathtt{error} \\
+%%       \text{Values} & V,W & ::= & \lam{x}N \mid \inj{V}{G}
+%%   \end{syntax}
+%%   Type System
+%%   \begin{gather*}
+%%     \inference{}{\Gamma \vdash x : \Gamma(x)}
+%%     \quad
+%%     \inference{}{\Gamma \vdash b : \Bool}
+%%     \quad
+%%     \inference{\Gamma, x : A \vdash N : B}
+%%               {\Gamma \vdash \lam{x} N : A \to B}
+%%     \quad              
+%%     \inference{\Gamma \vdash L : A \to B & \Gamma \vdash M : A}
+%%           {\Gamma \vdash L \app M : B} \\[2ex]
+%%    \inference{\Gamma \vdash M : G}
+%%           {\Gamma \vdash \inj{M}{G} : \dyn}
+%%    \quad
+%%    \inference{\Gamma \vdash M : \dyn}
+%%              {\Gamma \vdash \proj{M}{H} : H}
+%%    \quad
+%%    \inference{}
+%%              {\Gamma \vdash \mathtt{error} : A}
+%%   \end{gather*}
+%% Reduction
+%% \begin{align*}
+%%   (\lam{x} N)\app W & \reduce N[x:=W] \\
+%%   \proj{\inj{V}{G}}{G} & \reduce V \\
+%%   \proj{\inj{V}{G}}{H} & \reduce \texttt{error}
+%%        \qquad\qquad\qquad\text{if } G \neq H 
+%% \end{align*}
+
+%%   \caption{Internal language (cast calculus) for the Gradually-Typed
+%%     Lambda Calculus.}
+%%   \label{fig:CC}
+%% \end{figure}
 
 
 
-\begin{align*}
-    \semE{\_} &: \mathsf{Type} \to \mathsf{Term} \to \mathsf{Set} \\
-    \semE{A} M &= (\semV{A} M \lor \mathsf{reducible}\ M \lor M=\mathtt{blame})
-                \land (\forall N, (M \reduce N) \Rightarrow \rhd \semE{A} N)
-\end{align*}
+%% \begin{align*}
+%%     \semE{\_} &: \mathsf{Type} \to \mathsf{Term} \to \mathsf{Set} \\
+%%     \semE{A} M &= (\semV{A} M \lor \mathsf{reducible}\ M \lor M=\mathtt{blame})
+%%                 \land (\forall N, (M \reduce N) \Rightarrow \rhd \semE{A} N)
+%% \end{align*}
+
+\input{latex/cpp2024/StepIndexedLogic.tex}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{all}
