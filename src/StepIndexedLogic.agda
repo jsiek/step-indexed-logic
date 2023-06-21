@@ -294,18 +294,18 @@ goodness {A ∷ Γ} (cons Later ts) S = ∀ δ → wellfoundedˢ S δ
 ↓ᵈ k {A ∷ Γ} {.A} zeroˢ (P , δ) = ↓ᵖ k P , δ
 ↓ᵈ k {A ∷ Γ} {B} (sucˢ x) (P , δ) = P , ↓ᵈ k x δ
 
+good-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
+good-var {Γ}{A} x Now S =
+    ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
+good-var {Γ}{A} x Later S =
+    ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
+
 timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
 timeof {B ∷ Γ} zeroˢ (cons t ts) = t
 timeof {B ∷ Γ} (sucˢ x) (cons t ts) = timeof x ts
 
-good-one : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
-good-one {Γ}{A} x Now S =
-    ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
-good-one {Γ}{A} x Later S =
-    ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
-
 goodnesses : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-one x (timeof x ts) S
+goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-var x (timeof x ts) S
 
 _≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
 _≡ᵈ_ {[]} δ δ′ = ⊤
@@ -322,13 +322,13 @@ record Setˢ (Γ : Context) (ts : Times Γ) : Set₁ where
 open Setˢ public
 
 good-now : ∀{Γ}{A}{x : Γ ∋ A}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-one x (timeof x ts) S
+   → good-var x (timeof x ts) S
    → timeof x ts ≡ Now
    → ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
 good-now gS eq rewrite eq = gS
 
 good-later : ∀{Γ}{A}{x : Γ ∋ A}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-one x (timeof x ts) S
+   → good-var x (timeof x ts) S
    → timeof x ts ≡ Later
    → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
 good-later gS eq rewrite eq = gS
@@ -1050,7 +1050,7 @@ syntax ∃ˢ-syntax (λ x → P) = ∃ˢ[ x ] P
 const-good : ∀{Γ}{ts : Times Γ}{A}
    → (S : Set)
    → (x : Γ ∋ A)
-   → good-one x (timeof x ts) (λ δ → S ᵒ)
+   → good-var x (timeof x ts) (λ δ → S ᵒ)
 const-good{Γ}{ts} S x
     with timeof x ts
 ... | Now = λ δ j k k≤j → ≡ᵒ-refl refl
@@ -1067,7 +1067,7 @@ S ˢ = record { # = λ δ → S ᵒ
 step-indexed-good : ∀{Γ}{ts : Times Γ}{A}
    → (S : Setᵒ)
    → (x : Γ ∋ A)
-   → good-one x (timeof x ts) (λ δ → S)
+   → good-var x (timeof x ts) (λ δ → S)
 step-indexed-good{Γ}{ts} S x
     with timeof x ts
 ... | Now = λ δ j k x₁ → ≡ᵒ-refl refl

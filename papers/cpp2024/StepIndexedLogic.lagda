@@ -190,7 +190,9 @@ The treatment of the exists quantifier is similar, except that to
 obtain the true-at-zero property, we require that the type $A$ be
 inhabited. We do not wish this requirement to clutter every use of the
 exists quantifier, so we use Agda's support for instance arguments
-(think type classes). So we define the following record type
+(think type classes). So we define the following record type and use
+it as an implicit instance argument in the definition of the exists
+quantifier.
 
 \begin{code}
 record Inhabited (A : Set) : Set where
@@ -199,8 +201,10 @@ record Inhabited (A : Set) : Set where
 open Inhabited {{...}} public
 \end{code}
 
-\noindent and use it as an implicit instance argument in the
-definition of exists, as follows.
+\noindent We define the formula $∃ᵒ P$ at $k$ to mean that there
+exists a value $a ∈ A$ such that $P \app a$ is true at $k$.  For the
+true-at-zero property, we use the \textsf{elt} field of
+\textsf{Inhabited} to obtain a witness.
 
 \begin{code}
 ∃ᵒ : ∀{A : Set}{{_ : Inhabited A}} → Predᵒ A → Setᵒ
@@ -214,4 +218,132 @@ syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
 \end{code}
 
 
+\section{Equivalence for Step-Indexed Propositions}
 
+We define equivalence of step-indexed propositions $P$ and $Q$ to be
+that for any step $k$, $P$ at $k$ is true if and only if $Q$ at $k$ is
+true. This is of course an equivalence relation, and we make
+use of a library named \textsf{EquivalenceRelation} to provide
+nice syntax for equational reasoning.
+
+\begin{code}
+abstract
+  infix 2 _≡ᵒ_
+  _≡ᵒ_ : Setᵒ → Setᵒ → Set
+  P ≡ᵒ Q = ∀ k → # P k ⇔ # Q k
+
+  ≡ᵒ-refl : ∀{P Q : Setᵒ}
+    → P ≡ Q
+    → P ≡ᵒ Q
+  ≡ᵒ-refl refl i = (λ x → x) , (λ x → x)
+
+  ≡ᵒ-sym : ∀{P Q : Setᵒ}
+    → P ≡ᵒ Q
+    → Q ≡ᵒ P
+  ≡ᵒ-sym PQ i = (proj₂ (PQ i)) , (proj₁ (PQ i))
+
+  ≡ᵒ-trans : ∀{P Q R : Setᵒ}
+    → P ≡ᵒ Q
+    → Q ≡ᵒ R
+    → P ≡ᵒ R
+  ≡ᵒ-trans PQ QR i = (λ z → proj₁ (QR i) (proj₁ (PQ i) z))
+                   , (λ z → proj₂ (PQ i) (proj₂ (QR i) z))
+
+instance
+  SIL-Eqᵒ : EquivalenceRelation Setᵒ
+  SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
+\end{code}
+
+\section{Recursive Predicates and Relations}
+
+We seek to define an operator for defining recursive predicates and
+relations with syntax that is something like $μ r. R$, where $r$ is
+the name of the recursive relation and $R$ is the definition of the
+relation, which can refer to $r$. We shall ensure that the recursive
+definition is well founded by requiring that the bound variable $r$ is
+only used underneath at least one later operator. This requires us to
+use an explicit representation for variables that refer to recursive
+predicates, unlike the situation for forall and exists quantifiers.
+
+We choose de Bruijn indices that are well typed. That is, the type of
+the variable specifies the input type of the predicate.  (For
+relations, the input type is a product.)
+
+\begin{code}
+Context : Set₁
+Context = List Set
+
+data _∋_ : Context → Set → Set₁ where
+  zeroˢ : ∀{Γ}{A} → (A ∷ Γ) ∋ A
+  sucˢ : ∀{Γ}{A}{B} → Γ ∋ B → (A ∷ Γ) ∋ B
+\end{code}
+
+These indices are used to index into a tuple of recursive
+predicates. The following is the type for such a tuple, with one
+predicate for each variable in the context.  \footnote{$\mathsf{top}ᵖ$
+is how to say ``true`` in $\mathsf{Set}₁$.}
+
+\begin{code}
+RecEnv : Context → Set₁
+RecEnv [] = topᵖ 
+RecEnv (A ∷ Γ) = (Predᵒ A) × RecEnv Γ
+\end{code}
+
+We shall refer to a function of type $RecEnv Γ → Setᵒ$ as a functional.
+
+To keep track of whether a variable has been used inside or outside of
+a later operator, we introduce a notion of time and a specialized list
+of times for all the variables in a context.
+
+\begin{code}
+data Time : Set where
+  Now : Time
+  Later : Time
+
+data Times : Context → Set₁ where
+  ∅ : Times []
+  cons : ∀{Γ}{A} → Time → Times Γ → Times (A ∷ Γ)
+\end{code}
+
+The key tool that we use to prove the fixpoint theorem for recursive
+predicates is the following $k$-approximation operator of
+\citet{Appel:2001aa}. The proposition $\downarrowᵒ k P$ is true at $i$
+if $P$ at $i$ is true and $i < k$, except when $k = 0$, in which case
+$\downarrowᵒ k P$ has to be true unconditionally.
+
+\begin{code}
+↓ : ℕ → (ℕ → Set) → (ℕ → Set)
+↓ k P zero = ⊤
+↓ k P (suc j) = suc j < k × (P (suc j))
+
+↓ᵒ : ℕ → Setᵒ → Setᵒ
+↓ᵒ k P = record { # = ↓ k (# P)
+                ; down = λ { zero x .zero z≤n → tt
+                           ; (suc n) (sn<k , Pn) zero j≤n → tt
+                           ; (suc n) (sn<k , Psn) (suc j) (s≤s j≤n) →
+                           (≤-trans (s≤s (s≤s j≤n)) sn<k)
+                           , (down P (suc n) Psn (suc j) (s≤s j≤n))}
+                ; tz = tt
+                }
+\end{code}
+
+The semantic conditions that correspond to using the variable for a
+recursive predicate now vs. later are the notion of nonexpansive
+vs. wellfounded~\citep{Appel:2001aa}, respectively.
+
+WE CHANGED WRT Appel!
+
+A functional is
+\emph{nonexpansive} if its $k$-approximation remains the same when applying
+an equal or larger approximation to the input. A functional is
+\emph{wellfounded} if its $k+1$-approximation remains the same when applying
+an $j$-approximation to the input where $j \leq k$. 
+
+
+\begin{code}
+good-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
+good-var {Γ}{A} x Now P =
+    ∀ δ j k → k ≤ j → ↓ᵒ k (P δ) ≡ᵒ ↓ᵒ k (P (↓ᵈ j x δ))
+good-var {Γ}{A} x Later P =
+    ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (P δ) ≡ᵒ ↓ᵒ (suc k) (P (↓ᵈ j x δ))
+\end{code}
