@@ -150,9 +150,13 @@ main idea is that we use Agda functions and variables to represent
 quantification in SIL, as one would do in higher-order abstract
 syntax. 
 
+Let $A,B,C$ range over Agda types (element of \textsf{Set}).
+\begin{code}
+variable
+  A B C : Set
+\end{code}
 We define a step-indexed predicate over type $A$ to be a function from
 $A$ to $Setᵒ$.
-
 \begin{code}
 Predᵒ : Set → Set₁
 Predᵒ A = A → Setᵒ
@@ -161,10 +165,10 @@ Predᵒ A = A → Setᵒ
 \noindent The forall quantifier maps a step-indexed predicate to $Setᵒ$.
 
 \begin{code}
-∀ᵒ : ∀{A : Set} → Predᵒ A → Setᵒ
-∀ᵒ{A} P = record { # = λ k → ∀ (a : A) → # (P a) k
-                 ; down = λ n ∀Pn k k≤n a → down (P a) n (∀Pn a) k k≤n
-                 ; tz = λ a → tz (P a) }
+∀ᵒ : Predᵒ A → Setᵒ
+∀ᵒ P = record { # = λ k → ∀ a → # (P a) k
+              ; down = λ n ∀Pn k k≤n a → down (P a) n (∀Pn a) k k≤n
+              ; tz = λ a → tz (P a) }
 \end{code}
 
 \noindent As an example, the following formla says that adding zero to any
@@ -210,10 +214,10 @@ true-at-zero property, we use the \textsf{elt} field of
 \textsf{Inhabited} to obtain a witness.
 
 \begin{code}
-∃ᵒ : ∀{A : Set}{{_ : Inhabited A}} → Predᵒ A → Setᵒ
-∃ᵒ{A} P = record { # = λ k → Σ[ a ∈ A ] # (P a) k
-                     ; down = λ n (a , Pa) k k≤n → a , (down (P a) n Pa k k≤n)
-                     ; tz = elt , tz (P elt) }
+∃ᵒ : ∀{{_ : Inhabited A}} → Predᵒ A → Setᵒ
+∃ᵒ P = record { # = λ k → ∃[ a ] # (P a) k
+              ; down = λ n (a , Pa) k k≤n → a , (down (P a) n Pa k k≤n)
+              ; tz = elt , tz (P elt) }
 
 ∃ᵒ-syntax = ∃ᵒ
 infix 2 ∃ᵒ-syntax
@@ -247,25 +251,119 @@ instance
 
 \section{Recursive Predicates and Relations}
 
-We seek to define an operator for defining recursive predicates and
-relations with syntax that is something like $μ r. R$, where $r$ is
-the name of the recursive relation and $R$ is the definition of the
-relation, which can refer to $r$. We shall ensure that the recursive
-definition is well founded by requiring that the bound variable $r$ is
-only used underneath at least one later operator. This requires us to
-use an explicit representation for variables that refer to recursive
-predicates, unlike the situation for forall and exists quantifiers.
+Our goal is to define an operator for recursive predicates and relations
+with syntax that is something like $μᵒ r. R$, where $r$ is the name of the
+recursive relation and $R$ is the definition of the relation, which
+can refer to $r$. We shall prove a fixpoint theorem which states that
+the recursive predicate is equal to its unfolding, something like the
+following.
+\[
+  (μᵒ r. R) \app δ \app a ≡ᵒ R \app δ(r:= μᵒ r. R) \app a
+\]
+where $δ$ is an environment mapping variables to predicates.
 
-We choose de Bruijn indices that are well typed. That is, the type of
-the variable specifies the input type of the predicate.  (For
-relations, the input type is a product.)
+\subsection{Review of the Fixpoint Theorem of Appel and McAllester}
+
+Our proof of this fixpoint theorem is inspired by the fixpoint theorem
+of \citet{Appel:2001aa}. In that work, \citet{Appel:2001aa} use
+step-indexing to give a semantic definition of recursive types. Their
+fixpoint theorem proves that a recursive type is equal to its unfolding.
+They define a (semantic) type $\tau$ to be a relation between step indexes and
+syntactic values. They do not define a syntax for types, but instead
+define operators for constructing semantic types as follows.
+\begin{align*}
+  ⊥ &= \{ \} \\
+  ⊤ &= \{ ⟨k,v⟩ \mid k ∈ ℕ\} \\
+  \mathbf{int} &= \{⟨k,n⟩ \mid k ∈ ℕ, n ∈ ℤ \}\\
+  τ₁ × τ₂ &= \{ ⟨k,(v₁,v₂)⟩ \mid ∀j<k. ⟨j,v₁⟩∈τ₁, ⟨j,v₂⟩∈τ₂ \} \\
+  τ₁ → τ₂ &= \{ ⟨k,λx.e⟩ \mid ∀j<k.∀v. ⟨j,v⟩∈τ₁ ⇒ e[v/x] :ⱼ τ₂ \} \\
+  μ F &= \{ ⟨k,v⟩ \mid ⟨k,v⟩ ∈ F^{k\plus 1}(⊥) \}
+    & \text{if } F : \tau \to \tau'
+\end{align*}
+Their fixpoint theorem says that for any well founded $F$,
+\[
+  μ F = F(μF)
+\]
+A well founded function $F$ on types is
+one in which each pair in the output $⟨k,v⟩$ only depends
+on later pairs in the input, that is, pairs of the form $⟨j,v′⟩$
+where $j < k$. \citet{Appel:2001aa} characterize this dependency
+with the help of the $k$-approximation function:
+\[
+  \kapprox(k,τ) = \{ ⟨j,v⟩ \mid j < k, ⟨j,v⟩ ∈ τ\} 
+\]
+They define a \emph{well founded} function $F$ to be one that
+satisfies the following equation.
+\[
+  \kapprox(k \plus 1, F(τ)) = \kapprox(k \plus 1, F(\kapprox(k,τ)))
+\]
+
+Functions over semantic types are not always well founded.  For
+example, the identity function $λα.α$ is not well founded, so one
+cannot apply the fixpoint theorem to the recursive type $μ(λα.α)$
+(which corresponds to the syntactic type $μα.α$).
+On the other hand, the function
+$λα.α×α$ is well founded because of the strict less-than in the
+definition of the $×$ operator. So the fixpont theorem applies to
+$μ(λα.α×α)$.  In general, a function built from the type operators is
+well founded so long as the recursive $α$ only appears underneath a
+type constructor such as $×$ or $→$. \citet{Appel:2001aa} prove this
+fact, which relies on the auxilliary notion of a nonexpansive
+function. In such a function, the output can depend on pairs at the
+current step index as well as later ones. So a \emph{nonexpansive}
+function satisfies the following equation.
+\[
+  \kapprox(k, F(τ)) = \kapprox(k, F(\kapprox(k,τ)))
+\]
+For example, $λα.α$ is nonexpansive and so is $λα.\mathbf{int}$.
+\citet{Appel:2001aa} then prove lemmas about the type constructors.
+For example, regarding products, they prove that if $F$ and $G$
+are nonexpansive functions, then so is $λ α. (F α) × (G α)$.
+
+It is worth noting that \citet{Appel:2001aa} neglect to prove such 
+lemmas for the $μ$ operator itself. For example, given $F : τ₁ → τ₂ → τ₃$
+that is nonexpansive in its first parameter and well founded in
+its second, then $λ α. μ (F α)$ is nonexpansive.
+On the other hand, if $F$ is well founded in both parameters,
+then $λ α. μ (F α)$ is well founded. We shall return to this point later.
+
+\subsection{Adapting to a Step-Indexed Logic}
+
+Comparing the type operators of \citet{Appel:2001aa} to the logic
+operators of SIL, there are striking similarities. The function type
+operator is quite similar to implication, although one difference is
+that the function type operator uses strict less-than whereas
+implication uses non-strict less-than. The logic introduces the
+``later`` operator, whereas the type operators essentially bake the
+later operator into the type operators through their use of strict
+less-than.
+
+Our definition of recursive predicates will be similar to the
+recursive type of \citet{Appel:2001aa} in that we shall define the
+meaning of a recursive predicate by iteration.
+
+On the other hand, we do not want a fixpoint theorem that requires the
+user of the logic to provide a proof that a particular proposition is
+well founded. Instead, we shall introduce a type system for
+propositions that ensure that $μᵒ$ is only applied to well founded
+propositions, and that the proof of well foundedness is provided by
+our logic operators, not by the user of the logic.
+
+
+
+
+We shall require that the variable $r$ is only used underneath at
+least one ``later'' operator. To enforce this restriction, we use an
+explicit representation for variables (unlike the situation for forall
+and exists quantifiers). We choose de Bruijn indices that are well
+typed. That is, the type of the variable specifies the input type of
+the predicate.  (For relations, the input type is a product.)
 
 \begin{code}
 Context : Set₁
 Context = List Set
 
 variable
-  A B C : Set
   Γ : Context
 
 data _∋_ : Context → Set → Set₁ where
@@ -284,7 +382,8 @@ RecEnv [] = topᵖ
 RecEnv (A ∷ Γ) = (Predᵒ A) × RecEnv Γ
 \end{code}
 
-We refer to a function of type $RecEnv Γ → Setᵒ$ as a \emph{functional}.
+We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
+\emph{functional}.
 
 To keep track of whether a variable has been used inside or outside of
 a later operator, we introduce a notion of time and we introduce a
@@ -302,7 +401,7 @@ data Times : Context → Set₁ where
 \end{code}
 
 The key tool that we use to prove the fixpoint theorem for recursive
-predicates is the following $k$-approximation
+predicates is the $k$-approximation
 operator~\citep{Appel:2001aa}. The proposition $↓ᵒ k P$ is
 true at $i$ if $P$ at $i$ is true and $i < k$, except when $k = 0$, in
 which case $↓ᵒ k P$ has to be true unconditionally.
