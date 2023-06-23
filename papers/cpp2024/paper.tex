@@ -132,6 +132,7 @@
 \newunicodechar{λ}{\ensuremath{\mathnormal\lambda}}
 \newunicodechar{←}{\ensuremath{\mathnormal\from}}
 \newunicodechar{→}{\ensuremath{\mathnormal\to}}
+\newunicodechar{↓}{\ensuremath{\mathnormal\downarrow}}
 \newunicodechar{∀}{\ensuremath{\mathnormal\forall}}
 \newunicodechar{∃}{\ensuremath{\exists}}
 \newunicodechar{⊥}{\ensuremath{\mathnormal\bot}}
@@ -158,8 +159,10 @@
 \newunicodechar{μ}{\ensuremath{\mu}}
 \newunicodechar{∋}{\ensuremath{\ni}}
 \newunicodechar{ˢ}{\ensuremath{^s}}
+\newunicodechar{ᵈ}{\ensuremath{^d}}
 \newunicodechar{Γ}{\ensuremath{\Gamma}}
 \newunicodechar{∅}{\ensuremath{\emptyset}}
+\newunicodechar{δ}{\ensuremath{\delta}}
 
 %%
 %% end of the preamble, start of the body of the document source.
@@ -218,11 +221,10 @@
   can be streamlined by use of modal logics such as
   LSLR~\citep{Dreyer:2011wl}.  The Iris system~\citep{JUNG:2018aa}
   provides support for reasoning about step-indexed logical relations
-  in the Coq proof assistant, but there is not yet analogous support
-  for the Agda proof assistant. This paper describes an embedding of
-  a step-indexed logic in Agda and an application of the logic to a
-  semantic type safety proof for an internal language for the
-  Gradually-Typed Lambda Calculus.
+  in the Coq proof assistant. This paper describes a shallow embedding
+  of a step-indexed logic in Agda and its application to a semantic
+  type safety proof for an internal language of the Gradually-Typed
+  Lambda Calculus.
 \end{abstract}
 
 %%
@@ -292,7 +294,7 @@ proofs. It is worth noting that the authors have also proved the
 Gradual Guarantee for the GTLC using SIL and the lesssons from that
 experience confirm the findings in this paper.
 
-%TODO: ROAD MAP
+TODO: ROAD MAP
 
 
 %\section{A Step-Indexed Logic (SIL)}
