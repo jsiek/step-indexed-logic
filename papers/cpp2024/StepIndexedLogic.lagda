@@ -54,6 +54,10 @@ Let $P, Q, R$ range over step-indexed propositions.
 \begin{code}
 variable P Q R : Setᵒ
 \end{code}
+Let $p, q$ range over (regular) propositions.
+\begin{code}
+variable p q : Set
+\end{code}
 
 The false formula for SIL is embedded in Agda by defining an instance
 of this record type, with the representation function mapping zero
@@ -252,13 +256,13 @@ instance
 \section{Recursive Predicates and Relations}
 
 Our goal is to define an operator for recursive predicates and relations
-with syntax that is something like $μᵒ r. R$, where $r$ is the name of the
+with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
 recursive relation and $R$ is the definition of the relation, which
-can refer to $r$. We shall prove a fixpoint theorem which states that
+can refer to $x$. We shall prove a fixpoint theorem which states that
 the recursive predicate is equal to its unfolding, something like the
 following.
 \[
-  (μᵒ r. R) \app δ \app a ≡ᵒ R \app δ(r:= μᵒ r. R) \app a
+  (μᵒ x. R) \app δ \app a ≡ᵒ R \app δ(x:= μᵒ x. R) \app a
 \]
 where $δ$ is an environment mapping variables to predicates.
 
@@ -340,19 +344,15 @@ less-than.
 
 Our definition of recursive predicates will be similar to the
 recursive type of \citet{Appel:2001aa} in that we shall define the
-meaning of a recursive predicate by iteration.
+meaning of a recursive predicate by iteration.  On the other hand, we
+do not want a fixpoint theorem that requires the user of the logic to
+provide a proof that a particular proposition is well
+founded. Instead, we shall introduce a type system for propositions
+that ensure that $μ$ is only applied to well founded propositions, and
+that the proof of well foundedness is provided by our logic operators,
+not by the user of the logic.
 
-On the other hand, we do not want a fixpoint theorem that requires the
-user of the logic to provide a proof that a particular proposition is
-well founded. Instead, we shall introduce a type system for
-propositions that ensure that $μᵒ$ is only applied to well founded
-propositions, and that the proof of well foundedness is provided by
-our logic operators, not by the user of the logic.
-
-
-
-
-We shall require that the variable $r$ is only used underneath at
+We shall require that the variable $x$ is only used underneath at
 least one ``later'' operator. To enforce this restriction, we use an
 explicit representation for variables (unlike the situation for forall
 and exists quantifiers). We choose de Bruijn indices that are well
@@ -362,13 +362,12 @@ the predicate.  (For relations, the input type is a product.)
 \begin{code}
 Context : Set₁
 Context = List Set
-
-variable
-  Γ : Context
+variable Γ : Context
 
 data _∋_ : Context → Set → Set₁ where
   zeroˢ : (A ∷ Γ) ∋ A
   sucˢ : Γ ∋ B → (A ∷ Γ) ∋ B
+variable x y z : Γ ∋ A
 \end{code}
 
 These indices are used to index into a tuple of recursive
@@ -399,6 +398,118 @@ data Times : Context → Set₁ where
   ∅ : Times []
   cons : Time → Times Γ → Times (A ∷ Γ)
 \end{code}
+Let $Δ$ range over these lists of times.
+\begin{code}
+variable Δ Δ₁ Δ₂ : Times Γ
+\end{code}
+
+We shall define another record type, \textsf{Set}$^s$ for step-indexed
+propositions that may contain free variables.
+\begin{code}
+record Setˢ (Γ : Context) (Δ : Times Γ) : Set₁
+\end{code}
+Let $F,G,H$ range over \textsf{Set}$^s$.
+\begin{code}
+variable F G H : Setˢ Γ Δ
+\end{code}
+
+We explain the type system for \textsf{Set}$^s$ in 
+Figure~\ref{fig:SIL-type-system}, using traditional notation.
+The judgment $Γ ⊢ F ⊣ Δ$ holds when $F$ uses the variables
+in $Γ$ at the times specified in $Δ$. For example,
+membership $M ∈ x$ is well typed when $x$ is in $Γ$
+and $Δ$ assigns $x$ to $\Now$ and all the other variables
+in $Γ$ to $\Later$. The later formula $▷ˢ F$ is well typed
+at $▷ Δ$ when $F$ is well typed at $Δ$. The recursive formula
+$μˢ F$ is well typed in $Γ$ at $Δ$ if $F$ is well typed
+in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
+by the $μˢ$ has type $A$ and may only be used later.
+There is some redundancy in the type system, for example,
+in the rule for membership $\varnow(Γ,x) = Δ$ could
+instead simply check that $Δ$ maps $x$ to $\Now$.
+However, this redundancy helps the Agda inference algorithm
+when working with partial proofs.
+
+\begin{code}
+laters : ∀ (Γ : Context) → Times Γ
+laters [] = ∅
+laters (A ∷ Γ) = cons Later (laters Γ)
+\end{code}
+
+\begin{code}
+var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
+var-now (B ∷ Γ) zeroˢ = cons Now (laters Γ)
+var-now (B ∷ Γ) (sucˢ x) = cons Later (var-now Γ x)
+\end{code}
+
+\begin{code}
+choose : Time → Time → Time
+choose Now Now = Now
+choose Now Later = Now
+choose Later Now = Now
+choose Later Later = Later
+
+_∪_ : ∀{Γ} (ts₁ ts₂ : Times Γ) → Times Γ
+_∪_ {[]} ts₁ ts₂ = ∅
+_∪_ {A ∷ Γ} (cons x ts₁) (cons y ts₂) = cons (choose x y) (_∪_ ts₁ ts₂)
+\end{code}
+
+\begin{figure}
+\raggedright
+\begin{center}
+\begin{minipage}{0.3\textwidth}
+\begin{align*}
+  ▷ \mathsf{Now} &= \mathsf{Later} \\
+  ▷ \mathsf{Later} &= \mathsf{Later}
+\end{align*}
+\end{minipage}  
+\begin{minipage}{0.3\textwidth}
+\begin{align*}
+  ▷ ∅ &= ∅ \\
+  ▷ (Δ,T) &= ▷ Δ,\, ▷ T
+\end{align*}
+\end{minipage}
+\end{center}
+
+\vspace{5pt}
+
+\fbox{$Γ ⊢ F ⊣ Δ$}
+\begin{gather*}
+\inference{M : A & x : Γ ∋ A & \varnow(Γ,x) = Δ}{Γ ⊢ M ∈ x ⊣ Δ} \quad
+\inference{Γ ⊢ F ⊣ Δ}{Γ ⊢ \, ▷ˢ F ⊣\, ▷ Δ} \\[2ex]
+\inference{Γ⊢ F ⊣ Δ₁  & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F →ˢ G ⊣ Δ₁ ∪ Δ₂} \quad
+\inference{Γ ⊢ F ⊣ Δ₁ & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F ×ˢ G ⊣ Δ₁ ∪ Δ₂} \quad
+\inference{Γ ⊢ F ⊣ Δ₁ & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F ⊎ˢ G ⊣ Δ₁ ∪ Δ₂} \\[2ex]
+\inference{∀ a ∈ A.\, Γ ⊢ f a ⊣ Δ}{Γ ⊢ ∀ˢ f ⊣ Δ} \quad
+\inference{∀ a ∈ A.\, Γ ⊢ f a ⊣ Δ}{Γ ⊢ ∃ˢ f ⊣ Δ} \quad
+\inference{}{Γ ⊢ p ˢ ⊣ \mathsf{laters}(Δ)}\\[2ex]
+\inference{Γ,A ⊢ F ⊣ Δ,\mathsf{Later}}{Γ ⊢ μˢ F ⊣ Δ}
+\end{gather*}
+\caption{Type System for Well Founded and Nonexpansive Formulas}
+\label{fig:SIL-type-system}
+\end{figure}
+
+% TODO: decide whether applyˢ is needed
+
+
+
+The type system is implemented in the type signatures for the logical
+operators, which we declare as follows.
+\begin{code}
+_∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
+▷ˢ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
+infixr 6 _→ˢ_
+_→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+infixr 7 _×ˢ_
+_×ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+infixr 7 _⊎ˢ_
+_⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
+∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
+_ˢ : Set → Setˢ Γ (laters Γ)
+μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
+\end{code}
+
 
 The key tool that we use to prove the fixpoint theorem for recursive
 predicates is the $k$-approximation
@@ -478,6 +589,31 @@ good-var x Now P = nonexpansive x P
 good-var x Later P = wellfounded x P
 \end{code}
 
+\begin{code}
+timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
+timeof {B ∷ Γ} zeroˢ (cons t ts) = t
+timeof {B ∷ Γ} (sucˢ x) (cons t ts) = timeof x ts
+
+goodnesses : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-var x (timeof x ts) S
+
+_≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
+_≡ᵈ_ {[]} δ δ′ = ⊤
+_≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡ᵈ δ′
+
+congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
+congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ᵒ (S δ′)
+\end{code}
+
+\begin{code}
+record Setˢ Γ ts where
+  field
+    # : RecEnv Γ → Setᵒ 
+    good : goodnesses ts #
+    congr : congruent #
+open Setˢ public
+\end{code}
+
 \section*{Appendix}
 
 Step-indexed equality is an equivalence relation.
@@ -501,3 +637,4 @@ The $k$-approximation operator is downward closed.
                      (≤-trans (s≤s (s≤s j≤n)) sn<k)
                    , (down P (suc n) Psn (suc j) (s≤s j≤n))}
 \end{code}
+
