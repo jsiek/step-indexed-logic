@@ -254,6 +254,7 @@ instance
 \end{code}
 
 \section{Recursive Predicates and Relations}
+\label{sec:rec-pred}
 
 Our goal is to define an operator for recursive predicates and relations
 with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
@@ -331,7 +332,7 @@ its second, then $λ α. μ (F α)$ is nonexpansive.
 On the other hand, if $F$ is well founded in both parameters,
 then $λ α. μ (F α)$ is well founded. We shall return to this point later.
 
-\subsection{Adapting to a Step-Indexed Logic}
+\subsection{Step-Indexed Logic with Recursive Predicates}
 
 Comparing the type operators of \citet{Appel:2001aa} to the logic
 operators of SIL, there are striking similarities. The function type
@@ -352,7 +353,7 @@ that ensure that $μ$ is only applied to well founded propositions, and
 that the proof of well foundedness is provided by our logic operators,
 not by the user of the logic.
 
-We shall require that the variable $x$ is only used underneath at
+We shall require that a recursive predicate is only used underneath at
 least one ``later'' operator. To enforce this restriction, we use an
 explicit representation for variables (unlike the situation for forall
 and exists quantifiers). We choose de Bruijn indices that are well
@@ -449,9 +450,9 @@ choose Now Later = Now
 choose Later Now = Now
 choose Later Later = Later
 
-_∪_ : ∀{Γ} (ts₁ ts₂ : Times Γ) → Times Γ
-_∪_ {[]} ts₁ ts₂ = ∅
-_∪_ {A ∷ Γ} (cons x ts₁) (cons y ts₂) = cons (choose x y) (_∪_ ts₁ ts₂)
+_∪_ : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
+_∪_ {[]} Δ₁ Δ₂ = ∅
+_∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (_∪_ Δ₁ Δ₂)
 \end{code}
 
 \begin{figure}
@@ -491,31 +492,33 @@ _∪_ {A ∷ Γ} (cons x ts₁) (cons y ts₂) = cons (choose x y) (_∪_ ts₁ 
 
 % TODO: decide whether applyˢ is needed
 
-
-
 The type system is implemented in the type signatures for the logical
 operators, which we declare as follows.
 \begin{code}
-_∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
-▷ˢ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
+postulate _∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
+postulate ▷ˢ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
 infixr 6 _→ˢ_
-_→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+postulate _→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
 infixr 7 _×ˢ_
-_×ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+postulate _×ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
 infixr 7 _⊎ˢ_
-_⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
-∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
-∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
-_ˢ : Set → Setˢ Γ (laters Γ)
-μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
+postulate _⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+postulate ∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
+postulate ∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
+postulate _ˢ : Set → Setˢ Γ (laters Γ)
+postulate μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 \end{code}
 
+\section{Semantic Definitions and Proofs}
 
-The key tool that we use to prove the fixpoint theorem for recursive
-predicates is the $k$-approximation
-operator~\citep{Appel:2001aa}. The proposition $↓ᵒ k P$ is
-true at $i$ if $P$ at $i$ is true and $i < k$, except when $k = 0$, in
-which case $↓ᵒ k P$ has to be true unconditionally.
+As mentioned previously, \citet{Appel:2001aa} use the notion of
+$k$-approximation to define a semantic characterization of well
+founded types. Similarly, we define the $k$-approximation of a
+step-indexed proposition, using the notation $↓ᵒ k P$.  The
+proposition $↓ᵒ k P$ is true at $i$ if $P$ at $i$ is true and $i < k$,
+except when $k = 0$, in which case $↓ᵒ k P$ has to be true
+unconditionally. (This differs from \citet{Appel:2001aa} in the
+$\zero$ case.)
 
 \begin{code}
 ↓ : ℕ → (ℕ → Set) → (ℕ → Set)
@@ -528,7 +531,8 @@ which case $↓ᵒ k P$ has to be true unconditionally.
 ↓ᵒ k P = record { # = ↓ k (# P) ; down = ↓-down {P} k ; tz = tt }
 \end{code}
 
-We lift $k$-approximation to predicates with the following definition. 
+We lift $k$-approximation to step-indexed predicates with the
+following definition.
 
 \begin{code}
 ↓ᵖ : ℕ → ∀{A} → Predᵒ A → Predᵒ A
@@ -547,7 +551,7 @@ which predicate to apply the $k$-approximation.
 
 The semantic conditions that correspond to using the variable for a
 recursive predicate now vs. later are the notion of nonexpansive
-vs. wellfounded~\citep{Appel:2001aa}, respectively.
+and wellfounded we reviewed in Section~\ref{sec:rec-pred}.
 A direct adaptation of nonexpansive to our setting yields the following,
 which says that given any environment $δ$ and variable $x$,
 the $k$-approximation of $P\app δ$ is equivalent to the
@@ -566,51 +570,72 @@ the $δ$ with respect to variable $x$.
 
 However, these definitions of nonexpansive and wellfounded were not
 general enough to handle more than one recursive predicate in scope.
-So instead of taking the $k$-approximation of the input $δ$ we allow
-the $j$-approximation of $δ$ for any $j$ greater or equal to $k$.
+(Recall that \citet{Appel:2001aa} neglected to prove that $μ$ preserves
+nonexpansive and wellfounded propositions.)
+So instead of taking the $k$-approximation of the input $δ$, we
+generalize $k$ to any $j$ greater or equal to $k$.
 
 \begin{code}
 nonexpansive : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
-nonexpansive x P =
-    ∀ δ j k → k ≤ j → ↓ᵒ k (P δ) ≡ᵒ ↓ᵒ k (P (↓ᵈ j x δ))
+nonexpansive x P = ∀ δ j k → k ≤ j → ↓ᵒ k (P δ) ≡ᵒ ↓ᵒ k (P (↓ᵈ j x δ))
 
 wellfounded : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
-wellfounded x P =
-    ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (P δ) ≡ᵒ ↓ᵒ (suc k) (P (↓ᵈ j x δ))
+wellfounded x P = ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (P δ) ≡ᵒ ↓ᵒ (suc k) (P (↓ᵈ j x δ))
 \end{code}
 
-We define \textsf{good-var} to dispatch to either
-\textsf{nonexpansive} or \textsf{wellfounded} depending on whether the
-variable is used now or later.
+We say that a functional $f$ is ``good'' with respect to variable $x$
+at time $t$ if it is either \textsf{nonexpansive} (when $t = \Now$) or
+\textsf{wellfounded} (when $t = \Later$).
 
 \begin{code}
 good-var : (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
-good-var x Now P = nonexpansive x P
-good-var x Later P = wellfounded x P
+good-var x Now f = nonexpansive x f
+good-var x Later f = wellfounded x f
 \end{code}
+
+\noindent Next we define the \textsf{timeof} function to lookup the
+time for a variable $x$ in $Δ$.
 
 \begin{code}
 timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
-timeof {B ∷ Γ} zeroˢ (cons t ts) = t
-timeof {B ∷ Γ} (sucˢ x) (cons t ts) = timeof x ts
+timeof {B ∷ Γ} zeroˢ (cons t Δ) = t
+timeof {B ∷ Γ} (sucˢ x) (cons t Δ) = timeof x Δ
+\end{code}
 
-goodnesses : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-var x (timeof x ts) S
+\noindent We say that a functional is ``good'' if it is good with respect to
+every variable that is in scope.
 
+\begin{code}
+good-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+good-fun {Γ} Δ f = ∀{A} (x : Γ ∋ A) → good-var x (timeof x Δ) f
+\end{code}
+
+Two environments are equivalent if they are point-wise equivalent.
+
+\begin{code}
 _≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
 _≡ᵈ_ {[]} δ δ′ = ⊤
 _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡ᵈ δ′
-
-congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
-congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ᵒ (S δ′)
 \end{code}
 
+\noindent A functional is congruent if applying it to equivalent
+environments produces equivalent step-indexed propositions.
+
 \begin{code}
-record Setˢ Γ ts where
+congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
+congruent f = ∀{δ δ′} → δ ≡ᵈ δ′ → (f δ) ≡ᵒ (f δ′)
+\end{code}
+
+We can now define $\mathsf{Set}ˢ$ as the following record type.
+The meaning is given by a functional and we require proofs that
+the functional is good and congruent.
+
+\begin{code}
+record Setˢ Γ Δ where
   field
-    # : RecEnv Γ → Setᵒ 
-    good : goodnesses ts #
-    congr : congruent #
+    ♯ : RecEnv Γ → Setᵒ 
+    good : good-fun Δ ♯
+    congr : congruent ♯
 open Setˢ public
 \end{code}
 
