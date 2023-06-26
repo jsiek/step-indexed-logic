@@ -25,6 +25,7 @@ postulate impossible : {A : Set} → A
 \end{comment}
 
 
+%===============================================================================
 \section{Step-Indexed First-Order Logic}
 
 We represent the meaning of a step-indexed proposition with an Agda
@@ -165,6 +166,11 @@ $A$ to $Setᵒ$.
 Predᵒ : Set → Set₁
 Predᵒ A = A → Setᵒ
 \end{code}
+We define the constantly true predicate as follows.
+\begin{code}
+⊤ᵖ : ∀{A} → Predᵒ A
+⊤ᵖ = (λ a → ⊤ᵒ)
+\end{code}
 
 \noindent The forall quantifier maps a step-indexed predicate to $Setᵒ$.
 
@@ -229,6 +235,7 @@ syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
 \end{code}
 
 
+%===============================================================================
 \section{Equivalence for Step-Indexed Propositions}
 
 We define equivalence of step-indexed propositions $P$ and $Q$ to be
@@ -253,6 +260,7 @@ instance
   SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
 \end{code}
 
+%===============================================================================
 \section{Recursive Predicates and Relations}
 \label{sec:rec-pred}
 
@@ -421,7 +429,7 @@ in $Γ$ at the times specified in $Δ$. For example,
 membership $M ∈ x$ is well typed when $x$ is in $Γ$
 and $Δ$ assigns $x$ to $\Now$ and all the other variables
 in $Γ$ to $\Later$. The later formula $▷ˢ F$ is well typed
-at $▷ Δ$ when $F$ is well typed at $Δ$. The recursive formula
+at $\laters(Γ)$ when $F$ is well typed at $Δ$. The recursive formula
 $μˢ F$ is well typed in $Γ$ at $Δ$ if $F$ is well typed
 in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
 by the $μˢ$ has type $A$ and may only be used later.
@@ -457,33 +465,16 @@ _∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (_∪_ Δ₁ 
 
 \begin{figure}
 \raggedright
-\begin{center}
-\begin{minipage}{0.3\textwidth}
-\begin{align*}
-  ▷ \mathsf{Now} &= \mathsf{Later} \\
-  ▷ \mathsf{Later} &= \mathsf{Later}
-\end{align*}
-\end{minipage}  
-\begin{minipage}{0.3\textwidth}
-\begin{align*}
-  ▷ ∅ &= ∅ \\
-  ▷ (Δ,T) &= ▷ Δ,\, ▷ T
-\end{align*}
-\end{minipage}
-\end{center}
-
-\vspace{5pt}
-
 \fbox{$Γ ⊢ F ⊣ Δ$}
 \begin{gather*}
 \inference{M : A & x : Γ ∋ A & \varnow(Γ,x) = Δ}{Γ ⊢ M ∈ x ⊣ Δ} \quad
-\inference{Γ ⊢ F ⊣ Δ}{Γ ⊢ \, ▷ˢ F ⊣\, ▷ Δ} \\[2ex]
+\inference{Γ ⊢ F ⊣ Δ}{Γ ⊢ \, ▷ˢ F ⊣\, \laters(Γ)} \\[2ex]
 \inference{Γ⊢ F ⊣ Δ₁  & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F →ˢ G ⊣ Δ₁ ∪ Δ₂} \quad
 \inference{Γ ⊢ F ⊣ Δ₁ & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F ×ˢ G ⊣ Δ₁ ∪ Δ₂} \quad
 \inference{Γ ⊢ F ⊣ Δ₁ & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F ⊎ˢ G ⊣ Δ₁ ∪ Δ₂} \\[2ex]
 \inference{∀ a ∈ A.\, Γ ⊢ f a ⊣ Δ}{Γ ⊢ ∀ˢ f ⊣ Δ} \quad
 \inference{∀ a ∈ A.\, Γ ⊢ f a ⊣ Δ}{Γ ⊢ ∃ˢ f ⊣ Δ} \quad
-\inference{}{Γ ⊢ p ˢ ⊣ \mathsf{laters}(Δ)}\\[2ex]
+\inference{}{Γ ⊢ p ˢ ⊣ \laters(Δ)}\\[2ex]
 \inference{Γ,A ⊢ F ⊣ Δ,\mathsf{Later}}{Γ ⊢ μˢ F ⊣ Δ}
 \end{gather*}
 \caption{Type System for Well Founded and Nonexpansive Formulas}
@@ -506,7 +497,7 @@ postulate _⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ
 postulate ∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
 postulate ∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
 postulate _ˢ : Set → Setˢ Γ (laters Γ)
-postulate μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
+μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 \end{code}
 
 \section{Semantic Definitions and Proofs}
@@ -639,6 +630,91 @@ record Setˢ Γ Δ where
 open Setˢ public
 \end{code}
 
+
+\subsection{Recursive Predicates}
+
+As mentioned above, we shall define a recursive predicate $μˢ f$ by iterating
+its body $f$. So we start by defining the nth iteration of a function.
+
+\begin{code}
+iter : ∀ {ℓ} {A : Set ℓ} → ℕ → (A → A) → (A → A)
+iter zero    f  =  id
+iter (suc n) f  =  f ∘ iter n f
+\end{code}
+
+Next we define an auxilliary function $μₒ$ that takes a function $f$
+over step-indexed predicates and produces a raw step-indexed predicate
+(without the proofs.) It iterates the function $k \plus 1$ times,
+starting at the true formula.
+
+\begin{code}
+μₒ : ∀{A} → (Predᵒ A → Predᵒ A) → A → (ℕ → Set)
+μₒ {A} f a k = #(iter{A = Predᵒ A} (suc k) f (λ a → ⊤ᵒ) a) k
+\end{code}
+
+Now, recall that the body $f$ of a $μˢ f$ has type
+\[
+    A → \mathsf{Set}ˢ (A ∷ Γ) (\mathsf{cons}\, \Later\, Δ))
+\]
+and not $\mathsf{Pred}ᵒ A → \mathsf{Pred}ᵒ A$.
+So we define the following function to convert
+from the former to the later.
+
+\begin{code}
+toFun : ∀{Γ}{ts : Times Γ}{A}
+   → RecEnv Γ
+   → (A → Setˢ (A ∷ Γ) (cons Later ts))
+     ----------------------------------
+   → (Predᵒ A → Predᵒ A)
+toFun δ f μf = λ a → ♯ (f a) (μf , δ)
+\end{code}
+
+The $μₒ$ function is downward closed when applied to the
+result of $\mathsf{toFun}$.
+\begin{code}
+down-μₒ : ∀{Γ}{ts : Times Γ}{A}{P : A → Setˢ (A ∷ Γ) (cons Later ts)}
+    {a : A}{δ : RecEnv Γ}
+  → downClosed (μₒ (toFun δ P) a)
+\end{code}
+
+
+\begin{code}
+muᵒ : ∀{Γ}{ts : Times Γ}{A}
+   → (A → Setˢ (A ∷ Γ) (cons Later ts))
+   → RecEnv Γ
+     ----------------------------------
+   → (A → Setᵒ)
+muᵒ {Γ}{ts}{A} f δ a =
+  record { # = μₒ (toFun δ f) a
+         ; down = down-μₒ {Γ}{ts}{A}{f}{a}{δ}
+         ; tz = tz ((toFun δ f) ⊤ᵖ a) }
+\end{code}
+
+
+
+\begin{code}
+good-fun-mu : ∀{Γ}{Δ : Times Γ}{A}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → (a : A)
+   → good-fun Δ (λ δ → muᵒ S δ a)
+\end{code}
+
+\begin{code}
+congruent-mu : ∀{Γ}{Δ : Times Γ}{A}
+   (P : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   (a : A)
+   → congruent (λ δ → muᵒ P δ a)
+\end{code}
+
+\begin{code}
+μˢ {Γ}{Δ}{A} P a =
+  record { ♯ = λ δ → muᵒ P δ a
+         ; good = good-fun-mu P a
+         ; congr = congruent-mu P a }
+\end{code}
+
+
+%===============================================================================
 \section*{Appendix}
 
 Step-indexed equality is an equivalence relation.
@@ -663,3 +739,367 @@ The $k$-approximation operator is downward closed.
                    , (down P (suc n) Psn (suc j) (s≤s j≤n))}
 \end{code}
 
+\begin{code}
+abstract 
+  ↓ᵒ-zero : ∀{A}{P Q : Predᵒ A} (a : A) → ↓ᵒ zero (P a) ≡ᵒ ↓ᵒ zero (Q a)
+  ↓ᵒ-zero{A}{P}{Q} a zero = (λ _ → tt) , λ _ → tt
+  ↓ᵒ-zero{A}{P}{Q} a (suc i) = (λ {()}) , (λ {()})
+\end{code}
+
+\begin{code}
+congᵖ : ∀{A}{B} (F : Predᵒ A → Predᵒ B) → Set₁
+congᵖ F = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (F P b) ≡ᵒ (F Q b)
+
+abstract
+  cong-↓ : ∀{A}{k : ℕ}
+     → congᵖ{A}{A} (↓ᵖ k)
+  cong-↓ {A} {k} {P} {Q} eq a zero =
+     (λ _ → tt) , λ _ → tt
+  cong-↓ {A} {k} {P} {Q} eq a (suc i) =
+     (λ {(si≤k , Pasi) → si≤k , (proj₁ (eq a (suc i)) Pasi)})
+     ,
+     λ {(si≤k , Qasi) → si≤k , (proj₂ (eq a (suc i)) Qasi)}
+\end{code}
+
+\begin{code}
+nonexpansiveˢ : ∀{Γ}{A} (S : RecEnv (A ∷ Γ) → Setᵒ) (δ : RecEnv Γ) → Set₁
+nonexpansiveˢ{Γ}{A} S δ =
+  ∀ P k → ↓ᵒ k (S (P , δ)) ≡ᵒ ↓ᵒ k (S ((↓ᵖ k P) , δ))
+
+wellfoundedˢ : ∀{Γ}{A} (S : RecEnv (A ∷ Γ) → Setᵒ) (δ : RecEnv Γ) → Set₁
+wellfoundedˢ{Γ}{A} S δ =
+  ∀ P k → ↓ᵒ (suc k) (S (P , δ)) ≡ᵒ ↓ᵒ (suc k) (S ((↓ᵖ k P) , δ))
+
+goodness : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+goodness {[]} ts S = topᵖ
+goodness {A ∷ Γ} (cons Now ts) S = ∀ δ → nonexpansiveˢ S δ
+goodness {A ∷ Γ} (cons Later ts) S = ∀ δ → wellfoundedˢ S δ
+
+g⇒g : ∀{Γ}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-fun ts S
+   → goodness ts S
+g⇒g {[]} {ts} {S} gs = ttᵖ
+g⇒g {A ∷ Γ} {cons Now ts} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
+g⇒g {A ∷ Γ} {cons Later ts} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
+
+≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ}
+   → δ ≡ᵈ δ
+≡ᵈ-refl {[]} {δ} = tt
+≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ᵒ-refl refl) , ≡ᵈ-refl
+\end{code}
+
+\begin{code}
+cong-head : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
+cong-head {[]} S = topᵖ
+cong-head {A ∷ Γ} S =
+  ∀{P Q} → (∀ a → P a ≡ᵒ Q a) → (∀ δ → S (P , δ) ≡ᵒ S (Q , δ))
+
+cong⇒head : ∀{Γ : Context}{S : RecEnv Γ → Setᵒ}
+  → congruent S
+  → cong-head S
+cong⇒head {[]} {S} congS′ = ttᵖ
+cong⇒head {A ∷ Γ} {S} congS′ P=Q δ = congS′ (P=Q , ≡ᵈ-refl{Γ}{δ})
+\end{code}
+
+\begin{code}
+≡ᵖ-refl : ∀{A}{P Q : Predᵒ A}
+  → P ≡ Q
+  → ∀ {a} → P a ≡ᵒ Q a
+≡ᵖ-refl refl {a} = ≡ᵒ-refl refl
+
+≡ᵖ-sym : ∀{A}{P Q : Predᵒ A}
+  → (∀ {a} → P a ≡ᵒ Q a)
+  → ∀ {a} → Q a ≡ᵒ P a
+≡ᵖ-sym P=Q {a} = ≡ᵒ-sym P=Q
+\end{code}
+
+\begin{code}
+dc-iter : ∀(i : ℕ){A}
+   → (F : Predᵒ A → Predᵒ A)
+   → ∀ a → downClosed (#(iter i F ⊤ᵖ a))
+dc-iter zero F = λ a n _ k _ → tt
+dc-iter (suc i) F = λ a → down (F (iter i F ⊤ᵖ) a)
+\end{code}
+
+\begin{code}
+lemma15a : ∀{Γ}{A}{ts : Times Γ}{P Q : Predᵒ A}{δ : RecEnv Γ}
+  → (j : ℕ) → (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later ts)) → (a : A)
+  → ↓ᵒ j (iter j (toFun δ Fᵃ) P a) ≡ᵒ ↓ᵒ j (iter j (toFun δ Fᵃ) Q a)
+lemma15a {Γ}{A}{ts}{P}{Q}{δ} zero Fᵃ a = ↓ᵒ-zero{_}{P}{Q} a
+lemma15a {Γ}{A}{ts}{P}{Q}{δ} (suc j) Fᵃ a =
+  let f = toFun δ Fᵃ in
+  ↓ᵒ (suc j) (f (iter j f P) a)         ⩦⟨ g⇒g (good (Fᵃ a)) δ (iter j f P) j ⟩ 
+  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)
+                                    ⩦⟨ cong-↓ (λ a → (cong⇒head (congr (Fᵃ a)))
+                                        (λ a → lemma15a j Fᵃ a) δ) a ⟩
+  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)
+                               ⩦⟨ ≡ᵒ-sym (g⇒g (good (Fᵃ a)) δ (iter j f Q) j) ⟩
+  ↓ᵒ (suc j) (f (iter j f Q) a)  ∎
+\end{code}
+
+\begin{code}
+iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A}
+  → (F : A → A)
+  → (j k : ℕ)
+  → j ≤ k
+  → (iter j F (iter (k ∸ j) F P)) ≡ (iter k F P)
+iter-subtract {A = A} {P} F .zero k z≤n = refl
+iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
+  rewrite iter-subtract{A = A}{P} F j k j≤k = refl
+\end{code}
+
+\begin{code}
+lemma15b : ∀{Γ}{A}{ts : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ}
+  → (k : ℕ)
+  → (j : ℕ)
+  → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+  → (a : A)
+  → j ≤ k
+  → ↓ᵒ j (iter j (toFun δ F) P a) ≡ᵒ ↓ᵒ j (iter k (toFun δ F) P a)
+lemma15b{Γ}{A}{ts}{P}{δ} k j F a j≤k =
+  let f = toFun δ F in
+  ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j F a ⟩
+  ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)
+                      ⩦⟨ cong-↓{A}{j}{iter j f (iter (k ∸ j) f P)}{iter k f P}
+                              (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
+  ↓ᵒ j (iter k f P a)   ∎
+\end{code}
+
+\begin{code}
+abstract
+  ≡ᵒ-to : ∀{P Q : Setᵒ}
+    → P ≡ᵒ Q
+    → (∀ k → # P k → # Q k)
+  ≡ᵒ-to PQ k = ⇔-to (PQ k) 
+\end{code}
+
+The function $μₒ$ is downward closed.
+\begin{code}
+down-μₒ {Γ}{ts}{A}{P}{a}{δ} k iterskPk zero j≤k = tz (toFun δ P (id ⊤ᵖ) a)
+down-μₒ {Γ}{ts}{A}{P}{a}{δ} (suc k′) μPa (suc j′) (s≤s j′≤k′) =
+  let f = toFun δ P in
+  let dc-iter-ssk : downClosed (# ((iter (suc (suc k′)) f ⊤ᵖ) a))
+      dc-iter-ssk = dc-iter (suc (suc k′)) (toFun δ P) a in
+  let ↓-iter-ssk : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc k′)) f ⊤ᵖ) a))(suc j′)
+      ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μPa (suc j′) (s≤s j′≤k′))
+  in
+  let eq : ↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) (toFun δ P) ⊤ᵖ) a)
+        ≡ᵒ ↓ᵒ (suc (suc j′)) ((iter (suc (suc k′)) (toFun δ P) ⊤ᵖ) a)
+      eq = lemma15b {P = ⊤ᵖ}{δ} (suc (suc k′)) (suc (suc j′)) P a
+                (s≤s (s≤s j′≤k′)) in
+  let ↓-iter-ssj : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) f ⊤ᵖ) a))
+                    (suc j′)
+      ↓-iter-ssj = ≡ᵒ-to (≡ᵒ-sym eq) (suc j′) ↓-iter-ssk in
+  proj₂ ↓-iter-ssj
+\end{code}
+
+
+\begin{code}
+abstract
+  lemma17 : ∀{A}{P : Predᵒ A}{k}{a : A}
+     → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
+  lemma17 {A} {P} {k} {a} zero = (λ _ → tt) , (λ _ → tt)
+  lemma17 {A} {P} {k} {a} (suc i) =
+    (λ {(x , (y , z)) → x , z})
+    ,
+    λ {(x , y) → x , ((s≤s (<⇒≤ x)) , y)}
+    
+abstract
+  lemma18a : ∀{Γ}{Δ : Times Γ}{A}
+     → (k : ℕ)
+     → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
+     → (a : A)
+     → (δ : RecEnv Γ)
+     → ↓ᵒ k (muᵒ F δ a) ≡ᵒ ↓ᵒ k (iter k (toFun δ F) ⊤ᵖ a)
+  lemma18a zero F a δ zero = (λ x → tt) , (λ {x → tt})
+  lemma18a zero F a δ (suc j) = (λ {()}) , λ {()}
+  lemma18a (suc k) F a δ zero = (λ {x → tt}) , λ {x → tt}
+  lemma18a (suc k′) F a δ (suc j′) =
+    let k = suc k′ in
+    let j = suc j′ in 
+    ↓ k (λ j₁ → # (toFun δ F (iter j₁ (toFun δ F) ⊤ᵖ) a) j₁) j
+         ⩦⟨ ⩦-refl refl ⟩    
+    j < k  ×  # (iter (suc j) (toFun δ F) ⊤ᵖ a) j
+         ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y})
+            , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
+    j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a)) j
+         ⩦⟨ EQ  ⟩    
+    j < k  ×  # (↓ᵒ (suc j) (iter k (toFun δ F) ⊤ᵖ a)) j
+         ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z})
+             , (λ {(x , y) → x , (≤-refl , y)})  ⟩
+    j < k  ×  # (iter k (toFun δ F) ⊤ᵖ a) j
+       ⩦⟨ ⩦-refl refl  ⟩    
+    ↓ k (# (iter k (toFun δ F) ⊤ᵖ a)) j   ∎
+    where
+    k : ℕ
+    k = suc k′
+    j : ℕ
+    j = suc j′
+    EQ : (j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a)) j)
+         ⇔ (j < k  ×  # (↓ᵒ (suc j) (iter k (toFun δ F) ⊤ᵖ a)) j)
+    EQ =
+      (λ {(s≤s x , y) →
+        let xx = proj₁ ((lemma15b (suc k′) (suc j) F a (s≤s x)) j) y in
+        (s≤s x) , (≤-refl , proj₂ xx)})
+      ,
+      λ {(s≤s x , (s≤s y , z)) →
+        let xx = proj₂ ((lemma15b(suc k′)(suc j) F a (s≤s x)) j) (≤-refl , z) in
+        s≤s x , (≤-refl , (proj₂ xx))}
+
+lemma18b : ∀{Γ}{Δ : Times Γ}{A}
+     → (j : ℕ)
+     → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
+     → (a : A)
+     → (δ : RecEnv Γ)
+     → ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))
+       ≡ᵒ ↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a)
+lemma18b{Γ}{Δ}{A} j F a δ =
+   ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))      ⩦⟨ g⇒g (good (F a)) δ (muᵒ F δ) j ⟩
+   ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (muᵒ F δ) , δ))
+                                     ⩦⟨ cong-↓ (λ a → cong⇒head (congr (F a))
+                                               (λ a → lemma18a j F a δ ) δ) a ⟩
+   ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (iter j (toFun δ F) ⊤ᵖ) , δ))
+             ⩦⟨ ≡ᵖ-sym{A} (g⇒g (good (F a)) δ (iter j (toFun δ F) ⊤ᵖ) j) {a} ⟩
+   ↓ᵒ (suc j) (♯ (F a) (iter j (toFun δ F) ⊤ᵖ , δ))           ⩦⟨ ≡ᵒ-refl refl ⟩
+   ↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a)     ∎
+       
+lemma19a : ∀{Γ}{Δ : Times Γ}{A}
+   (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   (a : A)
+   (j : ℕ)
+   (δ : RecEnv Γ)
+   → ↓ᵒ j (muᵒ F δ a) ≡ᵒ ↓ᵒ j (♯ (F a) (muᵒ F δ , δ))
+lemma19a{Γ}{Δ}{A} F a j δ = 
+    ↓ᵒ j (muᵒ F δ a)                                     ⩦⟨ lemma18a j F a δ  ⟩
+    ↓ᵒ j (iter j (toFun δ F) ⊤ᵖ a)        ⩦⟨ lemma15b (suc j) j F a (n≤1+n j) ⟩
+    ↓ᵒ j (iter (suc j) (toFun δ F) ⊤ᵖ a)
+              ⩦⟨ ≡ᵖ-sym (lemma17{A}{(iter (suc j) (toFun δ F) ⊤ᵖ)}{j}{a}) {a} ⟩
+    ↓ᵒ j (↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a))
+                              ⩦⟨ cong-↓ (λ a → ≡ᵒ-sym (lemma18b j F a δ))  a  ⟩
+    ↓ᵒ j (↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ)))
+                         ⩦⟨ lemma17{A}{λ a → (♯ (F a) (muᵒ F δ , δ))}{j}{a}  ⟩
+    ↓ᵒ j (♯ (F a) (muᵒ F δ , δ))                      ∎
+
+good-now : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-var x (timeof x Δ) S
+   → timeof x Δ ≡ Now
+   → ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
+good-now gS eq rewrite eq = gS
+
+good-later : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-var x (timeof x Δ) S
+   → timeof x Δ ≡ Later
+   → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
+good-later gS eq rewrite eq = gS
+
+good-now-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
+     (a : A) (x : Γ ∋ B)
+   → timeof x Δ ≡ Now
+   → (δ : RecEnv Γ) (k j : ℕ)
+   → (k ≤ j)
+   → ↓ᵒ k (muᵒ S δ a) ≡ᵒ ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)
+good-now-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j =
+    ↓ᵒ-zero{A}{muᵒ S δ}{muᵒ S (↓ᵈ _ x δ)} a
+good-now-mu {Γ} {Δ} {A}{B} S a x time-x δ (suc k′) j k≤j =
+  let k = suc k′ in
+  let gSa = good-now{A = B}{sucˢ x}{Δ = cons Later Δ}
+              (good (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
+              j k k≤j in
+  let gSaz = good (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) k′ k′ ≤-refl in
+  let gSaz2 = good (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ ≤-refl in
+  let IH = cong-↓ (λ a → congr (S a)
+           ((λ a → good-now-mu S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
+            , ≡ᵈ-refl)) a in
+  ↓ᵒ k (muᵒ S δ a)                                        ⩦⟨ lemma19a S a k δ ⟩
+  ↓ᵒ k (♯ (S a) (muᵒ S δ , δ))                                         ⩦⟨ gSa ⟩
+  ↓ᵒ k (♯ (S a) (muᵒ S δ , ↓ᵈ j x δ))                                 ⩦⟨ gSaz ⟩
+  ↓ᵒ k (♯ (S a) (↓ᵖ k′ (muᵒ S δ) , ↓ᵈ j x δ))                           ⩦⟨ IH ⟩
+  ↓ᵒ k (♯ (S a) (↓ᵖ k′ (muᵒ S (↓ᵈ j x δ)) , ↓ᵈ j x δ))        ⩦⟨ ≡ᵒ-sym gSaz2 ⟩
+  ↓ᵒ k (♯ (S a) (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ))
+                                        ⩦⟨ ≡ᵒ-sym (lemma19a S a k (↓ᵈ j x δ)) ⟩
+  ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)   ∎
+
+abstract
+  down-1-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+       (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
+       (a : A) (x : Γ ∋ B) (δ : RecEnv Γ) (j : ℕ)
+   → ↓ᵒ 1 (muᵒ S δ a) ≡ᵒ ↓ᵒ 1 (muᵒ S (↓ᵈ j x δ) a)
+  down-1-mu S a x δ j zero = (λ _ → tt) , (λ _ → tt)
+  down-1-mu S a x δ j (suc i) = (λ { (s≤s () , _)}) , λ { (s≤s () , _)}
+
+good-later-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
+     (a : A) (x : Γ ∋ B)
+   → timeof x Δ ≡ Later
+   → (δ : RecEnv Γ) (k j : ℕ)
+   → (k ≤ j)
+   → ↓ᵒ (suc k) (muᵒ S δ a) ≡ᵒ ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)
+good-later-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j = down-1-mu S a x δ j
+good-later-mu {Γ} {Δ} {A} {B} S a x time-x δ (suc k′) j k≤j =
+  let k = suc k′ in
+  let gSa = good-later{A = B}{sucˢ x}{Δ = cons Later Δ}
+              (good (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
+              j k k≤j in
+  let gSaz = good (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) (suc k′) k ≤-refl in
+  let gSaz2 = good (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl in
+  let IH = cong-↓ (λ a → congr (S a)
+           ((λ a → good-later-mu S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
+            , ≡ᵈ-refl)) a in
+
+  ↓ᵒ (suc k) (muᵒ S δ a)                            ⩦⟨ lemma19a S a (suc k) δ ⟩
+  ↓ᵒ (suc k) (♯ (S a) (muᵒ S δ , δ))                                   ⩦⟨ gSa ⟩
+  ↓ᵒ (suc k) (♯ (S a) (muᵒ S δ , ↓ᵈ j x δ))                           ⩦⟨ gSaz ⟩
+  ↓ᵒ (suc k) (♯ (S a) (↓ᵖ k (muᵒ S δ) , ↓ᵈ j x δ))                      ⩦⟨ IH ⟩
+  ↓ᵒ (suc k) (♯ (S a) (↓ᵖ k (muᵒ S (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ⩦⟨ ≡ᵒ-sym gSaz2 ⟩
+  ↓ᵒ (suc k) (♯ (S a) (muᵒ S (↓ᵈ j x δ) , (↓ᵈ j x δ)))
+                              ⩦⟨ ≡ᵒ-sym (lemma19a S a (suc k) (↓ᵈ j x δ)) ⟩
+  ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)   ∎
+
+good-fun-mu {Γ} {Δ} {A} S a x
+    with timeof x Δ in time-x
+... | Now = λ δ j k k≤j → good-now-mu S a x time-x δ k j k≤j
+... | Later = λ δ j k k≤j → good-later-mu S a x time-x δ k j k≤j
+
+cong-toFun : ∀{A}{Γ}{δ δ′ : RecEnv Γ}{Δ : Times Γ}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → δ ≡ᵈ δ′
+   → (P Q : Predᵒ A)
+   → (a : A)
+   → (∀ b → P b ≡ᵒ Q b)
+   → toFun δ S P a ≡ᵒ toFun δ′ S Q a
+cong-toFun{A}{Γ}{δ}{δ′} S δ=δ′ P Q a P=Q =
+  let Pδ=Qδ′ : (P , δ) ≡ᵈ (Q , δ′)
+      Pδ=Qδ′ = P=Q , δ=δ′ in
+  congr (S a) Pδ=Qδ′
+
+abstract
+  ≡ᵒ⇒⇔ : ∀{S T : Setᵒ}{k}
+     → S ≡ᵒ T
+     → # S k ⇔ # T k
+  ≡ᵒ⇒⇔ {S}{T}{k} eq = eq k
+
+  ≡ᵒ-intro : ∀{P Q : Setᵒ}
+    → (∀ k → # P k ⇔ # Q k)
+      ---------------------
+    → P ≡ᵒ Q
+  ≡ᵒ-intro P⇔Q k = P⇔Q k
+
+
+cong-iter : ∀{A}{a : A}
+  → (i : ℕ)
+  → (F G : Predᵒ A → Predᵒ A)
+  → (∀ P Q a → (∀ b → P b ≡ᵒ Q b) → F P a ≡ᵒ G Q a)
+  → (I : Predᵒ A)
+  → iter i F I a ≡ᵒ iter i G I a
+cong-iter zero F G F=G I = ≡ᵒ-refl refl
+cong-iter{A}{a} (suc i) F G F=G I =
+  let IH = λ b → cong-iter{A}{b} i F G F=G I in
+  F=G (iter i F I) (iter i G I) a IH
+
+congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
+  where
+  Goal : (k : ℕ) → μₒ (toFun δ P) a k ⇔ μₒ (toFun δ′ P) a k
+  Goal k = ≡ᵒ⇒⇔ (cong-iter{A}{a} (suc k) (toFun δ P) (toFun δ′ P)
+                    (cong-toFun P δ=δ′) ⊤ᵖ)
+\end{code}

@@ -250,16 +250,16 @@ Predsᵒ Γ = Product Γ → Productᵒ Γ
 ↓ʲ Later (suc k) S = ↓ᵒ k S
 
 ⇓ : ∀{Γ} → Times Γ → ℕ → Productᵒ Γ → Productᵒ Γ
-⇓ {[]} ts k γ = ttᵖ
-⇓ {A ∷ Γ} (cons t ts) k (a , γ) = (↓ʲ t k a) , (⇓ ts k γ)
+⇓ {[]} Δ k γ = ttᵖ
+⇓ {A ∷ Γ} (cons t Δ) k (a , γ) = (↓ʲ t k a) , (⇓ Δ k γ)
 
 ⇓ᵖ : ∀{Γ} → Times Γ → ℕ → Predsᵒ Γ → Predsᵒ Γ
-⇓ᵖ ts k δ γ = ⇓ ts k (δ γ)
+⇓ᵖ Δ k δ γ = ⇓ Δ k (δ γ)
 
 -- This is the simultaneous version. We may instead need
 -- it to only talk about one variable at a time.
 goodness : {Γ : Context} → Times Γ → (Predsᵒ Γ → Setᵒ) → Set₁
-goodness {Γ} ts S = ∀{δ k} → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (⇓ᵖ ts k δ))  
+goodness {Γ} Δ S = ∀{δ k} → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (⇓ᵖ Δ k δ))  
 
 -}
 
@@ -286,9 +286,9 @@ wellfoundedˢ{Γ}{A} S δ =
   ∀ P k → ↓ᵒ (suc k) (S (P , δ)) ≡ᵒ ↓ᵒ (suc k) (S ((↓ᵖ k P) , δ))
 
 goodness : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-goodness {[]} ts S = topᵖ
-goodness {A ∷ Γ} (cons Now ts) S = ∀ δ → nonexpansiveˢ S δ
-goodness {A ∷ Γ} (cons Later ts) S = ∀ δ → wellfoundedˢ S δ
+goodness {[]} Δ S = topᵖ
+goodness {A ∷ Γ} (cons Now Δ) S = ∀ δ → nonexpansiveˢ S δ
+goodness {A ∷ Γ} (cons Later Δ) S = ∀ δ → wellfoundedˢ S δ
 
 ↓ᵈ : ℕ → ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → RecEnv Γ
 ↓ᵈ k {A ∷ Γ} {.A} zeroˢ (P , δ) = ↓ᵖ k P , δ
@@ -301,11 +301,11 @@ good-var {Γ}{A} x Later S =
     ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
 
 timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
-timeof {B ∷ Γ} zeroˢ (cons t ts) = t
-timeof {B ∷ Γ} (sucˢ x) (cons t ts) = timeof x ts
+timeof {B ∷ Γ} zeroˢ (cons t Δ) = t
+timeof {B ∷ Γ} (sucˢ x) (cons t Δ) = timeof x Δ
 
-goodnesses : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-goodnesses {Γ} ts S = ∀{A} (x : Γ ∋ A) → good-var x (timeof x ts) S
+good-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+good-fun {Γ} Δ S = ∀{A} (x : Γ ∋ A) → good-var x (timeof x Δ) S
 
 _≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
 _≡ᵈ_ {[]} δ δ′ = ⊤
@@ -314,31 +314,31 @@ _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡�
 congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
 congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ᵒ (S δ′)
 
-record Setˢ (Γ : Context) (ts : Times Γ) : Set₁ where
+record Setˢ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setᵒ 
-    good : goodnesses ts #
+    good : good-fun Δ #
     congr : congruent #
 open Setˢ public
 
-good-now : ∀{Γ}{A}{x : Γ ∋ A}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-var x (timeof x ts) S
-   → timeof x ts ≡ Now
+good-now : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-var x (timeof x Δ) S
+   → timeof x Δ ≡ Now
    → ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
 good-now gS eq rewrite eq = gS
 
-good-later : ∀{Γ}{A}{x : Γ ∋ A}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-var x (timeof x ts) S
-   → timeof x ts ≡ Later
+good-later : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-var x (timeof x Δ) S
+   → timeof x Δ ≡ Later
    → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
 good-later gS eq rewrite eq = gS
 
-g⇒g : ∀{Γ}{ts : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → goodnesses ts S
-   → goodness ts S
-g⇒g {[]} {ts} {S} gs = ttᵖ
-g⇒g {A ∷ Γ} {cons Now ts} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
-g⇒g {A ∷ Γ} {cons Later ts} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
+g⇒g : ∀{Γ}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-fun Δ S
+   → goodness Δ S
+g⇒g {[]} {Δ} {S} gs = ttᵖ
+g⇒g {A ∷ Γ} {cons Now Δ} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
+g⇒g {A ∷ Γ} {cons Later Δ} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
 
 ≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ}
    → δ ≡ᵈ δ
@@ -358,39 +358,39 @@ cong⇒head {A ∷ Γ} {S} congS′ P=Q δ = congS′ (P=Q , ≡ᵈ-refl{Γ}{δ}
 
 abstract
   infix 2 _≡ˢ_
-  _≡ˢ_ : ∀{Γ}{ts : Times Γ} → Setˢ Γ ts → Setˢ Γ ts → Set₁
+  _≡ˢ_ : ∀{Γ}{Δ : Times Γ} → Setˢ Γ Δ → Setˢ Γ Δ → Set₁
   S ≡ˢ T = ∀ δ → # S δ ≡ᵒ # T δ
 
-  ≡ˢ-intro : ∀{Γ}{ts : Times Γ}{S T : Setˢ Γ ts}
+  ≡ˢ-intro : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
     → (∀ δ → # S δ ≡ᵒ # T δ)
       ---------------------
     → S ≡ˢ T
   ≡ˢ-intro S=T eq δ = S=T eq δ
 
-  ≡ˢ-elim : ∀{Γ}{ts : Times Γ}{S T : Setˢ Γ ts}
+  ≡ˢ-elim : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
     → S ≡ˢ T
       ---------------------
     → (∀ δ → # S δ ≡ᵒ # T δ)
   ≡ˢ-elim S=T δ = S=T δ
 
-  ≡ˢ-refl : ∀{Γ}{ts : Times Γ}{S T : Setˢ Γ ts}
+  ≡ˢ-refl : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
     → S ≡ T
     → S ≡ˢ T
   ≡ˢ-refl{S = S}{T} refl δ = ≡ᵒ-refl{# S δ}{# T δ} refl
 
-  ≡ˢ-sym : ∀{Γ}{ts : Times Γ}{S T : Setˢ Γ ts}
+  ≡ˢ-sym : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
     → S ≡ˢ T
     → T ≡ˢ S
   ≡ˢ-sym{S = S}{T} ST δ = ≡ᵒ-sym{# S δ}{# T δ} (ST δ)
 
-  ≡ˢ-trans : ∀{Γ}{ts : Times Γ}{S T R : Setˢ Γ ts}
+  ≡ˢ-trans : ∀{Γ}{Δ : Times Γ}{S T R : Setˢ Γ Δ}
     → S ≡ˢ T
     → T ≡ˢ R
     → S ≡ˢ R
   ≡ˢ-trans{S = S}{T}{R} ST TR δ = ≡ᵒ-trans{# S δ}{# T δ}{# R δ} (ST δ) (TR δ)
   
 instance
-  SIL-Eqˢ : ∀{Γ}{ts : Times Γ} → EquivalenceRelation (Setˢ Γ ts)
+  SIL-Eqˢ : ∀{Γ}{Δ : Times Γ} → EquivalenceRelation (Setˢ Γ Δ)
   SIL-Eqˢ = record { _⩦_ = _≡ˢ_ ; ⩦-refl = ≡ˢ-refl
                    ; ⩦-sym = ≡ˢ-sym ; ⩦-trans = ≡ˢ-trans }
 
@@ -458,13 +458,13 @@ abstract
     ,
     λ {(x , y) → x , ((s≤s (<⇒≤ x)) , y)}
 
-good-▷ : ∀{Γ}{ts : Times Γ}
-   → (S : Setˢ Γ ts)
-   → goodnesses (laters Γ) (λ δ → ▷ᵒ (# S δ))
-good-▷{Γ}{ts} S x
+good-▷ : ∀{Γ}{Δ : Times Γ}
+   → (S : Setˢ Γ Δ)
+   → good-fun (laters Γ) (λ δ → ▷ᵒ (# S δ))
+good-▷{Γ}{Δ} S x
     with good S x
 ... | gS
-    with timeof x ts
+    with timeof x Δ
 ... | Now rewrite timeof-later{Γ} x =
   λ δ j k k≤j →
   ↓ᵒ (suc k) (▷ᵒ (# S δ))                              ⩦⟨ down-▷ {k} (# S δ) ⟩ 
@@ -483,8 +483,8 @@ good-▷{Γ}{ts} S x
   ↓ᵒ (suc k) (↓ᵒ (suc (suc k)) (▷ᵒ (# S (↓ᵈ j x δ))))     ⩦⟨ lemma17ᵒ (suc k) ⟩
   ↓ᵒ (suc k) (▷ᵒ (# S (↓ᵈ j x δ)))    ∎
 
-▷ˢ : ∀{Γ}{ts : Times Γ}
-   → Setˢ Γ ts
+▷ˢ : ∀{Γ}{Δ : Times Γ}
+   → Setˢ Γ Δ
      -----------------
    → Setˢ Γ (laters Γ)
 ▷ˢ S = record { # = λ δ → ▷ᵒ (# S δ)
@@ -507,9 +507,9 @@ iter-subtract {A = A} {P} F .zero k z≤n = refl
 iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
   rewrite iter-subtract{A = A}{P} F j k j≤k = refl
 
-toFun : ∀{Γ}{ts : Times Γ}{A}
+toFun : ∀{Γ}{Δ : Times Γ}{A}
    → RecEnv Γ
-   → (A → Setˢ (A ∷ Γ) (cons Later ts))
+   → (A → Setˢ (A ∷ Γ) (cons Later Δ))
      ----------------------------------
    → (Predᵒ A → Predᵒ A)
 toFun δ P μP = λ a → # (P a) (μP , δ)
@@ -519,32 +519,28 @@ abstract
   ↓ᵒ-zero{A}{P}{Q} a zero = (λ _ → tt) , λ _ → tt
   ↓ᵒ-zero{A}{P}{Q} a (suc i) = (λ {()}) , (λ {()})
 
-lemma15a : ∀{Γ}{A}{ts : Times Γ}{P Q : Predᵒ A}{δ : RecEnv Γ}
-  → (j : ℕ)
-  → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
-  → (a : A)
-  → ↓ᵒ j (iter j (toFun δ F) P a) ≡ᵒ ↓ᵒ j (iter j (toFun δ F) Q a)
-lemma15a {Γ}{A}{ts}{P}{Q}{δ} zero F a = ↓ᵒ-zero{_}{P}{Q} a
-lemma15a {Γ}{A}{ts}{P}{Q}{δ} (suc j) F a =
-  let f = toFun δ F in
-  let S = # (F a) in
-  ↓ᵒ (suc j) (f (iter j f P) a)         ⩦⟨ g⇒g (good (F a)) δ (iter j f P) j ⟩ 
+lemma15a : ∀{Γ}{A}{Δ : Times Γ}{P Q : Predᵒ A}{δ : RecEnv Γ}
+  → (j : ℕ) → (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) → (a : A)
+  → ↓ᵒ j (iter j (toFun δ Fᵃ) P a) ≡ᵒ ↓ᵒ j (iter j (toFun δ Fᵃ) Q a)
+lemma15a {Γ}{A}{Δ}{P}{Q}{δ} zero Fᵃ a = ↓ᵒ-zero{_}{P}{Q} a
+lemma15a {Γ}{A}{Δ}{P}{Q}{δ} (suc j) Fᵃ a =
+  let f = toFun δ Fᵃ in
+  ↓ᵒ (suc j) (f (iter j f P) a)         ⩦⟨ g⇒g (good (Fᵃ a)) δ (iter j f P) j ⟩ 
   ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)
-                   ⩦⟨ cong-↓ (λ a → (cong⇒head (congr (F a)))
-                                      (λ a → lemma15a j F a) δ) a ⟩
+                                    ⩦⟨ cong-↓ (λ a → (cong⇒head (congr (Fᵃ a)))
+                                        (λ a → lemma15a j Fᵃ a) δ) a ⟩
   ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)
-                               ⩦⟨ ≡ᵒ-sym (g⇒g (good (F a)) δ (iter j f Q) j) ⟩
-  ↓ᵒ (suc j) (f (iter j f Q) a)
-  ∎
+                               ⩦⟨ ≡ᵒ-sym (g⇒g (good (Fᵃ a)) δ (iter j f Q) j) ⟩
+  ↓ᵒ (suc j) (f (iter j f Q) a)  ∎
 
-lemma15b : ∀{Γ}{A}{ts : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ}
+lemma15b : ∀{Γ}{A}{Δ : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ}
   → (k : ℕ)
   → (j : ℕ)
-  → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
   → (a : A)
   → j ≤ k
   → ↓ᵒ j (iter j (toFun δ F) P a) ≡ᵒ ↓ᵒ j (iter k (toFun δ F) P a)
-lemma15b{Γ}{A}{ts}{P}{δ} k j F a j≤k =
+lemma15b{Γ}{A}{Δ}{P}{δ} k j F a j≤k =
   let f = toFun δ F in
   ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j F a ⟩
   ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)
@@ -627,19 +623,19 @@ lookup {B ∷ Γ} {A} (sucˢ x) (P , δ) = lookup{Γ}{A} x δ
 ↓-lookup {C ∷ Γ} {A}{B}{a}{k} {j} {P , δ} (sucˢ x) (sucˢ y) k≤j =
    ↓-lookup x y k≤j
 
-lookup-diff : ∀{Γ}{ts : Times Γ}{A}{B}{δ : RecEnv Γ}{j}
+lookup-diff : ∀{Γ}{Δ : Times Γ}{A}{B}{δ : RecEnv Γ}{j}
    → (x : Γ ∋ A)
    → (y : Γ ∋ B)
-   → timeof x ts ≢ timeof y ts
+   → timeof x Δ ≢ timeof y Δ
    → lookup{Γ}{A} x (↓ᵈ j y δ) ≡ lookup{Γ}{A} x δ
-lookup-diff {C ∷ Γ} {cons t ts} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
-lookup-diff {C ∷ Γ} {cons t ts} zeroˢ (sucˢ y) neq = refl
-lookup-diff {C ∷ Γ} {cons t ts} (sucˢ x) zeroˢ neq = refl
-lookup-diff {C ∷ Γ} {cons t ts} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
+lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
+lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ (sucˢ y) neq = refl
+lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) zeroˢ neq = refl
+lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
 
-timeof-diff : ∀{Γ}{ts : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B)
-   → timeof x ts ≡ Now → timeof y ts ≡ Later
-   → timeof x ts ≢ timeof y ts
+timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B)
+   → timeof x Δ ≡ Now → timeof y Δ ≡ Later
+   → timeof x Δ ≢ timeof y Δ
 timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
 
 var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
@@ -654,7 +650,7 @@ timeof-var-now {B ∷ Γ} (sucˢ x) = timeof-var-now x
 
 good-lookup : ∀{Γ}{A}{a}
   → (x : Γ ∋ A)
-  → goodnesses (var-now Γ x) (λ δ → lookup x δ a)
+  → good-fun (var-now Γ x) (λ δ → lookup x δ a)
 good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ (P , δ) j k k≤j =
    ≡ᵒ-sym (lemma17e{_}{P} k≤j)
 good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y =
@@ -717,33 +713,36 @@ cong-iter{A}{a} (suc i) F G F=G I =
 μₒ : ∀{A} → (Predᵒ A → Predᵒ A) → A → Setₒ 
 μₒ {A} F a k = #(iter{_}{Predᵒ A} (suc k) F ⊤ᵖ a) k
 
-muᵒ : ∀{Γ}{ts : Times Γ}{A}
-   → (A → Setˢ (A ∷ Γ) (cons Later ts)) → RecEnv Γ
-     ---------------------------------------------
+down-μₒ : ∀{Γ}{Δ : Times Γ}{A}{P : A → Setˢ (A ∷ Γ) (cons Later Δ)}
+    {a : A}{δ : RecEnv Γ}
+  → downClosed (μₒ (toFun δ P) a)
+down-μₒ {Γ}{Δ}{A}{P}{a}{δ} k iterskPk zero j≤k = tz (toFun δ P (id ⊤ᵖ) a)
+down-μₒ {Γ}{Δ}{A}{P}{a}{δ} (suc k′) μPa (suc j′) (s≤s j′≤k′) =
+  let f = toFun δ P in
+  let dc-iter-ssk : downClosed (# ((iter (suc (suc k′)) f ⊤ᵖ) a))
+      dc-iter-ssk = dc-iter (suc (suc k′)) (toFun δ P) a in
+  let ↓-iter-ssk : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc k′)) f ⊤ᵖ) a))(suc j′)
+      ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μPa (suc j′) (s≤s j′≤k′))
+  in
+  let eq : ↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) (toFun δ P) ⊤ᵖ) a)
+        ≡ᵒ ↓ᵒ (suc (suc j′)) ((iter (suc (suc k′)) (toFun δ P) ⊤ᵖ) a)
+      eq = lemma15b {P = ⊤ᵖ}{δ} (suc (suc k′)) (suc (suc j′)) P a
+                (s≤s (s≤s j′≤k′)) in
+  let ↓-iter-ssj : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) f ⊤ᵖ) a))
+                    (suc j′)
+      ↓-iter-ssj = ≡ᵒ-to (≡ᵒ-sym eq) (suc j′) ↓-iter-ssk in
+  proj₂ ↓-iter-ssj
+    
+muᵒ : ∀{Γ}{Δ : Times Γ}{A}
+   → (A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → RecEnv Γ
+     ----------------------------------
    → (A → Setᵒ)
-muᵒ {Γ}{ts}{A} P δ a =
-  record { # = μₒ (toFun δ P) a
-         ; down = dc
-         ; tz = tz ((toFun δ P) ⊤ᵖ a)
+muᵒ {Γ}{Δ}{A} f δ a =
+  record { # = μₒ (toFun δ f) a
+         ; down = down-μₒ {Γ}{Δ}{A}{f}{a}{δ}
+         ; tz = tz ((toFun δ f) ⊤ᵖ a)
          }
-  where
-  dc : downClosed (μₒ (toFun δ P) a)
-  dc k iterskPk zero j≤k = tz (toFun δ P (id ⊤ᵖ) a)
-  dc (suc k′) μPa (suc j′) (s≤s j′≤k′) =
-    let f = toFun δ P in
-    let dc-iter-ssk : downClosed (# ((iter (suc (suc k′)) f ⊤ᵖ) a))
-        dc-iter-ssk = dc-iter (suc (suc k′)) (toFun δ P) a in
-    let ↓-iter-ssk : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc k′)) f ⊤ᵖ) a))(suc j′)
-        ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μPa (suc j′) (s≤s j′≤k′))
-    in
-    let eq : ↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) (toFun δ P) ⊤ᵖ) a)
-          ≡ᵒ ↓ᵒ (suc (suc j′)) ((iter (suc (suc k′)) (toFun δ P) ⊤ᵖ) a)
-        eq = lemma15b {P = ⊤ᵖ}{δ} (suc (suc k′)) (suc (suc j′)) P a
-                  (s≤s (s≤s j′≤k′)) in
-    let ↓-iter-ssj : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) f ⊤ᵖ) a))
-                      (suc j′)
-        ↓-iter-ssj = ≡ᵒ-to (≡ᵒ-sym eq) (suc j′) ↓-iter-ssk in
-    proj₂ ↓-iter-ssj
 
 μᵒ : ∀{A}
    → (A → Setˢ (A ∷ []) (cons Later ∅))
@@ -752,9 +751,9 @@ muᵒ {Γ}{ts}{A} P δ a =
 μᵒ {A} P = muᵒ P ttᵖ
 
 abstract
-  lemma18a : ∀{Γ}{ts : Times Γ}{A}
+  lemma18a : ∀{Γ}{Δ : Times Γ}{A}
      → (k : ℕ)
-     → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+     → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
      → (a : A)
      → (δ : RecEnv Γ)
      → ↓ᵒ k (muᵒ F δ a) ≡ᵒ ↓ᵒ k (iter k (toFun δ F) ⊤ᵖ a)
@@ -793,14 +792,14 @@ abstract
         let xx = proj₂ ((lemma15b(suc k′)(suc j) F a (s≤s x)) j) (≤-refl , z) in
         s≤s x , (≤-refl , (proj₂ xx))}
 
-lemma18b : ∀{Γ}{ts : Times Γ}{A}
+lemma18b : ∀{Γ}{Δ : Times Γ}{A}
      → (j : ℕ)
-     → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+     → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
      → (a : A)
      → (δ : RecEnv Γ)
      → ↓ᵒ (suc j) (# (F a) (muᵒ F δ , δ))
        ≡ᵒ ↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a)
-lemma18b{Γ}{ts}{A} j F a δ =
+lemma18b{Γ}{Δ}{A} j F a δ =
    ↓ᵒ (suc j) (# (F a) (muᵒ F δ , δ))      ⩦⟨ g⇒g (good (F a)) δ (muᵒ F δ) j ⟩
    ↓ᵒ (suc j) (# (F a) (↓ᵖ j (muᵒ F δ) , δ))
                                      ⩦⟨ cong-↓ (λ a → cong⇒head (congr (F a))
@@ -810,13 +809,13 @@ lemma18b{Γ}{ts}{A} j F a δ =
    ↓ᵒ (suc j) (# (F a) (iter j (toFun δ F) ⊤ᵖ , δ))           ⩦⟨ ≡ᵒ-refl refl ⟩
    ↓ᵒ (suc j) (iter (suc j) (toFun δ F) ⊤ᵖ a)     ∎
        
-lemma19a : ∀{Γ}{ts : Times Γ}{A}
-   (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+lemma19a : ∀{Γ}{Δ : Times Γ}{A}
+   (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
    (a : A)
    (j : ℕ)
    (δ : RecEnv Γ)
    → ↓ᵒ j (muᵒ F δ a) ≡ᵒ ↓ᵒ j (# (F a) (muᵒ F δ , δ))
-lemma19a{Γ}{ts}{A} F a j δ = 
+lemma19a{Γ}{Δ}{A} F a j δ = 
     ↓ᵒ j (muᵒ F δ a)                                     ⩦⟨ lemma18a j F a δ  ⟩
     ↓ᵒ j (iter j (toFun δ F) ⊤ᵖ a)        ⩦⟨ lemma15b (suc j) j F a (n≤1+n j) ⟩
     ↓ᵒ j (iter (suc j) (toFun δ F) ⊤ᵖ a)
@@ -838,18 +837,18 @@ lemma19a{Γ}{ts}{A} F a j δ =
      , (λ {(x , y) → x , (proj₂ (imp x) y)})
 -}
 
-good-now-mu : ∀{Γ}{ts : Times Γ}{A}{B}
-   → (S : A → Setˢ (A ∷ Γ) (cons Later ts))
+good-now-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
      (a : A) (x : Γ ∋ B)
-   → timeof x ts ≡ Now
+   → timeof x Δ ≡ Now
    → (δ : RecEnv Γ) (k j : ℕ)
    → (k ≤ j)
    → ↓ᵒ k (muᵒ S δ a) ≡ᵒ ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)
-good-now-mu {Γ} {ts} {A} S a x time-x δ zero j k≤j =
+good-now-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j =
     ↓ᵒ-zero{A}{muᵒ S δ}{muᵒ S (↓ᵈ _ x δ)} a
-good-now-mu {Γ} {ts} {A} S a x time-x δ (suc k′) j k≤j =
+good-now-mu {Γ} {Δ} {A} S a x time-x δ (suc k′) j k≤j =
   let k = suc k′ in
-  let gSa = good-now{ts = cons Later ts}
+  let gSa = good-now{Δ = cons Later Δ}
               (good (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
               j k k≤j in
   let gSaz = good (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) k′ k′ ≤-refl in
@@ -867,24 +866,24 @@ good-now-mu {Γ} {ts} {A} S a x time-x δ (suc k′) j k≤j =
   ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)   ∎
 
 abstract
-  down-1-mu : ∀{Γ}{ts : Times Γ}{A}{B}
-       (S : A → Setˢ (A ∷ Γ) (cons Later ts))
+  down-1-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+       (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
        (a : A) (x : Γ ∋ B) (δ : RecEnv Γ) (j : ℕ)
    → ↓ᵒ 1 (muᵒ S δ a) ≡ᵒ ↓ᵒ 1 (muᵒ S (↓ᵈ j x δ) a)
   down-1-mu S a x δ j zero = (λ _ → tt) , (λ _ → tt)
   down-1-mu S a x δ j (suc i) = (λ { (s≤s () , _)}) , λ { (s≤s () , _)}
 
-good-later-mu : ∀{Γ}{ts : Times Γ}{A}{B}
-   → (S : A → Setˢ (A ∷ Γ) (cons Later ts))
+good-later-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
      (a : A) (x : Γ ∋ B)
-   → timeof x ts ≡ Later
+   → timeof x Δ ≡ Later
    → (δ : RecEnv Γ) (k j : ℕ)
    → (k ≤ j)
    → ↓ᵒ (suc k) (muᵒ S δ a) ≡ᵒ ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)
-good-later-mu {Γ} {ts} {A} S a x time-x δ zero j k≤j = down-1-mu S a x δ j
-good-later-mu {Γ} {ts} {A} S a x time-x δ (suc k′) j k≤j =
+good-later-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j = down-1-mu S a x δ j
+good-later-mu {Γ} {Δ} {A} S a x time-x δ (suc k′) j k≤j =
   let k = suc k′ in
-  let gSa = good-later{ts = cons Later ts}
+  let gSa = good-later{Δ = cons Later Δ}
               (good (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
               j k k≤j in
   let gSaz = good (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) (suc k′) k ≤-refl in
@@ -902,17 +901,17 @@ good-later-mu {Γ} {ts} {A} S a x time-x δ (suc k′) j k≤j =
                               ⩦⟨ ≡ᵒ-sym (lemma19a S a (suc k) (↓ᵈ j x δ)) ⟩
   ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)   ∎
 
-goodnesses-mu : ∀{Γ}{ts : Times Γ}{A}
-   → (S : A → Setˢ (A ∷ Γ) (cons Later ts))
+good-fun-mu : ∀{Γ}{Δ : Times Γ}{A}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
    → (a : A)
-   → goodnesses ts (λ δ → muᵒ S δ a)
-goodnesses-mu {Γ} {ts} {A} S a x
-    with timeof x ts in time-x
+   → good-fun Δ (λ δ → muᵒ S δ a)
+good-fun-mu {Γ} {Δ} {A} S a x
+    with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → good-now-mu S a x time-x δ k j k≤j
 ... | Later = λ δ j k k≤j → good-later-mu S a x time-x δ k j k≤j
 
-cong-toFun : ∀{A}{Γ}{δ δ′ : RecEnv Γ}{ts : Times Γ}
-   → (S : A → Setˢ (A ∷ Γ) (cons Later ts))
+cong-toFun : ∀{A}{Γ}{δ δ′ : RecEnv Γ}{Δ : Times Γ}
+   → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
    → δ ≡ᵈ δ′
    → (P Q : Predᵒ A)
    → (a : A)
@@ -923,23 +922,23 @@ cong-toFun{A}{Γ}{δ}{δ′} S δ=δ′ P Q a P=Q =
       Pδ=Qδ′ = P=Q , δ=δ′ in
   congr (S a) Pδ=Qδ′
 
-congruent-mu : ∀{Γ}{ts : Times Γ}{A}
-   (P : A → Setˢ (A ∷ Γ) (cons Later ts))
+congruent-mu : ∀{Γ}{Δ : Times Γ}{A}
+   (P : A → Setˢ (A ∷ Γ) (cons Later Δ))
    (a : A)
    → congruent (λ δ → muᵒ P δ a)
-congruent-mu{Γ}{ts}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
+congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
   where
   Goal : (k : ℕ) → μₒ (toFun δ P) a k ⇔ μₒ (toFun δ′ P) a k
   Goal k = ≡ᵒ⇒⇔ (cong-iter{A}{a} (suc k) (toFun δ P) (toFun δ′ P)
                     (cong-toFun P δ=δ′) ⊤ᵖ)
 
-μˢ : ∀{Γ}{ts : Times Γ}{A}
-   → (A → Setˢ (A ∷ Γ) (cons Later ts))
+μˢ : ∀{Γ}{Δ : Times Γ}{A}
+   → (A → Setˢ (A ∷ Γ) (cons Later Δ))
      ----------------------------------
-   → (A → Setˢ Γ ts)
-μˢ {Γ}{ts}{A} P a =
+   → (A → Setˢ Γ Δ)
+μˢ {Γ}{Δ}{A} P a =
   record { # = λ δ → muᵒ P δ a
-         ; good = goodnesses-mu P a
+         ; good = good-fun-mu P a
          ; congr = congruent-mu P a
          }
 
@@ -962,11 +961,11 @@ abstract
         (λ z a → proj₁ (P=Q a (suc i)) (z a))
       , (λ z a → proj₂ (P=Q a (suc i)) (z a))
   
-good-all : ∀{Γ}{ts : Times Γ}{A : Set}
-   (P : A → Setˢ Γ ts)
-  → goodnesses ts (λ δ → ∀ᵒ[ a ] # (P a) δ)
-good-all {Γ}{ts}{A} P x
-    with timeof x ts in time-x
+good-all : ∀{Γ}{Δ : Times Γ}{A : Set}
+   (P : A → Setˢ Γ Δ)
+  → good-fun Δ (λ δ → ∀ᵒ[ a ] # (P a) δ)
+good-all {Γ}{Δ}{A} P x
+    with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
       ↓ᵒ k (∀ᵒ[ a ] # (P a) δ)                                      ⩦⟨ down-∀ ⟩
       ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (# (P a) δ))
@@ -982,10 +981,10 @@ good-all {Γ}{ts}{A} P x
       ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (# (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∀ ⟩
       ↓ᵒ (suc k) (∀ᵒ[ a ] # (P a) (↓ᵈ j x δ))            ∎
 
-∀ˢ : ∀{Γ}{ts : Times Γ}{A : Set}
-   → (A → Setˢ Γ ts)
-   → Setˢ Γ ts
-∀ˢ{Γ}{ts}{A} P =
+∀ˢ : ∀{Γ}{Δ : Times Γ}{A : Set}
+   → (A → Setˢ Γ Δ)
+   → Setˢ Γ Δ
+∀ˢ{Γ}{Δ}{A} P =
   record { # = λ δ → ∀ᵒ[ a ] # (P a) δ
          ; good = good-all P
          ; congr = λ d=d′ → cong-∀ λ a → congr (P a) d=d′
@@ -995,7 +994,7 @@ good-all {Γ}{ts}{A} P x
 infix 1 ∀ˢ-syntax
 syntax ∀ˢ-syntax (λ x → P) = ∀ˢ[ x ] P
 
-{---------------------- Exists -----------------------------------------}
+{---------------------- ExisΔ -----------------------------------------}
 
 abstract
   down-∃ : ∀{A}{P : Predᵒ A}{k}{{_ : Inhabited A}}
@@ -1012,11 +1011,11 @@ abstract
       (λ {(a , b) → a , proj₁ (P=Q a i) b})
       , λ {(a , b) → a , (proj₂ (P=Q a i) b)}
 
-good-exists : ∀{Γ}{ts : Times Γ}{A : Set}{{_ : Inhabited A}}
-   (P : A → Setˢ Γ ts)
-  → goodnesses ts (λ δ → ∃ᵒ[ a ] # (P a) δ)
-good-exists {Γ}{ts}{A} P x
-    with timeof x ts in time-x
+good-exisΔ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
+   (P : A → Setˢ Γ Δ)
+  → good-fun Δ (λ δ → ∃ᵒ[ a ] # (P a) δ)
+good-exisΔ {Γ}{Δ}{A} P x
+    with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
       ↓ᵒ k (∃ᵒ[ a ] # (P a) δ)                                      ⩦⟨ down-∃ ⟩
       ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (# (P a) δ))
@@ -1031,12 +1030,12 @@ good-exists {Γ}{ts}{A} P x
       ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (# (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∃ ⟩
       ↓ᵒ (suc k) (∃ᵒ[ a ] # (P a) (↓ᵈ j x δ))            ∎
 
-∃ˢ : ∀{Γ}{ts : Times Γ}{A : Set}{{_ : Inhabited A}}
-   → (A → Setˢ Γ ts)
-   → Setˢ Γ ts
-∃ˢ{Γ}{ts}{A} P =
+∃ˢ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
+   → (A → Setˢ Γ Δ)
+   → Setˢ Γ Δ
+∃ˢ{Γ}{Δ}{A} P =
   record { # = λ δ → ∃ᵒ[ a ] # (P a) δ
-         ; good = good-exists P
+         ; good = good-exisΔ P
          ; congr = λ d=d′ → cong-∃ λ a → congr (P a) d=d′
          }
 
@@ -1047,12 +1046,12 @@ syntax ∃ˢ-syntax (λ x → P) = ∃ˢ[ x ] P
 
 {---------------------- Constant -----------------------------------------}
 
-const-good : ∀{Γ}{ts : Times Γ}{A}
+const-good : ∀{Γ}{Δ : Times Γ}{A}
    → (S : Set)
    → (x : Γ ∋ A)
-   → good-var x (timeof x ts) (λ δ → S ᵒ)
-const-good{Γ}{ts} S x
-    with timeof x ts
+   → good-var x (timeof x Δ) (λ δ → S ᵒ)
+const-good{Γ}{Δ} S x
+    with timeof x Δ
 ... | Now = λ δ j k k≤j → ≡ᵒ-refl refl
 ... | Later = λ δ j k k≤j → ≡ᵒ-refl refl
 
@@ -1064,12 +1063,12 @@ S ˢ = record { # = λ δ → S ᵒ
 
 {---------------------- Only Step-indexed  ------------------------------------}
 
-step-indexed-good : ∀{Γ}{ts : Times Γ}{A}
+step-indexed-good : ∀{Γ}{Δ : Times Γ}{A}
    → (S : Setᵒ)
    → (x : Γ ∋ A)
-   → good-var x (timeof x ts) (λ δ → S)
-step-indexed-good{Γ}{ts} S x
-    with timeof x ts
+   → good-var x (timeof x Δ) (λ δ → S)
+step-indexed-good{Γ}{Δ} S x
+    with timeof x Δ
 ... | Now = λ δ j k x₁ → ≡ᵒ-refl refl
 ... | Later = λ δ j k x₁ → ≡ᵒ-refl refl
 
@@ -1087,15 +1086,15 @@ choose Now Later = Now
 choose Later Now = Now
 choose Later Later = Later
 
-combine : ∀{Γ} (ts₁ ts₂ : Times Γ) → Times Γ
-combine {[]} ts₁ ts₂ = ∅
-combine {A ∷ Γ} (cons x ts₁) (cons y ts₂) = cons (choose x y) (combine ts₁ ts₂)
+combine : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
+combine {[]} Δ₁ Δ₂ = ∅
+combine {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (combine Δ₁ Δ₂)
 
-timeof-combine : ∀{Γ}{ts₁ ts₂ : Times Γ}{A}{x : Γ ∋ A}
-   → timeof x (combine ts₁ ts₂) ≡ choose (timeof x ts₁) (timeof x ts₂)
-timeof-combine {B ∷ Γ} {cons s ts₁} {cons t ts₂} {.B} {zeroˢ} = refl
-timeof-combine {B ∷ Γ} {cons s ts₁} {cons t ts₂} {A} {sucˢ x} =
-  timeof-combine {Γ} {ts₁} {ts₂} {A} {x}
+timeof-combine : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{A}{x : Γ ∋ A}
+   → timeof x (combine Δ₁ Δ₂) ≡ choose (timeof x Δ₁) (timeof x Δ₂)
+timeof-combine {B ∷ Γ} {cons s Δ₁} {cons t Δ₂} {.B} {zeroˢ} = refl
+timeof-combine {B ∷ Γ} {cons s Δ₁} {cons t Δ₂} {A} {sucˢ x} =
+  timeof-combine {Γ} {Δ₁} {Δ₂} {A} {x}
 
 abstract
   down-× : ∀{S T : Setᵒ}{k}
@@ -1103,8 +1102,8 @@ abstract
   down-× zero = ⇔-intro (λ x → tt) (λ x → tt)
   down-× (suc i) =
       ⇔-intro
-      (λ { (si<k , Ssi , Tsi) → si<k , ((si<k , Ssi) , (si<k , Tsi))})
-      (λ { (si<k , (_ , Ssi) , _ , Tsi) → si<k , Ssi , Tsi})
+      (λ { (si<k , Ssi , Δi) → si<k , ((si<k , Ssi) , (si<k , Δi))})
+      (λ { (si<k , (_ , Ssi) , _ , Δi) → si<k , Ssi , Δi})
 
   cong-×ᵒ : ∀{S S′ T T′ : Setᵒ}
      → S ≡ᵒ S′
@@ -1117,12 +1116,12 @@ abstract
     fro  : #(S′ ×ᵒ T′) k → #(S ×ᵒ T) k
     fro (S′k , T′k) = (⇔-fro (SS′ k) S′k) , (⇔-fro (TT′ k) T′k)
 
-good-pair : ∀{Γ}{ts₁ ts₂ : Times Γ}
-   (S : Setˢ Γ ts₁) (T : Setˢ Γ ts₂)
-   → goodnesses (combine ts₁ ts₂) (λ δ → # S δ ×ᵒ # T δ)
-good-pair {Γ}{ts₁}{ts₂} S T {A} x
-    rewrite timeof-combine {Γ}{ts₁}{ts₂}{A}{x}
-    with timeof x ts₁ in time-x1 | timeof x ts₂ in time-x2
+good-pair : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+   (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
+   → good-fun (combine Δ₁ Δ₂) (λ δ → # S δ ×ᵒ # T δ)
+good-pair {Γ}{Δ₁}{Δ₂} S T {A} x
+    rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
+    with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
     let gS = good-now (good S x) time-x1 δ j k k≤j in
     let gT = good-now (good T x) time-x2 δ j k k≤j in
@@ -1181,11 +1180,11 @@ good-pair {Γ}{ts₁}{ts₂} S T {A} x
     ↓ᵒ (suc k) (# S (↓ᵈ j x δ) ×ᵒ # T (↓ᵈ j x δ))   ∎
 
 infixr 7 _×ˢ_
-_×ˢ_ : ∀{Γ}{ts₁ ts₂ : Times Γ}
-   → Setˢ Γ ts₁
-   → Setˢ Γ ts₂
+_×ˢ_ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+   → Setˢ Γ Δ₁
+   → Setˢ Γ Δ₂
      ------------------------
-   → Setˢ Γ (combine ts₁ ts₂)
+   → Setˢ Γ (combine Δ₁ Δ₂)
 S ×ˢ T = record { # = λ δ → # S δ ×ᵒ # T δ
                 ; good = good-pair S T
                 ; congr = λ d=d′ → cong-×ᵒ (congr S d=d′) (congr T d=d′)
@@ -1217,12 +1216,12 @@ abstract
     fro (inj₁ x) = inj₁ (proj₂ (SS′ k) x)
     fro (inj₂ y) = inj₂ (proj₂ (TT′ k) y)
 
-good-sum : ∀{Γ}{ts₁ ts₂ : Times Γ}
-   (S : Setˢ Γ ts₁) (T : Setˢ Γ ts₂)
-   → goodnesses (combine ts₁ ts₂) (λ δ → # S δ ⊎ᵒ # T δ)
-good-sum {Γ}{ts₁}{ts₂} S T {A} x
-    rewrite timeof-combine {Γ}{ts₁}{ts₂}{A}{x}
-    with timeof x ts₁ in time-x1 | timeof x ts₂ in time-x2
+good-sum : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+   (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
+   → good-fun (combine Δ₁ Δ₂) (λ δ → # S δ ⊎ᵒ # T δ)
+good-sum {Γ}{Δ₁}{Δ₂} S T {A} x
+    rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
+    with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
     let gS = good-now (good S x) time-x1 δ j k k≤j in
     let gT = good-now (good T x) time-x2 δ j k k≤j in
@@ -1281,11 +1280,11 @@ good-sum {Γ}{ts₁}{ts₂} S T {A} x
     ↓ᵒ (suc k) (# S (↓ᵈ j x δ) ⊎ᵒ # T (↓ᵈ j x δ))   ∎
 
 infixr 7 _⊎ˢ_
-_⊎ˢ_ : ∀{Γ}{ts₁ ts₂ : Times Γ}
-   → Setˢ Γ ts₁
-   → Setˢ Γ ts₂
+_⊎ˢ_ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+   → Setˢ Γ Δ₁
+   → Setˢ Γ Δ₂
      ------------------------
-   → Setˢ Γ (combine ts₁ ts₂)
+   → Setˢ Γ (combine Δ₁ Δ₂)
 S ⊎ˢ T = record { # = λ δ → # S δ ⊎ᵒ # T δ
                 ; good = good-sum S T
                 ; congr = λ d=d′ → cong-⊎ᵒ (congr S d=d′) (congr T d=d′)
@@ -1313,12 +1312,12 @@ abstract
     (λ x j x₁ x₂ → proj₁ (TT′ j) (x j x₁ (proj₂ (SS′ j) x₂)))
     , (λ z j z₁ z₂ → proj₂ (TT′ j) (z j z₁ (proj₁ (SS′ j) z₂)))
 
-good-fun : ∀{Γ}{ts₁ ts₂ : Times Γ}
-   (S : Setˢ Γ ts₁) (T : Setˢ Γ ts₂)
-   → goodnesses (combine ts₁ ts₂) (λ δ → # S δ →ᵒ # T δ)
-good-fun {Γ}{ts₁}{ts₂} S T {A} x
-    rewrite timeof-combine {Γ}{ts₁}{ts₂}{A}{x}
-    with timeof x ts₁ in time-x1 | timeof x ts₂ in time-x2
+good-imp : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+   (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
+   → good-fun (combine Δ₁ Δ₂) (λ δ → # S δ →ᵒ # T δ)
+good-imp {Γ}{Δ₁}{Δ₂} S T {A} x
+    rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
+    with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
     let gS = good-now (good S x) time-x1 δ j k k≤j in
     let gT = good-now (good T x) time-x2 δ j k k≤j in
@@ -1387,13 +1386,13 @@ good-fun {Γ}{ts₁}{ts₂} S T {A} x
     ↓ᵒ (suc k) (# S (↓ᵈ j x δ) →ᵒ # T (↓ᵈ j x δ))   ∎
 
 infixr 6 _→ˢ_
-_→ˢ_ : ∀{Γ}{ts₁ ts₂ : Times Γ}
-   → Setˢ Γ ts₁
-   → Setˢ Γ ts₂
+_→ˢ_ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+   → Setˢ Γ Δ₁
+   → Setˢ Γ Δ₂
      ------------------------
-   → Setˢ Γ (combine ts₁ ts₂)
+   → Setˢ Γ (combine Δ₁ Δ₂)
 S →ˢ T = record { # = λ δ → # S δ →ᵒ # T δ
-                ; good = good-fun S T
+                ; good = good-imp S T
                 ; congr = λ d=d′ → cong-→ (congr S d=d′) (congr T d=d′)
                 }
 
@@ -1406,11 +1405,11 @@ abstract
   permute-↓ {S} {j} {k} (suc i) =
     (λ {(x , (y , z)) → y , x , z}) , λ {(x , (y , z)) → y , x , z}
 
-good-↓ : ∀{Γ}{ts : Times Γ}{i}
-   (S : Setˢ Γ ts)
-   → goodnesses ts (λ δ → ↓ᵒ i (# S δ))
-good-↓ {Γ}{ts}{i} S {A} x
-    with timeof x ts in time-x
+good-↓ : ∀{Γ}{Δ : Times Γ}{i}
+   (S : Setˢ Γ Δ)
+   → good-fun Δ (λ δ → ↓ᵒ i (# S δ))
+good-↓ {Γ}{Δ}{i} S {A} x
+    with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → 
     let gS = good-now (good S x) time-x δ j k k≤j in
     ↓ᵒ k (↓ᵒ i (# S δ))              ⩦⟨ permute-↓  ⟩ 
@@ -1424,11 +1423,11 @@ good-↓ {Γ}{ts}{i} S {A} x
     ↓ᵒ i (↓ᵒ (suc k) (# S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
     ↓ᵒ (suc k) (↓ᵒ i (# S (↓ᵈ j x δ)))  ∎
 
-↓ˢ : ∀{Γ}{ts : Times Γ}
+↓ˢ : ∀{Γ}{Δ : Times Γ}
    → ℕ
-   → Setˢ Γ ts
+   → Setˢ Γ Δ
      ----------
-   → Setˢ Γ ts
+   → Setˢ Γ Δ
 ↓ˢ k S = record { # = λ δ → ↓ᵒ k (# S δ)
                 ; good = good-↓ S
                 ; congr = λ d=d′ → cong-↓ᵒ k (congr S d=d′)}
@@ -1439,17 +1438,17 @@ good-↓ {Γ}{ts}{i} S {A} x
 
 {---------------------- Predicate Application ----------------------------}
 
-good-apply : ∀{Γ}{ts : Times Γ}{A}
-   (S : Setˢ (A ∷ Γ) (cons Later ts))
-   (P : A → Setˢ Γ ts)
-   → goodnesses ts (λ δ → # S ((λ a → # (P a) δ) , δ))
-good-apply {Γ}{ts}{A} S P x
-   with timeof x ts in time-x
+good-apply : ∀{Γ}{Δ : Times Γ}{A}
+   (S : Setˢ (A ∷ Γ) (cons Later Δ))
+   (P : A → Setˢ Γ Δ)
+   → good-fun Δ (λ δ → # S ((λ a → # (P a) δ) , δ))
+good-apply {Γ}{Δ}{A} S P x
+   with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
     let gSz = ((good S) zeroˢ) ((λ a → # (P a) δ) , δ) j k k≤j in
     let gSz2 = ((good S) zeroˢ) ((λ a → # (P a) (↓ᵈ j x δ)) , (↓ᵈ j x δ))
                    j k k≤j in
-    let gSsx = good-now{ts = cons Now ts} ((good S) (sucˢ x)) time-x
+    let gSsx = good-now{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
                  ((λ a → ↓ᵒ j (# (P a) δ)) , δ) j k k≤j in
 
     let EQ : ((λ a → ↓ᵒ j (# (P a) δ)) , ↓ᵈ j x δ)
@@ -1481,7 +1480,7 @@ good-apply {Γ}{ts}{A} S P x
     let EQ : ((λ a → ↓ᵒ (suc j) (# (P a) δ)) , δ)
               ≡ᵈ ((λ a → ↓ᵒ (suc j)  (# (P a) (↓ᵈ j x δ))) , δ)
         EQ = (λ a → good-later (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    let gSsx = good-later{ts = cons Now ts} ((good S) (sucˢ x)) time-x
+    let gSsx = good-later{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
                  ((λ a → # (P a) (↓ᵈ j x δ)) , δ) j k k≤j in
     ↓ᵒ (suc k) (# S ((λ a → # (P a) δ) , δ)) 
       ⩦⟨ gSz ⟩
@@ -1493,10 +1492,10 @@ good-apply {Γ}{ts}{A} S P x
       ⩦⟨ gSsx ⟩
     ↓ᵒ (suc k) (# S ((λ a → # (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))  ∎
 
-applyˢ : ∀ {Γ}{ts : Times Γ}{A}
-   (S : Setˢ (A ∷ Γ) (cons Later ts))
-   (P : A → Setˢ Γ ts)
-   → Setˢ Γ ts   
+applyˢ : ∀ {Γ}{Δ : Times Γ}{A}
+   (S : Setˢ (A ∷ Γ) (cons Later Δ))
+   (P : A → Setˢ Γ Δ)
+   → Setˢ Γ Δ   
 applyˢ S P =
   record { # = λ δ → (# S) ((λ a → #(P a) δ) , δ)
          ; good = good-apply S P
@@ -1513,55 +1512,55 @@ abstract
   equiv-downᵒ {S} {T} ↓S=↓T (suc k) =
     (λ Ssk → proj₂ (proj₁ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Ssk)))
     ,
-    λ Tsk → proj₂ (proj₂ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Tsk))
+    λ Δk → proj₂ (proj₂ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Δk))
   
-  equiv-downˢ : ∀{Γ}{ts : Times Γ}{S T : Setˢ Γ ts}
+  equiv-downˢ : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
     → (∀ j → ↓ˢ j S ≡ˢ ↓ˢ j T)
     → S ≡ˢ T
-  equiv-downˢ {Γ}{ts}{S}{T} ↓S=↓T δ =
+  equiv-downˢ {Γ}{Δ}{S}{T} ↓S=↓T δ =
      equiv-downᵒ{# S δ}{# T δ} λ j → (↓S=↓T j) δ
 
 nonexpansive : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
 nonexpansive F a = ∀ P k → ↓ᵒ k (F P a) ≡ᵒ ↓ᵒ k (F (↓ᵖ k P) a)
 
-nonexpansive′ : ∀{Γ}{A}{ts : Times Γ}{δ : RecEnv Γ}
-  (F : A → Setˢ (A ∷ Γ) (cons Later ts)) (a : A) → Set₁
-nonexpansive′{Γ}{A}{ts}{δ} F a =
+nonexpansive′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
+nonexpansive′{Γ}{A}{Δ}{δ} F a =
   ∀ P k → ↓ᵒ k (# (F a) (P , δ)) ≡ᵒ ↓ᵒ k (# (F a) ((↓ᵖ k P) , δ))
 
 {- sanity check -}
-cont-toFun : ∀{Γ}{A}{ts : Times Γ}{δ : RecEnv Γ}
-  → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+cont-toFun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
   → (a : A)
   → nonexpansive′{δ = δ} F a
   → nonexpansive (toFun δ F) a
-cont-toFun{Γ}{A}{ts}{δ} F a cont′ = cont′
+cont-toFun{Γ}{A}{Δ}{δ} F a cont′ = cont′
 
 wellfounded : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
 wellfounded F a = ∀ P k → ↓ᵒ (suc k) (F P a) ≡ᵒ ↓ᵒ (suc k) (F (↓ᵖ k P) a)
 
-wellfounded′ : ∀{Γ}{A}{ts : Times Γ}{δ : RecEnv Γ}
-  (F : A → Setˢ (A ∷ Γ) (cons Later ts)) (a : A) → Set₁
-wellfounded′{Γ}{A}{ts}{δ} F a =
+wellfounded′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
+wellfounded′{Γ}{A}{Δ}{δ} F a =
   ∀ P k → ↓ᵒ (suc k) (# (F a) (P , δ))
        ≡ᵒ ↓ᵒ (suc k) (# (F a) ((↓ᵖ k P) , δ))
 
 {- sanity check -}
-WF-toFun : ∀{Γ}{A}{ts : Times Γ}{δ : RecEnv Γ}
-  → (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+WF-toFun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
   → (a : A)
   → wellfounded′{δ = δ} F a
   → wellfounded (toFun δ F) a
-WF-toFun{Γ}{A}{ts}{δ} F a cont′ = cont′
+WF-toFun{Γ}{A}{Δ}{δ} F a cont′ = cont′
 
-lemma19 : ∀{Γ}{ts : Times Γ}{A}
-   (F : A → Setˢ (A ∷ Γ) (cons Later ts))
+lemma19 : ∀{Γ}{Δ : Times Γ}{A}
+   (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
    (a : A)
    (j : ℕ)
    → ↓ˢ j (μˢ F a) ≡ˢ ↓ˢ j (applyˢ (F a) (μˢ F))
-lemma19{Γ}{ts}{A} F a j = ≡ˢ-intro (lemma19a F a j)
+lemma19{Γ}{Δ}{A} F a j = ≡ˢ-intro (lemma19a F a j)
 
-fixpointˢ : ∀{Γ}{ts : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later ts)) (a : A)
+fixpointˢ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
    → μˢ F a ≡ˢ applyˢ (F a) (μˢ F)
 fixpointˢ F a = equiv-downˢ (lemma19 F a)
 
