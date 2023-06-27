@@ -51,13 +51,13 @@ record Setᵒ : Set₁ where
     tz : # 0
 open Setᵒ public
 \end{code}
-Let $P, Q, R$ range over step-indexed propositions.
+Let $ϕ, ψ, þ$ range over step-indexed propositions.
 \begin{code}
-variable P Q R : Setᵒ
+variable ϕ ψ þ : Setᵒ
 \end{code}
-Let $p, q$ range over (regular) propositions.
+Let $p, q, r$ range over (regular) propositions.
 \begin{code}
-variable p q : Set
+variable p q r : Set
 \end{code}
 
 The false formula for SIL is embedded in Agda by defining an instance
@@ -76,62 +76,62 @@ The embedding of the true formula into Agda is even more straightforward.
 \end{code}
 
 Next we define conjunction and disjunction in SIL. Given two
-step-indexed propositions $P$ and $Q$, their conjunction is the
+step-indexed propositions $ϕ$ and $ψ$, their conjunction is the
 function that takes the conjunction of applying them to the step
 index. The proofs of downward-closedness and true-at-zero are
-straightforward, relying on the proofs of these properties for $P$ and $Q$.
+straightforward, relying on the proofs of these properties for $ϕ$ and $ψ$.
 The story for disjunction is similar.
 \begin{code}
 _×ᵒ_ : Setᵒ → Setᵒ → Setᵒ
-P ×ᵒ Q = record { # = λ k → # P k × # Q k
-                ; down = λ k (Pk , Qk) j j≤k →
-                          (down P k Pk j j≤k) , (down Q k Qk j j≤k)
-                ; tz = (tz P) , (tz Q) }
+ϕ ×ᵒ ψ = record { # = λ k → # ϕ k × # ψ k
+                ; down = λ k (ϕk , ψk) j j≤k →
+                          (down ϕ k ϕk j j≤k) , (down ψ k ψk j j≤k)
+                ; tz = (tz ϕ) , (tz ψ) }
 
 _⊎ᵒ_ : Setᵒ → Setᵒ → Setᵒ
-P ⊎ᵒ Q = record { # = λ k → # P k ⊎ # Q k
-                ; down = λ { k (inj₁ Pk) j j≤k → inj₁ (down P k Pk j j≤k)
-                           ; k (inj₂ Qk) j j≤k → inj₂ (down Q k Qk j j≤k)}
-                ; tz = inj₁ (tz P) }
+ϕ ⊎ᵒ ψ = record { # = λ k → # ϕ k ⊎ # ψ k
+                ; down = λ { k (inj₁ ϕk) j j≤k → inj₁ (down ϕ k ϕk j j≤k)
+                           ; k (inj₂ ψk) j j≤k → inj₂ (down ψ k ψk j j≤k)}
+                ; tz = inj₁ (tz ϕ) }
 \end{code}
 
 The definition of impliciation is more interesting.  The following is
 a naive first attempt, in which we following the same pattern as for
-conjuction and disjunction, by saying that the meaning of $P$ implies
-$Q$ at index $k$ is that $P$ at $k$ implies $Q$ at $k$. We run intro
-trouble proving that this is downward closed. We are given that $P$ at
-$j$ for some $j \leq k$, but we have no way to prove that $Q$ at $j$.
+conjuction and disjunction, by saying that the meaning of $ϕ$ implies
+$ψ$ at index $k$ is that $ϕ$ at $k$ implies $ψ$ at $k$. We run intro
+trouble proving that this is downward closed. We are given that $ϕ$ at
+$j$ for some $j \leq k$, but we have no way to prove that $ψ$ at $j$.
 
 \begin{code}
 _→n_ : Setᵒ → Setᵒ → Setᵒ
-P →n Q = record { # = λ k → # P k → # Q k
-                ; down = λ k Pk→Qk j j≤k Pj → impossible
-                ; tz = λ Pz → tz Q }
+ϕ →n ψ = record { # = λ k → # ϕ k → # ψ k
+                ; down = λ k ϕk→ψk j j≤k ϕj → impossible
+                ; tz = λ ϕz → tz ψ }
 \end{code}
 
 The standard workaround is to force implication to be downward closed
-by definition. We define $P$ implies $Q$ at $k$ to mean that for all
-$j \leq k$, $P$ at $j$ implies $Q$ at $j$.
+by definition. We define $ϕ$ implies $ψ$ at $k$ to mean that for all
+$j \leq k$, $ϕ$ at $j$ implies $ψ$ at $j$.
 
 \begin{code}
 _→ᵒ_ : Setᵒ → Setᵒ → Setᵒ
-P →ᵒ Q = record { # = λ k → ∀ j → j ≤ k → # P j → # Q j
-                ; down = λ k ∀j≤k→Pj→Qj j j≤k i i≤j Pi →
-                     ∀j≤k→Pj→Qj i (≤-trans i≤j j≤k) Pi
-                ; tz = λ { .zero z≤n _ → tz Q} }
+ϕ →ᵒ ψ = record { # = λ k → ∀ j → j ≤ k → # ϕ j → # ψ j
+                ; down = λ k ∀j≤k→ϕj→ψj j j≤k i i≤j ϕi →
+                     ∀j≤k→ϕj→ψj i (≤-trans i≤j j≤k) ϕi
+                ; tz = λ { .zero z≤n _ → tz ψ} }
 \end{code}
 
-Next we come to the important ``later`` operator, written $▷ᵒ P$.  Of
+Next we come to the important ``later`` operator, written $▷ᵒ ϕ$.  Of
 course, at zero it is true. For any other index of the form
-$\mathsf{suc}\app k$, $▷ᵒ P$ means $P$ at $k$, that is, subtract
+$\mathsf{suc}\app k$, $▷ᵒ ϕ$ means $ϕ$ at $k$, that is, subtract
 one from the step index.
 
 \begin{code}
 ▷ᵒ_ : Setᵒ → Setᵒ
-▷ᵒ P = record { # = λ { zero → ⊤ ; (suc k) → # P k }
-              ; down = λ { zero ▷Pn .zero z≤n → tt
-                         ; (suc n) ▷Pn .zero z≤n → tt
-                         ; (suc n) ▷Pn (suc k) (s≤s k≤n) → down P n ▷Pn k k≤n}
+▷ᵒ ϕ = record { # = λ { zero → ⊤ ; (suc k) → # ϕ k }
+              ; down = λ { zero ▷ϕn .zero z≤n → tt
+                         ; (suc n) ▷ϕn .zero z≤n → tt
+                         ; (suc n) ▷ϕn (suc k) (s≤s k≤n) → down ϕ n ▷ϕn k k≤n}
               ; tz = tt }
 \end{code}
 
@@ -139,14 +139,14 @@ A step-indexed logic such as LSLR is typically specialized to include
 atomic formulas to express properties of programs in a particular
 language. Here instead we simply allow arbitrary Agda propositions to
 be included in a step-indexed proposition by way of the following
-operator. So, given a proposition $P$, the formula $Pᵒ$ is true at
-zero and everywhere else it is equivalent to $P$.
+operator. So, given a proposition $ϕ$, the formula $ϕᵒ$ is true at
+zero and everywhere else it is equivalent to $ϕ$.
 
 \begin{code}
 _ᵒ : Set → Setᵒ
-P ᵒ = record { # = λ { zero → ⊤ ; (suc k) → P }
-             ; down = λ { k Pk zero j≤k → tt
-                        ; (suc k) Pk (suc j) j≤k → Pk}
+ϕ ᵒ = record { # = λ { zero → ⊤ ; (suc k) → ϕ }
+             ; down = λ { k ϕk zero j≤k → tt
+                        ; (suc k) ϕk (suc j) j≤k → ϕk}
              ; tz = tt }
 \end{code}
 
@@ -165,6 +165,11 @@ $A$ to $Setᵒ$.
 Predᵒ : Set → Set₁
 Predᵒ A = A → Setᵒ
 \end{code}
+Let $P, Q$ range over step-indexed predicates.
+\begin{code}
+variable P Q : Predᵒ A
+\end{code}
+
 We define the constantly true predicate as follows.
 \begin{code}
 ⊤ᵖ : ∀{A} → Predᵒ A
@@ -232,12 +237,47 @@ infix 2 ∃ᵒ-syntax
 syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
 \end{code}
 
+%===============================================================================
+\section{Approximation}
+
+THIS MOVED, UPDATE TEXT
+
+As mentioned previously, \citet{Appel:2001aa} use the notion of
+$k$-approximation to define a semantic characterization of well
+founded types. Similarly, we define the $k$-approximation of a
+step-indexed proposition, using the notation $↓ᵒ k P$.  The
+proposition $↓ᵒ k P$ is true at $i$ if $P$ at $i$ is true and $i < k$,
+except when $k = 0$, in which case $↓ᵒ k P$ has to be true
+unconditionally. (This differs from \citet{Appel:2001aa} in the
+$\zero$ case.)
+
+\begin{code}
+↓ : ℕ → (ℕ → Set) → (ℕ → Set)
+↓ k P zero = ⊤
+↓ k P (suc j) = suc j < k × (P (suc j))
+\end{code}
+
+The $k$-approximation operator is downward closed.
+
+\begin{code}
+↓-down : ∀ k → downClosed (↓ k (# ϕ))
+↓-down {P} k = λ { zero x .zero z≤n → tt
+                 ; (suc n) (sn<k , Pn) zero j≤n → tt
+                 ; (suc n) (sn<k , Psn) (suc j) (s≤s j≤n) →
+                     (≤-trans (s≤s (s≤s j≤n)) sn<k)
+                   , (down P (suc n) Psn (suc j) (s≤s j≤n))}
+\end{code}
+
+\begin{code}
+↓ᵒ : ℕ → Setᵒ → Setᵒ
+↓ᵒ k P = record { # = ↓ k (# P) ; down = ↓-down {P} k ; tz = tt }
+\end{code}
 
 %===============================================================================
 \section{Equivalence for Step-Indexed Propositions}
 
-We define equivalence of step-indexed propositions $P$ and $Q$ to be
-that for any step $k$, $P$ at $k$ is true if and only if $Q$ at $k$ is
+We define equivalence of step-indexed propositions $ϕ$ and $ψ$ to be
+that for any step $k$, $ϕ$ at $k$ is true if and only if $ψ$ at $k$ is
 true. This is of course an equivalence relation (the proofs are in the
 Appendix), and we make use of a library named
 \textsf{EquivalenceRelation} to provide nice syntax for equational
@@ -247,34 +287,152 @@ reasoning.
 abstract
   infix 2 _≡ᵒ_
   _≡ᵒ_ : Setᵒ → Setᵒ → Set
-  P ≡ᵒ Q = ∀ k → # P k ⇔ # Q k
+  ϕ ≡ᵒ ψ = ∀ k → # ϕ k ⇔ # ψ k
 
-  ≡ᵒ-refl : P ≡ Q → P ≡ᵒ Q
-  ≡ᵒ-sym : P ≡ᵒ Q → Q ≡ᵒ P
-  ≡ᵒ-trans : P ≡ᵒ Q → Q ≡ᵒ R → P ≡ᵒ R
+  ≡ᵒ-refl : ϕ ≡ ψ → ϕ ≡ᵒ ψ
+  ≡ᵒ-sym : ϕ ≡ᵒ ψ → ψ ≡ᵒ ϕ
+  ≡ᵒ-trans : ϕ ≡ᵒ ψ → ψ ≡ᵒ þ → ϕ ≡ᵒ þ
 
-  ≡ᵒ-intro : ∀{P Q : Setᵒ} → (∀ k → # P k ⇔ # Q k) → P ≡ᵒ Q
+  ≡ᵒ-intro : ∀{ϕ ψ : Setᵒ} → (∀ k → # ϕ k ⇔ # ψ k) → ϕ ≡ᵒ ψ
+  ≡ᵒ-intro P⇔Q k = P⇔Q k
+  
   ≡ᵒ⇒⇔ : ∀{S T : Setᵒ}{k} → S ≡ᵒ T → # S k ⇔ # T k
+  ≡ᵒ⇒⇔ {S}{T}{k} eq = eq k
 
-  ≡ᵒ-to : ∀{P Q : Setᵒ}
-    → P ≡ᵒ Q
-    → (∀ k → # P k → # Q k)
-  ≡ᵒ-to PQ k = ⇔-to (PQ k) 
+  ≡ᵒ-to : ∀{ϕ ψ : Setᵒ} → ϕ ≡ᵒ ψ → (∀ k → # ϕ k → # ψ k)
+  ≡ᵒ-to ϕψ k = ⇔-to (ϕψ k) 
 
-  ≡ᵒ-fro : ∀{P Q : Setᵒ}
-    → P ≡ᵒ Q
-    → (∀ k → # Q k → # P k)
-  ≡ᵒ-fro PQ k = ⇔-fro (PQ k)
+  ≡ᵒ-fro : ∀{ϕ ψ : Setᵒ} → ϕ ≡ᵒ ψ → (∀ k → # ψ k → # ϕ k)
+  ≡ᵒ-fro ϕψ k = ⇔-fro (ϕψ k)
 instance
   SIL-Eqᵒ : EquivalenceRelation Setᵒ
   SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
 \end{code}
 
-A function over step-indexed predicates is congruent if
-it maps equivalent predicates to equivalent predicates.
+The $k$-approximation of any two step-indexed propositions is
+equivalent when $k=0$.
+
 \begin{code}
-congruentᵖ : ∀{A}{B} (F : Predᵒ A → Predᵒ B) → Set₁
-congruentᵖ F = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (F P b) ≡ᵒ (F Q b)
+↓ᵒ-zero : ↓ᵒ zero ϕ ≡ᵒ ↓ᵒ zero ψ
+↓ᵒ-zero = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
+                     ; (suc i) → (λ {()}) , (λ {()})}
+\end{code}
+
+OBSOLETE, REPLACE WITH ABOVE
+\begin{code}
+↓ᵒ-zeroᵖ : ∀{A}{P Q : Predᵒ A} (a : A) → ↓ᵒ zero (P a) ≡ᵒ ↓ᵒ zero (Q a)
+↓ᵒ-zeroᵖ{A}{P}{Q} a = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
+                                ; (suc i) → (λ {()}) , (λ {()})}
+\end{code}
+
+\begin{code}
+≡ᵖ-refl : ∀{A}{P Q : Predᵒ A}
+  → P ≡ Q
+  → ∀ {a} → P a ≡ᵒ Q a
+≡ᵖ-refl refl {a} = ≡ᵒ-refl refl
+
+≡ᵖ-sym : ∀{A}{P Q : Predᵒ A}
+  → (∀ {a} → P a ≡ᵒ Q a)
+  → ∀ {a} → Q a ≡ᵒ P a
+≡ᵖ-sym P=Q {a} = ≡ᵒ-sym P=Q
+\end{code}
+
+%===============================================================================
+\section{Functionals and Iteration}
+\label{sec:rec-pred}
+
+A function over step-indexed predicates is a \emph{functional}.
+Let $f,g,h$ range over functionals.
+\begin{code}
+variable f g h : Predᵒ A → Predᵒ B
+\end{code}
+
+We say that a functional is congruent if it maps equivalent predicates
+to equivalent predicates.
+
+\begin{code}
+congruentᵖ : ∀{A}{B} (f : Predᵒ A → Predᵒ B) → Set₁
+congruentᵖ f = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (f P b) ≡ᵒ (f Q b)
+\end{code}
+
+We lift $k$-approximation to be a function over step-indexed
+predicates with the following definition.
+
+\begin{code}
+↓ᵖ : ℕ → ∀{A} → (Predᵒ A → Predᵒ A)
+↓ᵖ j P a = ↓ᵒ j (P a)
+\end{code}
+The $↓ᵖ$ operator is congruent
+\begin{code}
+cong-↓ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
+cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
+  where
+  aux : (i : ℕ) → ↓ k (# (P a)) i ⇔ ↓ k (# (Q a)) i
+  aux zero = (λ _ → tt) , λ _ → tt
+  aux (suc i) = 
+    (λ {(si≤k , Pasi) → si≤k , ≡ᵒ-to (eq a) (suc i) Pasi})
+    , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
+\end{code}
+
+TODO
+
+\begin{code}
+wellfoundedᵖ : ∀{A} (f : Predᵒ A → Predᵒ A) → Set₁
+wellfoundedᵖ f = ∀ a P k → ↓ᵒ (suc k) (f P a) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵖ k P) a)
+\end{code}
+
+
+\begin{code}
+iter : ∀ {ℓ} {A : Set ℓ} → ℕ → (A → A) → (A → A)
+iter zero    f  =  id
+iter (suc n) f  =  f ∘ iter n f
+\end{code}
+
+\begin{code}
+iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A} (F : A → A) (j k : ℕ)
+  → j ≤ k
+  → iter j F (iter (k ∸ j) F P) ≡ iter k F P
+iter-subtract {A = A} {P} F .zero k z≤n = refl
+iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
+  rewrite iter-subtract{A = A}{P} F j k j≤k = refl
+\end{code}
+
+
+\begin{code}
+lemma15a : ∀ (j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
+  → wellfoundedᵖ f → congruentᵖ f
+  → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter j f Q a)
+lemma15a zero f a wf-f cong-f = ↓ᵒ-zero
+lemma15a {A}{P}{Q} (suc j) f a wf-f cong-f =
+  ↓ᵒ (suc j) (f (iter j f P) a)         ⩦⟨ wf-f a (iter j f P) j ⟩ 
+  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)  ⩦⟨ cong-↓ (cong-f λ a → lemma15a j f a wf-f cong-f) a ⟩
+  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)  ⩦⟨ ≡ᵒ-sym (wf-f a (iter j f Q) j) ⟩
+  ↓ᵒ (suc j) (f (iter j f Q) a)         ∎
+\end{code}
+
+\begin{code}
+lemma15b : ∀{A}{P : Predᵒ A}
+   (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
+   → j ≤ k → wellfoundedᵖ f → congruentᵖ f
+   → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter k f P a)
+lemma15b {A}{P} k j f a j≤k wf-f cong-f =
+  ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j f a wf-f cong-f ⟩
+  ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)
+                      ⩦⟨ cong-↓{A}{j}{iter j f (iter (k ∸ j) f P)}{iter k f P}
+                              (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
+  ↓ᵒ j (iter k f P a)   ∎
+\end{code}
+
+
+\begin{code}
+lemma17 : ∀{A}{P : Predᵒ A}{k}{a}
+   → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
+lemma17 {A}{P}{k}{a} = ≡ᵒ-intro aux
+  where
+  aux : (i : ℕ) → # (↓ᵖ k (↓ᵖ (suc k) P) a) i ⇔ # (↓ᵖ k P a) i
+  aux zero = (λ _ → tt) , (λ _ → tt)
+  aux (suc i) = (λ {(x , (y , z)) → x , z})
+              , (λ {(x , y) → x , (s≤s (<⇒≤ x) , y)})
 \end{code}
 
 %===============================================================================
@@ -408,7 +566,7 @@ RecEnv (A ∷ Γ) = (Predᵒ A) × RecEnv Γ
 \end{code}
 
 We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
-\emph{functional}.
+\emph{environment functional}.
 
 To keep track of whether a variable has been used inside or outside of
 a later operator, we introduce a notion of time and we introduce a
@@ -519,44 +677,7 @@ postulate _ˢ : Set → Setˢ Γ (laters Γ)
 
 \section{Semantic Definitions and Proofs}
 
-As mentioned previously, \citet{Appel:2001aa} use the notion of
-$k$-approximation to define a semantic characterization of well
-founded types. Similarly, we define the $k$-approximation of a
-step-indexed proposition, using the notation $↓ᵒ k P$.  The
-proposition $↓ᵒ k P$ is true at $i$ if $P$ at $i$ is true and $i < k$,
-except when $k = 0$, in which case $↓ᵒ k P$ has to be true
-unconditionally. (This differs from \citet{Appel:2001aa} in the
-$\zero$ case.)
 
-\begin{code}
-↓ : ℕ → (ℕ → Set) → (ℕ → Set)
-↓ k P zero = ⊤
-↓ k P (suc j) = suc j < k × (P (suc j))
-
-↓-down : ∀ k → downClosed (↓ k (# P))
-
-↓ᵒ : ℕ → Setᵒ → Setᵒ
-↓ᵒ k P = record { # = ↓ k (# P) ; down = ↓-down {P} k ; tz = tt }
-\end{code}
-
-We lift $k$-approximation to step-indexed predicates with the
-following definition.
-
-\begin{code}
-↓ᵖ : ℕ → ∀{A} → Predᵒ A → Predᵒ A
-↓ᵖ j P a = ↓ᵒ j (P a)
-\end{code}
-The $↓ᵖ$ operator is congruent
-\begin{code}
-cong-↓ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
-cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
-  where
-  aux : (i : ℕ) → ↓ k (# (P a)) i ⇔ ↓ k (# (Q a)) i
-  aux zero = (λ _ → tt) , λ _ → tt
-  aux (suc i) = 
-    (λ {(si≤k , Pasi) → si≤k , ≡ᵒ-to (eq a) (suc i) Pasi})
-    , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
-\end{code}
 
 We apply $k$-approximation to one of the predicates in an environment
 with the $↓ᵈ$ operator. The second parameter, a variable, specifies
@@ -659,19 +780,6 @@ open Setˢ public
 \end{code}
 
 
-\subsection{Iteration and its Properies}
-
-As mentioned above, we shall define a recursive predicate $μˢ f$ by
-iterating its body $f$. Here we define the nth iteration of a function
-and prove several important properties that relate iteration to
-$k$-approximation.
-
-\begin{code}
-iter : ∀ {ℓ} {A : Set ℓ} → ℕ → (A → A) → (A → A)
-iter zero    f  =  id
-iter (suc n) f  =  f ∘ iter n f
-\end{code}
-
 \subsection{Recursive Predicates}
 
 
@@ -702,11 +810,6 @@ toFun : ∀{Γ}{ts : Times Γ}{A}
 toFun δ f μf = λ a → ♯ (f a) (μf , δ)
 \end{code}
 
-\begin{code}
-↓ᵒ-zero : ∀{A}{P Q : Predᵒ A} (a : A) → ↓ᵒ zero (P a) ≡ᵒ ↓ᵒ zero (Q a)
-↓ᵒ-zero{A}{P}{Q} a = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
-                                ; (suc i) → (λ {()}) , (λ {()})}
-\end{code}
 
 \begin{code}
 nonexpansiveˢ : ∀{Γ}{A} (S : RecEnv (A ∷ Γ) → Setᵒ) (δ : RecEnv Γ) → Set₁
@@ -748,19 +851,6 @@ cong⇒head {A ∷ Γ} {S} congS′ P=Q δ = congS′ (P=Q , ≡ᵈ-refl{Γ}{δ}
 \end{code}
 
 \begin{code}
-wellfoundedᵖ : ∀{A} (f : Predᵒ A → Predᵒ A) → Set₁
-wellfoundedᵖ f = ∀ a P k → ↓ᵒ (suc k) (f P a) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵖ k P) a)
-
-lemma15a : ∀{A}{P Q : Predᵒ A} (j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
-  → wellfoundedᵖ f → congruentᵖ f
-  → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter j f Q a)
-lemma15a {A}{P}{Q} zero f a wf-f cong-f = ↓ᵒ-zero{P = P}{Q} a
-lemma15a {A}{P}{Q} (suc j) f a wf-f cong-f =
-  ↓ᵒ (suc j) (f (iter j f P) a)         ⩦⟨ wf-f a (iter j f P) j ⟩ 
-  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)  ⩦⟨ cong-↓ (cong-f λ a → lemma15a j f a wf-f cong-f) a ⟩
-  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)  ⩦⟨ ≡ᵒ-sym (wf-f a (iter j f Q) j) ⟩
-  ↓ᵒ (suc j) (f (iter j f Q) a)         ∎
-
 lemma15a-toFun : ∀{Γ}{A}{ts : Times Γ}{P Q : Predᵒ A}{δ : RecEnv Γ}
   → (j : ℕ) → (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later ts)) → (a : A)
   → ↓ᵒ j (iter j (toFun δ Fᵃ) P a) ≡ᵒ ↓ᵒ j (iter j (toFun δ Fᵃ) Q a)
@@ -769,39 +859,8 @@ lemma15a-toFun {Γ}{A}{ts}{P}{Q}{δ} j Fᵃ a =
     (λ {P}{Q} P=Q a → cong⇒head (congr (Fᵃ a)) P=Q δ)
 \end{code}
 
-\begin{code}
-iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A} (F : A → A) (j k : ℕ)
-  → j ≤ k
-  → iter j F (iter (k ∸ j) F P) ≡ iter k F P
-iter-subtract {A = A} {P} F .zero k z≤n = refl
-iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
-  rewrite iter-subtract{A = A}{P} F j k j≤k = refl
-\end{code}
 
-\begin{code}
-≡ᵖ-refl : ∀{A}{P Q : Predᵒ A}
-  → P ≡ Q
-  → ∀ {a} → P a ≡ᵒ Q a
-≡ᵖ-refl refl {a} = ≡ᵒ-refl refl
 
-≡ᵖ-sym : ∀{A}{P Q : Predᵒ A}
-  → (∀ {a} → P a ≡ᵒ Q a)
-  → ∀ {a} → Q a ≡ᵒ P a
-≡ᵖ-sym P=Q {a} = ≡ᵒ-sym P=Q
-\end{code}
-
-\begin{code}
-lemma15b : ∀{A}{P : Predᵒ A}
-   (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
-   → j ≤ k → wellfoundedᵖ f → congruentᵖ f
-   → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter k f P a)
-lemma15b {A}{P} k j f a j≤k wf-f cong-f =
-  ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j f a wf-f cong-f ⟩
-  ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)
-                      ⩦⟨ cong-↓{A}{j}{iter j f (iter (k ∸ j) f P)}{iter k f P}
-                              (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
-  ↓ᵒ j (iter k f P a)   ∎
-\end{code}
 
 \begin{code}
 lemma15b-toFun : ∀{Γ}{A}{ts : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ}
@@ -903,32 +962,8 @@ abstract
                    , (λ z → proj₂ (PQ i) (proj₂ (QR i) z))
 \end{code}
 
-The $k$-approximation operator is downward closed.
 
 \begin{code}
-↓-down {P} k = λ { zero x .zero z≤n → tt
-                 ; (suc n) (sn<k , Pn) zero j≤n → tt
-                 ; (suc n) (sn<k , Psn) (suc j) (s≤s j≤n) →
-                     (≤-trans (s≤s (s≤s j≤n)) sn<k)
-                   , (down P (suc n) Psn (suc j) (s≤s j≤n))}
-\end{code}
-
-\begin{code}
-abstract
-  ≡ᵒ⇒⇔ {S}{T}{k} eq = eq k
-  ≡ᵒ-intro P⇔Q k = P⇔Q k
-\end{code}
-
-\begin{code}
-lemma17 : ∀{A}{P : Predᵒ A}{k}{a}
-   → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
-lemma17 {A}{P}{k}{a} = ≡ᵒ-intro aux
-  where
-  aux : (i : ℕ) → # (↓ᵖ k (↓ᵖ (suc k) P) a) i ⇔ # (↓ᵖ k P a) i
-  aux zero = (λ _ → tt) , (λ _ → tt)
-  aux (suc i) = (λ {(x , (y , z)) → x , z})
-              , (λ {(x , y) → x , (s≤s (<⇒≤ x) , y)})
-   
 abstract
   lemma18a : ∀{Γ}{Δ : Times Γ}{A}
      → (k : ℕ)
@@ -1025,7 +1060,7 @@ good-now-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
    → (k ≤ j)
    → ↓ᵒ k (muᵒ S δ a) ≡ᵒ ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)
 good-now-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j =
-    ↓ᵒ-zero{A}{muᵒ S δ}{muᵒ S (↓ᵈ _ x δ)} a
+    ↓ᵒ-zeroᵖ{A}{muᵒ S δ}{muᵒ S (↓ᵈ _ x δ)} a
 good-now-mu {Γ} {Δ} {A}{B} S a x time-x δ (suc k′) j k≤j =
   let k = suc k′ in
   let gSa = good-now{A = B}{sucˢ x}{Δ = cons Later Δ}
