@@ -238,42 +238,6 @@ syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
 \end{code}
 
 %===============================================================================
-\section{Approximation}
-
-THIS MOVED, UPDATE TEXT
-
-As mentioned previously, \citet{Appel:2001aa} use the notion of
-$k$-approximation to define a semantic characterization of well
-founded types. Similarly, we define the $k$-approximation of a
-step-indexed proposition, using the notation $↓ᵒ k P$.  The
-proposition $↓ᵒ k P$ is true at $i$ if $P$ at $i$ is true and $i < k$,
-except when $k = 0$, in which case $↓ᵒ k P$ has to be true
-unconditionally. (This differs from \citet{Appel:2001aa} in the
-$\zero$ case.)
-
-\begin{code}
-↓ : ℕ → (ℕ → Set) → (ℕ → Set)
-↓ k P zero = ⊤
-↓ k P (suc j) = suc j < k × (P (suc j))
-\end{code}
-
-The $k$-approximation operator is downward closed.
-
-\begin{code}
-↓-down : ∀ k → downClosed (↓ k (# ϕ))
-↓-down {P} k = λ { zero x .zero z≤n → tt
-                 ; (suc n) (sn<k , Pn) zero j≤n → tt
-                 ; (suc n) (sn<k , Psn) (suc j) (s≤s j≤n) →
-                     (≤-trans (s≤s (s≤s j≤n)) sn<k)
-                   , (down P (suc n) Psn (suc j) (s≤s j≤n))}
-\end{code}
-
-\begin{code}
-↓ᵒ : ℕ → Setᵒ → Setᵒ
-↓ᵒ k P = record { # = ↓ k (# P) ; down = ↓-down {P} k ; tz = tt }
-\end{code}
-
-%===============================================================================
 \section{Equivalence for Step-Indexed Propositions}
 
 We define equivalence of step-indexed propositions $ϕ$ and $ψ$ to be
@@ -309,26 +273,8 @@ instance
   SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
 \end{code}
 
-The $k$-approximation of any two step-indexed propositions is
-equivalent when $k=0$.
-
 \begin{code}
-↓ᵒ-zero : ↓ᵒ zero ϕ ≡ᵒ ↓ᵒ zero ψ
-↓ᵒ-zero = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
-                     ; (suc i) → (λ {()}) , (λ {()})}
-\end{code}
-
-OBSOLETE, REPLACE WITH ABOVE
-\begin{code}
-↓ᵒ-zeroᵖ : ∀{A}{P Q : Predᵒ A} (a : A) → ↓ᵒ zero (P a) ≡ᵒ ↓ᵒ zero (Q a)
-↓ᵒ-zeroᵖ{A}{P}{Q} a = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
-                                ; (suc i) → (λ {()}) , (λ {()})}
-\end{code}
-
-\begin{code}
-≡ᵖ-refl : ∀{A}{P Q : Predᵒ A}
-  → P ≡ Q
-  → ∀ {a} → P a ≡ᵒ Q a
+≡ᵖ-refl : ∀{A}{P Q : Predᵒ A} → P ≡ Q → ∀ {a} → P a ≡ᵒ Q a
 ≡ᵖ-refl refl {a} = ≡ᵒ-refl refl
 
 ≡ᵖ-sym : ∀{A}{P Q : Predᵒ A}
@@ -338,11 +284,19 @@ OBSOLETE, REPLACE WITH ABOVE
 \end{code}
 
 %===============================================================================
-\section{Functionals and Iteration}
+\section{Functionals, Approximation, and Iteration}
 \label{sec:rec-pred}
 
-A function over step-indexed predicates is a \emph{functional}.
+The definition of recursive predicates and their fixpoint theorem rely
+on three concepts: functionals, $k$-approximation, and iteration.  In
+the section we introduce these concepts and prove several important
+lemmas concerning them. We adapt these definitions and lemmas from
+\citet{Appel:2001aa}, who apply them to the semantics of recursive
+types.
+
+A \emph{functional} is a function over step-indexed predicates.
 Let $f,g,h$ range over functionals.
+
 \begin{code}
 variable f g h : Predᵒ A → Predᵒ B
 \end{code}
@@ -355,14 +309,54 @@ congruentᵖ : ∀{A}{B} (f : Predᵒ A → Predᵒ B) → Set₁
 congruentᵖ f = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (f P b) ≡ᵒ (f Q b)
 \end{code}
 
-We lift $k$-approximation to be a function over step-indexed
-predicates with the following definition.
+The $k$-approximation of a step-indexed predicate, $↓ k ϕ$, is true at
+$i$ if $ϕ$ at $i$ is true and $i < k$, except when $k = 0$, in which
+case $↓ k ϕ$ is true unconditionally.
 
 \begin{code}
-↓ᵖ : ℕ → ∀{A} → (Predᵒ A → Predᵒ A)
+↓ : ℕ → (ℕ → Set) → (ℕ → Set)
+↓ k ϕ zero = ⊤
+↓ k ϕ (suc j) = suc j < k × (ϕ (suc j))
+\end{code}
+
+The $k$-approximation operator is downward closed.
+
+\begin{code}
+↓-down : ∀ k → downClosed (↓ k (# ϕ))
+↓-down {ϕ} k = λ { zero x .zero z≤n → tt
+                 ; (suc n) (sn<k , ϕn) zero j≤n → tt
+                 ; (suc n) (sn<k , ϕsn) (suc j) (s≤s j≤n) →
+                     (≤-trans (s≤s (s≤s j≤n)) sn<k)
+                   , (down ϕ (suc n) ϕsn (suc j) (s≤s j≤n))}
+\end{code}
+
+So we can define $k$-approximation for step-indexed propositions as
+follows.
+
+\begin{code}
+↓ᵒ : ℕ → Setᵒ → Setᵒ
+↓ᵒ k ϕ = record { # = ↓ k (# ϕ) ; down = ↓-down {ϕ} k ; tz = tt }
+\end{code}
+
+The $k$-approximation of any two step-indexed propositions is
+equivalent when $k=0$.
+
+\begin{code}
+↓ᵒ-zero : ↓ᵒ zero ϕ ≡ᵒ ↓ᵒ zero ψ
+↓ᵒ-zero = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
+                     ; (suc i) → (λ {()}) , (λ {()})}
+\end{code}
+
+We lift $k$-approximation to be an operator on step-indexed predicates
+with the following definition.
+
+\begin{code}
+↓ᵖ : ℕ → ∀{A} → Predᵒ A → Predᵒ A
 ↓ᵖ j P a = ↓ᵒ j (P a)
 \end{code}
-The $↓ᵖ$ operator is congruent
+
+The $↓ᵖ$ operator is congruent.
+
 \begin{code}
 cong-↓ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
 cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
@@ -374,19 +368,34 @@ cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
     , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
 \end{code}
 
-TODO
+OBSOLETE, REPLACE WITH ABOVE
+\begin{code}
+↓ᵒ-zeroᵖ : ∀{A}{P Q : Predᵒ A} (a : A) → ↓ᵒ zero (P a) ≡ᵒ ↓ᵒ zero (Q a)
+↓ᵒ-zeroᵖ{A}{P}{Q} a = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
+                                ; (suc i) → (λ {()}) , (λ {()})}
+\end{code}
+
+A functional is \emph{wellfounded} if applying $k$-approximation of
+its input does not change its output under $k \plus 1$-approximation.
+Intuitively, this corresponds to functions that only use their input
+at one step later in time.
 
 \begin{code}
 wellfoundedᵖ : ∀{A} (f : Predᵒ A → Predᵒ A) → Set₁
 wellfoundedᵖ f = ∀ a P k → ↓ᵒ (suc k) (f P a) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵖ k P) a)
 \end{code}
 
+The nth iteration of a function, $f^n$, is implemented by the
+following $\mathsf{iter}$ function.
 
 \begin{code}
 iter : ∀ {ℓ} {A : Set ℓ} → ℕ → (A → A) → (A → A)
 iter zero    f  =  id
 iter (suc n) f  =  f ∘ iter n f
 \end{code}
+
+Iterating $k$ times is equivalent to iterating $j$ times
+followed by $k ∸ j$ times, assuming that $j \leq k$.
 
 \begin{code}
 iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A} (F : A → A) (j k : ℕ)
@@ -397,6 +406,10 @@ iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
   rewrite iter-subtract{A = A}{P} F j k j≤k = refl
 \end{code}
 
+Suppose a functional is wellfounded and congruent.  If you iterate the
+functional $j$ times and then take the $j$-approximation, then the
+initial predicate doesn't matter. This corresponds to Lemma 15 (part 1)
+of \citet{Appel:2001aa}.
 
 \begin{code}
 lemma15a : ∀ (j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
@@ -410,9 +423,13 @@ lemma15a {A}{P}{Q} (suc j) f a wf-f cong-f =
   ↓ᵒ (suc j) (f (iter j f Q) a)         ∎
 \end{code}
 
+Again assuming that the functional is wellfounded and congruent, if
+you take the $j$ approximation of the output, then iterating the
+functional more then $j$ times does not change the result.  This
+corresponds to Lemma 15 (part 2) of \citet{Appel:2001aa}.
+
 \begin{code}
-lemma15b : ∀{A}{P : Predᵒ A}
-   (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
+lemma15b : (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
    → j ≤ k → wellfoundedᵖ f → congruentᵖ f
    → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter k f P a)
 lemma15b {A}{P} k j f a j≤k wf-f cong-f =
@@ -423,10 +440,11 @@ lemma15b {A}{P} k j f a j≤k wf-f cong-f =
   ↓ᵒ j (iter k f P a)   ∎
 \end{code}
 
+Applying the $k$ and $k \plus 1$ approximations in sequence to a
+predicate is equivalent to just applying the $k$ approximation.
 
 \begin{code}
-lemma17 : ∀{A}{P : Predᵒ A}{k}{a}
-   → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
+lemma17 : ∀{k}{a} → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
 lemma17 {A}{P}{k}{a} = ≡ᵒ-intro aux
   where
   aux : (i : ℕ) → # (↓ᵖ k (↓ᵖ (suc k) P) a) i ⇔ # (↓ᵖ k P a) i
