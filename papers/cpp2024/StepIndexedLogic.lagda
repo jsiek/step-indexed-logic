@@ -346,6 +346,20 @@ equivalent when $k=0$.
                      ; (suc i) → (λ {()}) , (λ {()})}
 \end{code}
 
+TODO
+
+\begin{code}
+abstract
+  cong-↓ᵒ : ∀{P Q : Setᵒ}
+    → (k : ℕ)
+    → P ≡ᵒ Q
+    → ↓ᵒ k P ≡ᵒ ↓ᵒ k Q
+  cong-↓ᵒ {P} {Q} k P=Q zero = (λ x → tt) , (λ x → tt)
+  cong-↓ᵒ {P} {Q} k P=Q (suc i) =
+      (λ {(a , b) → a , proj₁ (P=Q (suc i)) b})
+      , λ {(a , b) → a , proj₂ (P=Q (suc i)) b}
+\end{code}
+
 We lift $k$-approximation to be an operator on predicates with the
 following definition.
 
@@ -682,8 +696,8 @@ infixr 7 _×ˢ_
 postulate _×ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
 infixr 7 _⊎ˢ_
 postulate _⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
-postulate ∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
-postulate ∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
+∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
+∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
 postulate _ˢ : Set → Setˢ Γ (laters Γ)
 μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 \end{code}
@@ -1294,4 +1308,98 @@ a ∈ x = record { ♯ = λ δ → (lookup x δ) a
                ; good = good-lookup x
                ; congr = congruent-lookup x a }
 
+
+{---------------------- Forall -----------------------------------------}
+
+abstract
+  down-∀ : ∀{A}{P : Predᵒ A}{k}
+    → ↓ᵒ k (∀ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (P a))
+  down-∀ {A} {P} {k} zero = (λ x → tt) , (λ x → tt)
+  down-∀ {A} {P} {k} (suc i) =
+    (λ {(a , b) → a , (λ c → a , b c)})
+    , λ {(a , b) → a , (λ a → proj₂ (b a))}
+
+  cong-∀ : ∀{A}{P Q : Predᵒ A}
+    → (∀ a → P a ≡ᵒ Q a)
+    → (∀ᵒ P) ≡ᵒ (∀ᵒ Q)
+  cong-∀ {A} {P} {k} P=Q zero =
+      (λ z a → proj₁ (P=Q a zero) (z a)) , (λ _ a → tz (P a))
+  cong-∀ {A} {P} {k} P=Q (suc i) =
+        (λ z a → proj₁ (P=Q a (suc i)) (z a))
+      , (λ z a → proj₂ (P=Q a (suc i)) (z a))
+  
+good-all : ∀{Γ}{Δ : Times Γ}{A : Set}
+   (P : A → Setˢ Γ Δ)
+  → good-fun Δ (λ δ → ∀ᵒ[ a ] ♯ (P a) δ)
+good-all {Γ}{Δ}{A} P x
+    with timeof x Δ in time-x
+... | Now = λ δ j k k≤j →
+      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ down-∀ ⟩
+      ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
+          ⩦⟨ cong-↓ᵒ k (cong-∀(λ a → good-now(good(P a) x) time-x δ j k k≤j)) ⟩
+      ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym down-∀ ⟩
+      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
+
+... | Later = λ δ j k k≤j → 
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ down-∀ ⟩
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
+                      ⩦⟨ cong-↓ᵒ (suc k) (cong-∀
+                          (λ a → good-later (good (P a) x) time-x δ j k k≤j)) ⟩
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∀ ⟩
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
+
+∀ˢ{Γ}{Δ}{A} P =
+  record { ♯ = λ δ → ∀ᵒ[ a ] ♯ (P a) δ
+         ; good = good-all P
+         ; congr = λ d=d′ → cong-∀ λ a → congr (P a) d=d′
+         }
+
+∀ˢ-syntax = ∀ˢ
+infix 1 ∀ˢ-syntax
+syntax ∀ˢ-syntax (λ x → P) = ∀ˢ[ x ] P
+
+{---------------------- Exist -----------------------------------------}
+
+abstract
+  down-∃ : ∀{A}{P : Predᵒ A}{k}{{_ : Inhabited A}}
+    → ↓ᵒ k (∃ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (P a))
+  down-∃ {A} {P} {k} zero = (λ x → tt) , (λ x → tt)
+  down-∃ {A} {P} {k} (suc i) =
+    (λ {(a , (b , c)) → a , (b , (a , c))})
+    , λ { (a , b , c) → a , b , proj₂ c}
+
+  cong-∃ : ∀{A}{P Q : Predᵒ A}{{_ : Inhabited A}}
+    → (∀ a → P a ≡ᵒ Q a)
+    → (∃ᵒ P) ≡ᵒ (∃ᵒ Q)
+  cong-∃ {A} {P} {Q} P=Q i =
+      (λ {(a , b) → a , proj₁ (P=Q a i) b})
+      , λ {(a , b) → a , (proj₂ (P=Q a i) b)}
+
+good-exists : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
+   (P : A → Setˢ Γ Δ)
+  → good-fun Δ (λ δ → ∃ᵒ[ a ] ♯ (P a) δ)
+good-exists {Γ}{Δ}{A} P x
+    with timeof x Δ in time-x
+... | Now = λ δ j k k≤j →
+      ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ down-∃ ⟩
+      ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
+          ⩦⟨ cong-↓ᵒ k (cong-∃(λ a → good-now(good(P a) x) time-x δ j k k≤j)) ⟩
+      ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym down-∃ ⟩
+      ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
+... | Later = λ δ j k k≤j →
+      ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ down-∃ ⟩
+      ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
+                      ⩦⟨ cong-↓ᵒ (suc k) (cong-∃
+                          (λ a → good-later (good (P a) x) time-x δ j k k≤j)) ⟩
+      ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∃ ⟩
+      ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
+
+∃ˢ{Γ}{Δ}{A} P =
+  record { ♯ = λ δ → ∃ᵒ[ a ] ♯ (P a) δ
+         ; good = good-exists P
+         ; congr = λ d=d′ → cong-∃ λ a → congr (P a) d=d′ }
+
+∃ˢ-syntax = ∃ˢ
+infix 1 ∃ˢ-syntax
+syntax ∃ˢ-syntax (λ x → P) = ∃ˢ[ x ] P
 \end{code}
