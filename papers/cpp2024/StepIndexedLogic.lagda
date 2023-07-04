@@ -309,9 +309,9 @@ congruentᵖ : ∀{A}{B} (f : Predᵒ A → Predᵒ B) → Set₁
 congruentᵖ f = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (f P b) ≡ᵒ (f Q b)
 \end{code}
 
-The $k$-approximation of a step-indexed predicate, $↓ k ϕ$, is true at
+The $k$-approximation of a step-indexed predicate, $↓\, k\, ϕ$, is true at
 $i$ if $ϕ$ at $i$ is true and $i < k$, except when $k = 0$, in which
-case $↓ k ϕ$ is true unconditionally.
+case $↓\, k\, ϕ$ is true unconditionally.
 
 \begin{code}
 ↓ : ℕ → (ℕ → Set) → (ℕ → Set)
@@ -319,19 +319,18 @@ case $↓ k ϕ$ is true unconditionally.
 ↓ k ϕ (suc j) = suc j < k × (ϕ (suc j))
 \end{code}
 
-The $k$-approximation operator is downward closed.
+\noindent The $k$-approximation operator is downward closed.
 
 \begin{code}
 ↓-down : ∀ k → downClosed (↓ k (# ϕ))
 ↓-down {ϕ} k = λ { zero x .zero z≤n → tt
                  ; (suc n) (sn<k , ϕn) zero j≤n → tt
                  ; (suc n) (sn<k , ϕsn) (suc j) (s≤s j≤n) →
-                     (≤-trans (s≤s (s≤s j≤n)) sn<k)
-                   , (down ϕ (suc n) ϕsn (suc j) (s≤s j≤n))}
+                     (≤-trans (s≤s (s≤s j≤n)) sn<k) , (down ϕ (suc n) ϕsn (suc j) (s≤s j≤n))}
 \end{code}
 
-So we can define $k$-approximation for step-indexed propositions as
-follows.
+\noindent So we can define $k$-approximation for step-indexed
+propositions as follows.
 
 \begin{code}
 ↓ᵒ : ℕ → Setᵒ → Setᵒ
@@ -347,8 +346,8 @@ equivalent when $k=0$.
                      ; (suc i) → (λ {()}) , (λ {()})}
 \end{code}
 
-We lift $k$-approximation to be an operator on step-indexed predicates
-with the following definition.
+We lift $k$-approximation to be an operator on predicates with the
+following definition.
 
 \begin{code}
 ↓ᵖ : ℕ → ∀{A} → Predᵒ A → Predᵒ A
@@ -363,9 +362,8 @@ cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
   where
   aux : (i : ℕ) → ↓ k (# (P a)) i ⇔ ↓ k (# (Q a)) i
   aux zero = (λ _ → tt) , λ _ → tt
-  aux (suc i) = 
-    (λ {(si≤k , Pasi) → si≤k , ≡ᵒ-to (eq a) (suc i) Pasi})
-    , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
+  aux (suc i) = (λ {(si≤k , Pasi) → si≤k , ≡ᵒ-to (eq a) (suc i) Pasi})
+              , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
 \end{code}
 
 OBSOLETE, REPLACE WITH ABOVE
@@ -375,8 +373,8 @@ OBSOLETE, REPLACE WITH ABOVE
                                 ; (suc i) → (λ {()}) , (λ {()})}
 \end{code}
 
-A functional is \emph{wellfounded} if applying $k$-approximation of
-its input does not change its output under $k \plus 1$-approximation.
+A functional is \emph{wellfounded} if applying $k$-approximation to
+its input does not change the $k{\plus}1$-approximation of its output.
 Intuitively, this corresponds to functions that only use their input
 at one step later in time.
 
@@ -398,8 +396,7 @@ Iterating $k$ times is equivalent to iterating $j$ times
 followed by $k ∸ j$ times, assuming that $j \leq k$.
 
 \begin{code}
-iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A} (F : A → A) (j k : ℕ)
-  → j ≤ k
+iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A} (F : A → A) (j k : ℕ) → j ≤ k
   → iter j F (iter (k ∸ j) F P) ≡ iter k F P
 iter-subtract {A = A} {P} F .zero k z≤n = refl
 iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
@@ -407,7 +404,7 @@ iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
 \end{code}
 
 Suppose a functional is wellfounded and congruent.  If you iterate the
-functional $j$ times and then take the $j$-approximation, then the
+functional $j$ times and then take the $j$-approximation, the
 initial predicate doesn't matter. This corresponds to Lemma 15 (part 1)
 of \citet{Appel:2001aa}.
 
@@ -417,14 +414,14 @@ lemma15a : ∀ (j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
   → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter j f Q a)
 lemma15a zero f a wf-f cong-f = ↓ᵒ-zero
 lemma15a {A}{P}{Q} (suc j) f a wf-f cong-f =
-  ↓ᵒ (suc j) (f (iter j f P) a)         ⩦⟨ wf-f a (iter j f P) j ⟩ 
-  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)  ⩦⟨ cong-↓ (cong-f λ a → lemma15a j f a wf-f cong-f) a ⟩
-  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)  ⩦⟨ ≡ᵒ-sym (wf-f a (iter j f Q) j) ⟩
-  ↓ᵒ (suc j) (f (iter j f Q) a)         ∎
+  ↓ᵒ (suc j) (f (iter j f P) a)           ⩦⟨ wf-f a (iter j f P) j ⟩ 
+  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)    ⩦⟨ cong-↓ (cong-f λ a → lemma15a j f a wf-f cong-f) a ⟩
+  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)    ⩦⟨ ≡ᵒ-sym (wf-f a (iter j f Q) j) ⟩
+  ↓ᵒ (suc j) (f (iter j f Q) a)           ∎
 \end{code}
 
 Again assuming that the functional is wellfounded and congruent, if
-you take the $j$ approximation of the output, then iterating the
+you take the $j$ approximation of the output, iterating the
 functional more then $j$ times does not change the result.  This
 corresponds to Lemma 15 (part 2) of \citet{Appel:2001aa}.
 
@@ -434,9 +431,8 @@ lemma15b : (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
    → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter k f P a)
 lemma15b {A}{P} k j f a j≤k wf-f cong-f =
   ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j f a wf-f cong-f ⟩
-  ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)
-                      ⩦⟨ cong-↓{A}{j}{iter j f (iter (k ∸ j) f P)}{iter k f P}
-                              (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
+  ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)    ⩦⟨ cong-↓{A}{j}{iter j f (iter (k ∸ j) f P)}{iter k f P}
+                                             (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
   ↓ᵒ j (iter k f P a)   ∎
 \end{code}
 
@@ -449,8 +445,7 @@ lemma17 {A}{P}{k}{a} = ≡ᵒ-intro aux
   where
   aux : (i : ℕ) → # (↓ᵖ k (↓ᵖ (suc k) P) a) i ⇔ # (↓ᵖ k P a) i
   aux zero = (λ _ → tt) , (λ _ → tt)
-  aux (suc i) = (λ {(x , (y , z)) → x , z})
-              , (λ {(x , y) → x , (s≤s (<⇒≤ x) , y)})
+  aux (suc i) = (λ {(x , (y , z)) → x , z}) , (λ {(x , y) → x , (s≤s (<⇒≤ x) , y)})
 \end{code}
 
 %===============================================================================
