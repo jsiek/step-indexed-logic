@@ -366,7 +366,7 @@ cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
               , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
 \end{code}
 
-OBSOLETE, REPLACE WITH ABOVE
+OBSOLETE, REPLACE USES WITH ABOVE
 \begin{code}
 ↓ᵒ-zeroᵖ : ∀{A}{P Q : Predᵒ A} (a : A) → ↓ᵒ zero (P a) ≡ᵒ ↓ᵒ zero (Q a)
 ↓ᵒ-zeroᵖ{A}{P}{Q} a = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
@@ -674,7 +674,7 @@ _∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (_∪_ Δ₁ 
 The type system is implemented in the type signatures for the logical
 operators, which we declare as follows.
 \begin{code}
-postulate _∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
+_∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
 postulate ▷ˢ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
 infixr 6 _→ˢ_
 postulate _→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
@@ -1164,3 +1164,134 @@ congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
                     (cong-toFun P δ=δ′) ⊤ᵖ)
 \end{code}
 
+\begin{code}
+lemma17b : ∀{A}{P : Predᵒ A}{j}{k}{a : A}
+   → suc j ≤′ k
+   → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
+lemma17b {A} {P} {j} {.(suc j)} {a} _≤′_.≤′-refl = lemma17{A}{P}{j}{a}
+lemma17b {A} {P} {j} {suc k} {a} (≤′-step j≤k) =
+    ↓ᵖ j (↓ᵖ (suc k) P) a           ⩦⟨ ≡ᵒ-sym (lemma17b{A}{↓ᵖ (suc k) P} j≤k) ⟩
+    ↓ᵖ j (↓ᵖ k (↓ᵖ (suc k) P)) a      ⩦⟨ E1 ⟩
+    ↓ᵖ j (↓ᵖ k P) a                   ⩦⟨ lemma17b{A}{P}{j}{k}{a} j≤k ⟩ 
+    ↓ᵖ j P a   ∎
+    where
+    E1 = cong-↓{A}{j}{(↓ᵖ k (↓ᵖ (suc k) P))}{(↓ᵖ k P)}
+         (λ a → lemma17{A}{P}{k}{a}) a 
+
+lemma17c : ∀{A}{P : Predᵒ A}{j}{k}{a : A}
+   → j < k
+   → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
+lemma17c {A} {P} {j} {k} {a} j<k = lemma17b{A}{P}{j}{k}{a} (≤⇒≤′ j<k)
+
+abstract 
+  lemma17f : ∀{S : Setᵒ}{k}
+       → ↓ᵒ k (↓ᵒ k S) ≡ᵒ ↓ᵒ k S
+  lemma17f {S} {k} zero = (λ x → tt) , (λ x → tt)
+  lemma17f {S} {k} (suc i) =
+      (λ {(x , (y , z)) → y , z})
+      ,
+      λ {(x , y) → x , (x , y)}
+
+abstract 
+  lemma17d : ∀{A}{P : Predᵒ A}{k}{a : A}
+       → ↓ᵖ k (↓ᵖ k P) a ≡ᵒ ↓ᵖ k P a
+  lemma17d {A} {P} {k} {a} zero = (λ x → tt) , (λ x → tt)
+  lemma17d {A} {P} {k} {a} (suc i) =
+      (λ {(x , (y , z)) → y , z})
+      ,
+      λ {(x , y) → x , (x , y)}
+
+lemma17e : ∀{A}{P : Predᵒ A}{j}{k}{a : A}
+   → j ≤ k
+   → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
+lemma17e {A} {P} {j} {k} {a} j≤k
+    with ≤⇒≤′ j≤k
+... | _≤′_.≤′-refl = lemma17d{A}{P}
+... | ≤′-step j≤n = lemma17c{A}{P} (s≤s (≤′⇒≤ j≤n))
+
+{---------------------- Membership in Recursive Predicate ---------------------}
+
+lookup : ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → Predᵒ A
+lookup {B ∷ Γ} {.B} zeroˢ (P , δ) = P
+lookup {B ∷ Γ} {A} (sucˢ x) (P , δ) = lookup{Γ}{A} x δ
+
+↓-lookup : ∀{Γ}{A}{B}{a}{k}{j}{δ : RecEnv Γ}
+   → (x : Γ ∋ A)
+   → (y : Γ ∋ B)
+   → k ≤ j
+   → ↓ᵒ k (lookup{Γ}{A} x δ a) ≡ᵒ ↓ᵒ k (lookup{Γ}{A} x (↓ᵈ j y δ) a)
+↓-lookup {C ∷ Γ}  {.C} {.C} {a} {k} {j} {P , δ} zeroˢ zeroˢ k≤j =
+    ≡ᵒ-sym (lemma17e{_}{P}{k}{j}{a} k≤j)
+↓-lookup {C ∷ Γ} {.C} {B} {a} {k} {j} {P , δ} zeroˢ (sucˢ y) k≤j =
+    ≡ᵒ-refl refl
+↓-lookup {C ∷ Γ} {A} {.C} {a} {k} {j} {P , δ} (sucˢ x) zeroˢ k≤j =
+   ≡ᵒ-refl refl
+↓-lookup {C ∷ Γ} {A}{B}{a}{k} {j} {P , δ} (sucˢ x) (sucˢ y) k≤j =
+   ↓-lookup x y k≤j
+
+lookup-diff : ∀{Γ}{Δ : Times Γ}{A}{B}{δ : RecEnv Γ}{j}
+   → (x : Γ ∋ A)
+   → (y : Γ ∋ B)
+   → timeof x Δ ≢ timeof y Δ
+   → lookup{Γ}{A} x (↓ᵈ j y δ) ≡ lookup{Γ}{A} x δ
+lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
+lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ (sucˢ y) neq = refl
+lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) zeroˢ neq = refl
+lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
+
+timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B)
+   → timeof x Δ ≡ Now → timeof y Δ ≡ Later
+   → timeof x Δ ≢ timeof y Δ
+timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
+
+timeof-var-now : ∀{Γ}{A}
+   → (x : Γ ∋ A)
+   → timeof x (var-now Γ x) ≡ Now
+timeof-var-now {B ∷ Γ} zeroˢ = refl
+timeof-var-now {B ∷ Γ} (sucˢ x) = timeof-var-now x
+
+timeof-later : ∀{Γ}{A}
+   → (x : Γ ∋ A)
+   → (timeof x (laters Γ)) ≡ Later
+timeof-later {B ∷ Γ} zeroˢ = refl
+timeof-later {B ∷ Γ} (sucˢ x) = timeof-later x
+
+good-lookup : ∀{Γ}{A}{a}
+  → (x : Γ ∋ A)
+  → good-fun (var-now Γ x) (λ δ → lookup x δ a)
+good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ (P , δ) j k k≤j =
+   ≡ᵒ-sym (lemma17e{_}{P} k≤j)
+good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y =
+   λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
+good-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ =
+   λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
+good-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
+    with timeof y (var-now Γ x) in eq-y
+... | Now = λ{(P , δ) j k k≤j → ↓-lookup x y k≤j }
+... | Later =
+      λ{(P , δ) j k k≤j →
+          let eq = (lookup-diff{Γ}{_}{_}{_}{δ}{j} x y
+                        (timeof-diff x y (timeof-var-now x) eq-y)) in
+          subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a))
+                (sym eq) (≡ᵒ-refl refl)}
+
+cong-lookup : ∀{Γ}{A}{δ δ′ : RecEnv Γ}
+   → (x : Γ ∋ A)
+   → (a : A)
+   → δ ≡ᵈ δ′
+   → lookup x δ a ≡ᵒ lookup x δ′ a
+cong-lookup {B ∷ Γ} {.B}{P , δ}{P′ , δ′} zeroˢ a (P=P′ , d=d′) = P=P′ a
+cong-lookup {B ∷ Γ} {A}{P , δ}{P′ , δ′} (sucˢ x) a (P=P′ , d=d′) =
+   cong-lookup x a d=d′
+
+congruent-lookup : ∀{Γ}{A}
+   → (x : Γ ∋ A)
+   → (a : A)
+   → congruent (λ δ → lookup x δ a)
+congruent-lookup {Γ}{A} x a d=d′ = cong-lookup x a d=d′
+
+a ∈ x = record { ♯ = λ δ → (lookup x δ) a
+               ; good = good-lookup x
+               ; congr = congruent-lookup x a }
+
+\end{code}
