@@ -96,17 +96,13 @@ equational reasoning.
 abstract
   ≡ᵒ-refl : ϕ ≡ ψ → ϕ ≡ᵒ ψ
   ≡ᵒ-refl refl i = (λ x → x) , (λ x → x)
+  
   ≡ᵒ-sym : ϕ ≡ᵒ ψ → ψ ≡ᵒ ϕ
   ≡ᵒ-sym PQ i = (proj₂ (PQ i)) , (proj₁ (PQ i))
+  
   ≡ᵒ-trans : ϕ ≡ᵒ ψ → ψ ≡ᵒ þ → ϕ ≡ᵒ þ
   ≡ᵒ-trans PQ QR i = (λ z → proj₁ (QR i) (proj₁ (PQ i) z))
                    , (λ z → proj₂ (PQ i) (proj₂ (QR i) z))
-
-  ≡ᵒ-to : ∀{ϕ ψ : Setᵒ} → ϕ ≡ᵒ ψ → (∀ k → # ϕ k → # ψ k)
-  ≡ᵒ-to ϕψ k = ⇔-to (ϕψ k) 
-
-  ≡ᵒ-fro : ∀{ϕ ψ : Setᵒ} → ϕ ≡ᵒ ψ → (∀ k → # ψ k → # ϕ k)
-  ≡ᵒ-fro ϕψ k = ⇔-fro (ϕψ k)
 instance
   SIL-Eqᵒ : EquivalenceRelation Setᵒ
   SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
@@ -245,8 +241,8 @@ cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
   where
   aux : (i : ℕ) → ↓ k (# (P a)) i ⇔ ↓ k (# (Q a)) i
   aux zero = (λ _ → tt) , λ _ → tt
-  aux (suc i) = (λ {(si≤k , Pasi) → si≤k , ≡ᵒ-to (eq a) (suc i) Pasi})
-              , (λ {(si≤k , Qasi) → si≤k , ≡ᵒ-fro (eq a) (suc i) Qasi})
+  aux (suc i) = (λ {(si≤k , Pasi) → si≤k , ⇔-to (≡ᵒ-elim (eq a)) Pasi})
+              , (λ {(si≤k , Qasi) → si≤k , ⇔-fro (≡ᵒ-elim (eq a)) Qasi})
 \end{code}
 
 A functional is \emph{wellfounded} if applying $k$-approximation to
@@ -804,7 +800,7 @@ down-μₒ {Γ}{ts}{A}{P}{a}{δ} (suc k′) μPa (suc j′) (s≤s j′≤k′) 
                 (s≤s (s≤s j′≤k′)) in
   let ↓-iter-ssj : #(↓ᵒ (suc (suc j′)) ((iter (suc (suc j′)) f ⊤ᵖ) a))
                     (suc j′)
-      ↓-iter-ssj = ≡ᵒ-to (≡ᵒ-sym eq) (suc j′) ↓-iter-ssk in
+      ↓-iter-ssj = ⇔-to (≡ᵒ-elim (≡ᵒ-sym eq)) ↓-iter-ssk in
   proj₂ ↓-iter-ssj
 \end{code}
 
