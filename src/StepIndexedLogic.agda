@@ -994,7 +994,7 @@ good-all {Γ}{Δ}{A} P x
 infix 1 ∀ˢ-syntax
 syntax ∀ˢ-syntax (λ x → P) = ∀ˢ[ x ] P
 
-{---------------------- ExisΔ -----------------------------------------}
+{---------------------- Exists -----------------------------------------}
 
 abstract
   down-∃ : ∀{A}{P : Predᵒ A}{k}{{_ : Inhabited A}}
@@ -1011,10 +1011,10 @@ abstract
       (λ {(a , b) → a , proj₁ (P=Q a i) b})
       , λ {(a , b) → a , (proj₂ (P=Q a i) b)}
 
-good-exisΔ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
+good-exists : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
    (P : A → Setˢ Γ Δ)
   → good-fun Δ (λ δ → ∃ᵒ[ a ] # (P a) δ)
-good-exisΔ {Γ}{Δ}{A} P x
+good-exists {Γ}{Δ}{A} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
       ↓ᵒ k (∃ᵒ[ a ] # (P a) δ)                                      ⩦⟨ down-∃ ⟩
@@ -1035,7 +1035,7 @@ good-exisΔ {Γ}{Δ}{A} P x
    → Setˢ Γ Δ
 ∃ˢ{Γ}{Δ}{A} P =
   record { # = λ δ → ∃ᵒ[ a ] # (P a) δ
-         ; good = good-exisΔ P
+         ; good = good-exists P
          ; congr = λ d=d′ → cong-∃ λ a → congr (P a) d=d′
          }
 
