@@ -46,7 +46,7 @@ step-indexed propositions.
 \begin{code}
 record Setᵒ : Set₁ where
   field
-    # : (ℕ → Set)
+    # : ℕ → Set
     down : downClosed #
     tz : # 0
 open Setᵒ public
@@ -60,8 +60,8 @@ Let $p, q, r$ range over (regular) propositions.
 variable p q r : Set
 \end{code}
 
-The true formula for SIL is embedded in Agda by defining an instance
-of the $\mathsf{Set}ô$ record type, with the representation function
+The ``true'' formula for SIL is embedded in Agda by defining an instance
+of the $\mathsf{Set}ᵒ$ record type, with the representation function
 mapping every natural number to true. The proofs of
 downward-closedness and true-at-zero are straightforward.
 
@@ -69,6 +69,9 @@ downward-closedness and true-at-zero are straightforward.
 ⊤ᵒ : Setᵒ
 ⊤ᵒ = record { # = λ k → ⊤ ; down = λ n _ k _ → tt ; tz = tt }
 \end{code}
+
+\noindent The rest of the SIL formulas are defined in
+Section~\ref{sec:open-propositions}.
 
 We define equivalence of step-indexed propositions $ϕ$ and $ψ$ to be
 that for any step $k$, $ϕ$ at $k$ is true if and only if $ψ$ at $k$ is
@@ -88,8 +91,8 @@ abstract
   ≡ᵒ-elim {S}{T}{k} eq = eq k
 \end{code}
 
-This is of course an equivalence relation and we make use of a
-library named \textsf{EquivalenceRelation} to provide nice syntax for
+\noindent This is an equivalence relation and we make use of a library
+named \textsf{EquivalenceRelation} to provide nice syntax for
 equational reasoning.
 
 \begin{code}
@@ -101,34 +104,31 @@ abstract
   ≡ᵒ-sym PQ i = (proj₂ (PQ i)) , (proj₁ (PQ i))
   
   ≡ᵒ-trans : ϕ ≡ᵒ ψ → ψ ≡ᵒ þ → ϕ ≡ᵒ þ
-  ≡ᵒ-trans PQ QR i = (λ z → proj₁ (QR i) (proj₁ (PQ i) z))
-                   , (λ z → proj₂ (PQ i) (proj₂ (QR i) z))
+  ≡ᵒ-trans PQ QR i = (λ z → proj₁ (QR i) (proj₁ (PQ i) z)) , (λ z → proj₂ (PQ i) (proj₂ (QR i) z))
 instance
   SIL-Eqᵒ : EquivalenceRelation Setᵒ
   SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
 \end{code}
 
-
 \section{Representation of Step-Indexed Predicates}
 
-UPDATE
+To express step-indexed predicates over arbitrary Agda types, we
+define the type $\mathsf{Pred}ᵒ A$ to be a function from $A$ to
+$\mathsf{Set}ᵒ$.
 
-It remains to define the forall and exists quantifiers of SIL.  The
-main idea is that we use Agda functions and variables to represent
-quantification in SIL, as one would do in higher-order abstract
-syntax. 
-
-Let $A,B,C$ range over Agda types (element of \textsf{Set}).
-\begin{code}
-variable A B C : Set
-\end{code}
-We define a step-indexed predicate over type $A$ to be a function from
-$A$ to $Setᵒ$.
 \begin{code}
 Predᵒ : Set → Set₁
 Predᵒ A = A → Setᵒ
 \end{code}
-Let $P, Q$ range over step-indexed predicates.
+
+\noindent Let $A,B,C$ range over Agda types (element of \textsf{Set})
+
+\begin{code}
+variable A B C : Set
+\end{code}
+
+\noindent and let $P, Q$ range over step-indexed predicates.
+
 \begin{code}
 variable P Q : Predᵒ A
 \end{code}
@@ -139,28 +139,32 @@ We define the constantly true predicate as follows.
 ⊤ᵖ = (λ a → ⊤ᵒ)
 \end{code}
 
+The equivalence of predicates applied to the same argument forms and
+equivalence relation.
+
 \begin{code}
 ≡ᵖ-refl : ∀{A}{P Q : Predᵒ A} → P ≡ Q → ∀ {a} → P a ≡ᵒ Q a
 ≡ᵖ-refl refl {a} = ≡ᵒ-refl refl
 
-≡ᵖ-sym : ∀{A}{P Q : Predᵒ A}
-  → (∀ {a} → P a ≡ᵒ Q a)
-  → ∀ {a} → Q a ≡ᵒ P a
+≡ᵖ-sym : ∀{A}{P Q : Predᵒ A} → (∀ {a} → P a ≡ᵒ Q a) → ∀ {a} → Q a ≡ᵒ P a
 ≡ᵖ-sym P=Q {a} = ≡ᵒ-sym P=Q
+
+≡ᵖ-trans : ∀{A}{P Q R : Predᵒ A} → (∀ {a} → P a ≡ᵒ Q a) → (∀ {a} → Q a ≡ᵒ R a) → ∀ {a} → P a ≡ᵒ R a
+≡ᵖ-trans P=Q Q=R {a} = ≡ᵒ-trans P=Q Q=R
 \end{code}
 
 \section{Functionals, Approximation, and Iteration}
 \label{sec:rec-pred}
 
 The definition of recursive predicates and their fixpoint theorem rely
-on three concepts: functionals, $k$-approximation, and iteration.  In
-the section we introduce these concepts and prove several important
-lemmas concerning them. We adapt these definitions and lemmas from
-\citet{Appel:2001aa}, who apply them to the semantics of recursive
-types.
+on three concepts that we introduce in this section: functionals,
+$k$-approximation, and iteration.  In the section we introduce these
+concepts and prove several important lemmas concerning them. We adapt
+these definitions and lemmas from \citet{Appel:2001aa}, who apply them
+to the semantics of recursive types.
 
-A \emph{functional} is a function over step-indexed predicates.
-Let $f,g,h$ range over functionals.
+In our setting, a \emph{functional} is a function over step-indexed
+predicates.  Let $f,g,h$ range over functionals.
 
 \begin{code}
 variable f g h : Predᵒ A → Predᵒ B
@@ -211,38 +215,37 @@ equivalent when $k=0$.
                      ; (suc i) → (λ {()}) , (λ {()})}
 \end{code}
 
-TODO
+Given two equivalent propositions $ϕ$ and $ψ$, their $k$-approximations are also
+eqivalent.
 
 \begin{code}
-abstract
-  cong-↓ᵒ : ∀{P Q : Setᵒ}
-    → (k : ℕ)
-    → P ≡ᵒ Q
-    → ↓ᵒ k P ≡ᵒ ↓ᵒ k Q
-  cong-↓ᵒ {P} {Q} k P=Q zero = (λ x → tt) , (λ x → tt)
-  cong-↓ᵒ {P} {Q} k P=Q (suc i) =
-      (λ {(a , b) → a , proj₁ (P=Q (suc i)) b})
-      , λ {(a , b) → a , proj₂ (P=Q (suc i)) b}
+cong-↓ᵒ : ∀ k → ϕ ≡ᵒ ψ → ↓ᵒ k ϕ ≡ᵒ ↓ᵒ k ψ
+cong-↓ᵒ {ϕ} {ψ} k ϕ=ψ = ≡ᵒ-intro aux
+  where
+  aux : (i : ℕ) → # (↓ᵒ k ϕ) i ⇔ # (↓ᵒ k ψ) i
+  aux zero = (λ _ → tt) , (λ _ → tt)
+  aux (suc i) = let ϕ⇔ψ = ≡ᵒ-elim ϕ=ψ in
+                (λ {(a , b) → a , ⇔-to ϕ⇔ψ b}) , λ {(a , b) → a , ⇔-fro ϕ⇔ψ b}
 \end{code}
 
 We lift $k$-approximation to be an operator on predicates with the
 following definition.
 
 \begin{code}
-↓ᵖ : ℕ → ∀{A} → Predᵒ A → Predᵒ A
+↓ᵖ : ℕ → Predᵒ A → Predᵒ A
 ↓ᵖ j P a = ↓ᵒ j (P a)
 \end{code}
 
-The $↓ᵖ$ operator is congruent.
+\noindent The $↓ᵖ$ operator is congruent.
 
 \begin{code}
-cong-↓ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
-cong-↓ {A} {k} {P} {Q} eq a = ≡ᵒ-intro aux
+cong-↓ : ∀{k} → congruentᵖ{A}{A} (↓ᵖ k)
+cong-↓ {A} {k} {P} {Q} P=Q a = ≡ᵒ-intro aux
   where
   aux : (i : ℕ) → ↓ k (# (P a)) i ⇔ ↓ k (# (Q a)) i
   aux zero = (λ _ → tt) , λ _ → tt
-  aux (suc i) = (λ {(si≤k , Pasi) → si≤k , ⇔-to (≡ᵒ-elim (eq a)) Pasi})
-              , (λ {(si≤k , Qasi) → si≤k , ⇔-fro (≡ᵒ-elim (eq a)) Qasi})
+  aux (suc i) = (λ {(si≤k , Pasi) → si≤k , ⇔-to (≡ᵒ-elim (P=Q a)) Pasi})
+              , (λ {(si≤k , Qasi) → si≤k , ⇔-fro (≡ᵒ-elim (P=Q a)) Qasi})
 \end{code}
 
 A functional is \emph{wellfounded} if applying $k$-approximation to
@@ -251,7 +254,7 @@ Intuitively, this corresponds to functions that only use their input
 at one step later in time.
 
 \begin{code}
-wellfoundedᵖ : ∀{A} (f : Predᵒ A → Predᵒ A) → Set₁
+wellfoundedᵖ : ∀ (f : Predᵒ A → Predᵒ A) → Set₁
 wellfoundedᵖ f = ∀ a P k → ↓ᵒ (suc k) (f P a) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵖ k P) a)
 \end{code}
 
@@ -264,7 +267,7 @@ iter zero    f  =  id
 iter (suc n) f  =  f ∘ iter n f
 \end{code}
 
-Iterating $k$ times is equivalent to iterating $j$ times
+\noindent Iterating $k$ times is equivalent to iterating $j$ times
 followed by $k ∸ j$ times, assuming that $j \leq k$.
 
 \begin{code}
@@ -281,8 +284,7 @@ initial predicate doesn't matter. This corresponds to Lemma 15 (part 1)
 of \citet{Appel:2001aa}.
 
 \begin{code}
-lemma15a : ∀ (j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
-  → wellfoundedᵖ f → congruentᵖ f
+lemma15a : ∀ j (f : Predᵒ A → Predᵒ A) (a : A) → wellfoundedᵖ f → congruentᵖ f
   → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter j f Q a)
 lemma15a zero f a wf-f cong-f = ↓ᵒ-zero
 lemma15a {A}{P}{Q} (suc j) f a wf-f cong-f =
@@ -298,8 +300,7 @@ functional more then $j$ times does not change the result.  This
 corresponds to Lemma 15 (part 2) of \citet{Appel:2001aa}.
 
 \begin{code}
-lemma15b : (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A)
-   → j ≤ k → wellfoundedᵖ f → congruentᵖ f
+lemma15b : (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A) → j ≤ k → wellfoundedᵖ f → congruentᵖ f
    → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter k f P a)
 lemma15b {A}{P} k j f a j≤k wf-f cong-f =
   ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j f a wf-f cong-f ⟩
@@ -308,8 +309,9 @@ lemma15b {A}{P} k j f a j≤k wf-f cong-f =
   ↓ᵒ j (iter k f P a)   ∎
 \end{code}
 
-Applying the $k$ and $k \plus 1$ approximations in sequence to a
-predicate is equivalent to just applying the $k$ approximation.
+Appoximations are idempotent in the sense that applying the $k$ and
+$k \plus 1$ approximations in sequence to a predicate is equivalent to
+just applying the $k$ approximation.
 
 \begin{code}
 lemma17 : ∀{k}{a} → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
@@ -322,126 +324,38 @@ lemma17 {A}{P}{k}{a} = ≡ᵒ-intro aux
 
 %===============================================================================
 \section{Open Step-Indexed Propositions}
-\label{sec:rec-pred}
+\label{sec:open-propositions}
 
-Our goal is to define an operator for recursive predicates and relations
-with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
-recursive relation and $R$ is the definition of the relation, which
-can refer to $x$. We shall prove a fixpoint theorem which states that
-the recursive predicate is equal to its unfolding, something like the
-following.
-\[
-  (μᵒ x. R) \app δ \app a ≡ᵒ R \app δ(x:= μᵒ x. R) \app a
-\]
-where $δ$ is an environment mapping variables to predicates.
-
-\subsection{Review of the Fixpoint Theorem of Appel and McAllester}
-
-Our proof of this fixpoint theorem is inspired by the fixpoint theorem
-of \citet{Appel:2001aa}. In that work, \citet{Appel:2001aa} use
-step-indexing to give a semantic definition of recursive types. Their
-fixpoint theorem proves that a recursive type is equal to its unfolding.
-They define a (semantic) type $\tau$ to be a relation between step indexes and
-syntactic values. They do not define a syntax for types, but instead
-define operators for constructing semantic types as follows.
-\begin{align*}
-  ⊥ &= \{ \} \\
-  ⊤ &= \{ ⟨k,v⟩ \mid k ∈ ℕ\} \\
-  \mathbf{int} &= \{⟨k,n⟩ \mid k ∈ ℕ, n ∈ ℤ \}\\
-  τ₁ × τ₂ &= \{ ⟨k,(v₁,v₂)⟩ \mid ∀j<k. ⟨j,v₁⟩∈τ₁, ⟨j,v₂⟩∈τ₂ \} \\
-  τ₁ → τ₂ &= \{ ⟨k,λx.e⟩ \mid ∀j<k.∀v. ⟨j,v⟩∈τ₁ ⇒ e[v/x] :ⱼ τ₂ \} \\
-  μ F &= \{ ⟨k,v⟩ \mid ⟨k,v⟩ ∈ F^{k\plus 1}(⊥) \}
-    & \text{if } F : \tau \to \tau'
-\end{align*}
-Their fixpoint theorem says that for any well founded $F$,
-\[
-  μ F = F(μF)
-\]
-A well founded function $F$ on types is
-one in which each pair in the output $⟨k,v⟩$ only depends
-on later pairs in the input, that is, pairs of the form $⟨j,v′⟩$
-where $j < k$. \citet{Appel:2001aa} characterize this dependency
-with the help of the $k$-approximation function:
-\[
-  \kapprox(k,τ) = \{ ⟨j,v⟩ \mid j < k, ⟨j,v⟩ ∈ τ\} 
-\]
-They define a \emph{well founded} function $F$ to be one that
-satisfies the following equation.
-\[
-  \kapprox(k \plus 1, F(τ)) = \kapprox(k \plus 1, F(\kapprox(k,τ)))
-\]
-
-Functions over semantic types are not always well founded.  For
-example, the identity function $λα.α$ is not well founded, so one
-cannot apply the fixpoint theorem to the recursive type $μ(λα.α)$
-(which corresponds to the syntactic type $μα.α$).
-On the other hand, the function
-$λα.α×α$ is well founded because of the strict less-than in the
-definition of the $×$ operator. So the fixpont theorem applies to
-$μ(λα.α×α)$.  In general, a function built from the type operators is
-well founded so long as the recursive $α$ only appears underneath a
-type constructor such as $×$ or $→$. \citet{Appel:2001aa} prove this
-fact, which relies on the auxilliary notion of a nonexpansive
-function. In such a function, the output can depend on pairs at the
-current step index as well as later ones. So a \emph{nonexpansive}
-function satisfies the following equation.
-\[
-  \kapprox(k, F(τ)) = \kapprox(k, F(\kapprox(k,τ)))
-\]
-For example, $λα.α$ is nonexpansive and so is $λα.\mathbf{int}$.
-\citet{Appel:2001aa} then prove lemmas about the type constructors.
-For example, regarding products, they prove that if $F$ and $G$
-are nonexpansive functions, then so is $λ α. (F α) × (G α)$.
-
-It is worth noting that \citet{Appel:2001aa} neglect to prove such 
-lemmas for the $μ$ operator itself. For example, given $F : τ₁ → τ₂ → τ₃$
-that is nonexpansive in its first parameter and well founded in
-its second, then $λ α. μ (F α)$ is nonexpansive.
-On the other hand, if $F$ is well founded in both parameters,
-then $λ α. μ (F α)$ is well founded. We shall return to this point later.
-
-
-Comparing the type operators of \citet{Appel:2001aa} to the logic
-operators of SIL, there are striking similarities. The function type
-operator is quite similar to implication, although one difference is
-that the function type operator uses strict less-than whereas
-implication uses non-strict less-than. The logic introduces the
-``later`` operator, whereas the type operators essentially bake the
-later operator into the type operators through their use of strict
-less-than.
-
-Our definition of recursive predicates will be similar to the
-recursive type of \citet{Appel:2001aa} in that we shall define the
-meaning of a recursive predicate by iteration.  On the other hand, we
-do not want a fixpoint theorem that requires the user of the logic to
-provide a proof that a particular proposition is well
-founded. Instead, we shall introduce a type system for propositions
-that ensure that $μ$ is only applied to well founded propositions, and
-that the proof of well foundedness is provided by our logic operators,
-not by the user of the logic.
-
-We shall require that a recursive predicate is only used underneath at
-least one ``later'' operator. To enforce this restriction, we use an
-explicit representation for variables (unlike the situation for forall
-and exists quantifiers). We choose de Bruijn indices that are well
-typed. That is, the type of the variable specifies the input type of
-the predicate.  (For relations, the input type is a product.)
+For the purposes of defining recursive predicates, we need to
+introduce variables that can refer to the recursively-bound
+predicates. Furthermore, we shall require that each variable occurence
+be separated from its binding by at least one ``later'' operator. To
+enforce this restriction, we use an explicit representation for
+variables. We choose de Bruijn indices that are well typed. That is,
+the type of the variable specifies the input type of the predicate.
+(For relations, the input type is a product.) So a \textsf{Context}
+is a list of types. The metavariable $Γ$ ranges over contexts.
 
 \begin{code}
 Context : Set₁
 Context = List Set
 variable Γ : Context
+\end{code}
 
+\noindent The following data type defines well-typed de Bruijn indices.
+
+\begin{code}
 data _∋_ : Context → Set → Set₁ where
   zeroˢ : (A ∷ Γ) ∋ A
   sucˢ : Γ ∋ B → (A ∷ Γ) ∋ B
 variable x y z : Γ ∋ A
 \end{code}
 
-These indices are used to index into a tuple of recursive
-predicates. The following is the type for such a tuple, with one
-predicate for each variable in the context.\footnote{$\mathsf{top}ᵖ$
-is how to say ``true`` in $\mathsf{Set}₁$.}
+These de Bruijn indices are used to access elements in the
+environment, which is represented by a tuple of predicates. The
+following is the type for such a tuple, with one predicate for each
+variable in the context.\footnote{$\mathsf{top}ᵖ$ is how to say
+``true`` in $\mathsf{Set}₁$.} 
 
 \begin{code}
 RecEnv : Context → Set₁
@@ -449,11 +363,16 @@ RecEnv [] = topᵖ
 RecEnv (A ∷ Γ) = (Predᵒ A) × RecEnv Γ
 \end{code}
 
-We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
+\noindent Let $δ$ range over environments.
+\begin{code}
+variable δ : RecEnv Γ
+\end{code}
+
+\noindent We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
 \emph{environment functional}.
 
-To keep track of whether a variable has been used inside or outside of
-a later operator, we introduce a notion of time and we introduce a
+To keep track of whether a variable has been used underneath a later
+operator or not, we introduce a notion of time and we introduce a
 specialized list type to record the times for all the variables in a
 context.
 
@@ -471,44 +390,45 @@ Let $Δ$ range over these lists of times.
 variable Δ Δ₁ Δ₂ : Times Γ
 \end{code}
 
-We shall define another record type, \textsf{Set}$^s$ for open step-indexed
+We define another record type, $\mathsf{Set}ˢ$ for open step-indexed
 propositions, that is, propositions that may contain free variables.
 \begin{code}
 record Setˢ (Γ : Context) (Δ : Times Γ) : Set₁
 \end{code}
-Let $F,G,H$ range over \textsf{Set}$^s$.
+Let $F,G,H$ range over $\mathsf{Set}ˢ$.
 \begin{code}
 variable F G H : Setˢ Γ Δ
 \end{code}
 
-We explain the type system for \textsf{Set}$^s$ in 
-Figure~\ref{fig:SIL-type-system}, using traditional notation.
-The judgment $Γ ⊢ F ⊣ Δ$ holds when $F$ uses the variables
-in $Γ$ at the times specified in $Δ$. For example,
-membership $M ∈ x$ is well typed when $x$ is in $Γ$
-and $Δ$ assigns $x$ to $\Now$ and all the other variables
-in $Γ$ to $\Later$. The later formula $▷ˢ F$ is well typed
-at $\laters(Γ)$ when $F$ is well typed at $Δ$. The recursive formula
-$μˢ F$ is well typed in $Γ$ at $Δ$ if $F$ is well typed
-in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
-by the $μˢ$ has type $A$ and may only be used later.
-There is some redundancy in the type system, for example,
-in the rule for membership $\varnow(Γ,x) = Δ$ could
-instead simply check that $Δ$ maps $x$ to $\Now$.
-However, this redundancy helps the Agda inference algorithm
-when working with partial proofs.
-
+We explain the type system for \textsf{Set}$^s$ in
+Figure~\ref{fig:SIL-type-system}.  The membership formula $M ∈ x$ is
+well-typed when variable $x$ is in $Γ$ and $Δ$ assigns $x$ to $\Now$ and all
+the other variables in $Γ$ to $\Later$. We use the function $\varnow$
+to express this constraint, which also relies on the
+auxiliary $\laters$ function.
 \begin{code}
 laters : ∀ (Γ : Context) → Times Γ
 laters [] = ∅
 laters (A ∷ Γ) = cons Later (laters Γ)
-\end{code}
 
-\begin{code}
 var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
 var-now (B ∷ Γ) zeroˢ = cons Now (laters Γ)
 var-now (B ∷ Γ) (sucˢ x) = cons Later (var-now Γ x)
 \end{code}
+
+\noindent There is some redundancy in the type system, for example, in
+this rule for membership we could instead simply check that $Δ$ maps
+$x$ to $\Now$ and not place any constraints on the other variables.
+However, the redundancy helps Agda's inference algorithm when working
+with partial proofs.
+
+The later formula $▷ˢ F$ is well-typed at $\laters(Γ)$ when $F$ is
+well-typed at $Δ$.
+
+The implication formula $F →ˢ G$ is well-typed in $Γ$ at the combined
+times $Δ₁ ∪ Δ₂$ when $F$ is well-typed in $Γ$ at $Δ₁$ and $G$ is
+well-typed in $Γ$ at $Δ₂$. We combine lists of times using the
+following auxiliary functions.
 
 \begin{code}
 choose : Time → Time → Time
@@ -524,39 +444,50 @@ _∪_ {[]} Δ₁ Δ₂ = ∅
 _∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (_∪_ Δ₁ Δ₂)
 \end{code}
 
-\begin{figure}
-\raggedright
-\fbox{$Γ ⊢ F ⊣ Δ$}
-\begin{gather*}
-\inference{M : A & x : Γ ∋ A & \varnow(Γ,x) = Δ}{Γ ⊢ M ∈ x ⊣ Δ} \quad
-\inference{Γ ⊢ F ⊣ Δ}{Γ ⊢ \, ▷ˢ F ⊣\, \laters(Γ)} \\[2ex]
-\inference{Γ⊢ F ⊣ Δ₁  & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F →ˢ G ⊣ Δ₁ ∪ Δ₂} \quad
-\inference{Γ ⊢ F ⊣ Δ₁ & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F ×ˢ G ⊣ Δ₁ ∪ Δ₂} \quad
-\inference{Γ ⊢ F ⊣ Δ₁ & Γ ⊢ G ⊣ Δ₂}{Γ ⊢ F ⊎ˢ G ⊣ Δ₁ ∪ Δ₂} \\[2ex]
-\inference{∀ a ∈ A.\, Γ ⊢ f a ⊣ Δ}{Γ ⊢ ∀ˢ f ⊣ Δ} \quad
-\inference{∀ a ∈ A.\, Γ ⊢ f a ⊣ Δ}{Γ ⊢ ∃ˢ f ⊣ Δ} \quad
-\inference{}{Γ ⊢ p ˢ ⊣ \laters(Δ)}\\[2ex]
-\inference{Γ,A ⊢ F ⊣ Δ,\mathsf{Later}}{Γ ⊢ μˢ F ⊣ Δ}
-\end{gather*}
-\caption{Type System for Well Founded and Nonexpansive Formulas}
-\label{fig:SIL-type-system}
-\end{figure}
-
-% TODO: decide whether applyˢ is needed
-
-
-The exists quantifier requires that the type $A$ be inhabited to
-obtain the true-at-zero property. We do not wish this requirement to
-clutter every use of the exists quantifier, so we use Agda's support
-for instance arguments (think type classes). So we define the
-following record type and use it as an implicit instance argument in
-the definition of the exists quantifier.
+The universal and exists quantifiers use Agda functions, as one would
+do in higher-order abstract syntax.  The exists quantifier requires
+that the type $A$ be inhabited to obtain the true-at-zero property. We
+do not wish this requirement to clutter every use of the exists
+quantifier, so we use Agda's support for instance arguments (think
+type classes). So we define the following record type and use it as an
+implicit instance argument in the definition of the exists quantifier.
 
 \begin{code}
 record Inhabited (A : Set) : Set where
   field elt : A
 open Inhabited {{...}} public
 \end{code}
+
+The recursive formula $μˢ F$ is well-typed in $Γ$ at $Δ$ if $F$ is
+well typed in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
+by the $μˢ$ has type $A$ and may only be used later.
+
+
+\begin{figure}
+\raggedright
+\fbox{$F : \mathsf{Set}ˢ \, Γ \, Δ$}
+\begin{gather*}
+\inference{M : A & x : Γ ∋ A}
+          {M ∈ x  : \mathsf{Set}ˢ \,Γ \,\varnow(Γ,x)} \quad
+\inference{F : \mathsf{Set}ˢ\,Γ\, Δ}
+          {▷ˢ F : \mathsf{Set}ˢ \,Γ\,\laters(Γ)} \\[2ex]
+\inference{F : \mathsf{Set}ˢ\, Γ \, Δ₁  & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
+          {F →ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \quad
+\inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
+          {F ×ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \quad
+\inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
+          {F ⊎ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \\[2ex]
+\inference{∀ a ∈ A.\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
+          {∀ˢ f : \mathsf{Set}ˢ\,Γ\, Δ} \quad
+\inference{∀ a ∈ A.\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
+          {∃ˢ f : \mathsf{Set}ˢ\,Γ\, Δ} \quad
+\inference{}{p ˢ : \mathsf{Set}ˢ\,Γ\, \laters(Δ)}\\[2ex]
+\inference{F : \mathsf{Set}ˢ\,(Γ,A)\, Δ,\mathsf{Later}}
+          {μˢ F : \mathsf{Set}ˢ\,Γ\, Δ}
+\end{gather*}
+\caption{Type System for Open Step-Indexed Formulas}
+\label{fig:SIL-type-system}
+\end{figure}
 
 The type system is implemented in the type signatures for the logical
 operators, which we declare as follows.
@@ -576,6 +507,14 @@ _ˢ : Set → Setˢ Γ (laters Γ)
 μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 \end{code}
 
+Above we declared the type $\mathsf{Set}ˢ$ for open propositions but
+we have not yet given its definition. Similar to $\mathsf{Set}ᵒ$ it
+will be a record type. Its principal field is an environment
+functional ($\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$) that represents
+the meaning of the formula. Furthermore the record will include two
+properties, that the functional is congruent and that it is
+wellfounded in a sense that will take some effort to define.
+
 We apply $k$-approximation to one of the predicates in an environment
 with the $↓ᵈ$ operator. The second parameter, a variable, specifies
 which predicate to apply the $k$-approximation.
@@ -588,7 +527,7 @@ which predicate to apply the $k$-approximation.
 
 The semantic conditions that correspond to using the variable for a
 recursive predicate now vs. later are the notion of nonexpansive
-and wellfounded we reviewed in Section~\ref{sec:rec-pred}.
+and wellfounded we reviewed in Section~\ref{sec:intro}.
 A direct adaptation of nonexpansive to our setting yields the following,
 which says that given any environment $δ$ and variable $x$,
 the $k$-approximation of $P\app δ$ is equivalent to the
@@ -604,20 +543,21 @@ the $δ$ with respect to variable $x$.
 \[
   ↓ (suc \app k) (P δ) ≡ᵒ ↓ (suc\app k) (P (↓ᵈ k x δ)
 \]
-
 However, these definitions of nonexpansive and wellfounded were not
 general enough to handle more than one recursive predicate in scope.
-(Recall that \citet{Appel:2001aa} neglected to prove that $μ$ preserves
-nonexpansive and wellfounded propositions.)
-So instead of taking the $k$-approximation of the input $δ$, we
-generalize $k$ to any $j$ greater or equal to $k$.
+(Recall that \citet{Appel:2001aa} neglected to prove that $μ$
+preserves nonexpansive and wellfounded propositions.)  So instead of
+taking the $k$-approximation of the input $δ$, we generalize $k$ to
+any $j$ greater or equal to $k$, yielding the following notions of
+\emph{strongly nonexpansive} and \emph{strongly wellfounded}
+functionals.
 
 \begin{code}
-nonexpansive-fun : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
-nonexpansive-fun x f = ∀ δ j k → k ≤ j → ↓ᵒ k (f δ) ≡ᵒ ↓ᵒ k (f (↓ᵈ j x δ))
+strongly-nonexpansive : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
+strongly-nonexpansive x f = ∀ δ j k → k ≤ j → ↓ᵒ k (f δ) ≡ᵒ ↓ᵒ k (f (↓ᵈ j x δ))
 
-wellfounded-fun : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
-wellfounded-fun x f = ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (f δ) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵈ j x δ))
+strongly-wellfounded : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
+strongly-wellfounded x f = ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (f δ) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵈ j x δ))
 \end{code}
 
 We say that a functional $f$ is ``good'' with respect to variable $x$
@@ -626,8 +566,8 @@ at time $t$ if it is either \textsf{nonexpansive} (when $t = \Now$) or
 
 \begin{code}
 good-var : (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
-good-var x Now f = nonexpansive-fun x f
-good-var x Later f = wellfounded-fun x f
+good-var x Now f = strongly-nonexpansive x f
+good-var x Later f = strongly-wellfounded x f
 \end{code}
 
 \noindent Next we define the \textsf{timeof} function to lookup the
@@ -647,7 +587,7 @@ good-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
 good-fun {Γ} Δ f = ∀{A} (x : Γ ∋ A) → good-var x (timeof x Δ) f
 \end{code}
 
-Two environments are equivalent if they are point-wise equivalent.
+\noindent Two environments are equivalent if they are point-wise equivalent.
 
 \begin{code}
 _≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
@@ -663,9 +603,9 @@ congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
 congruent f = ∀{δ δ′} → δ ≡ᵈ δ′ → (f δ) ≡ᵒ (f δ′)
 \end{code}
 
-We can now define $\mathsf{Set}ˢ$ as the following record type.
-The meaning is given by a functional and we require proofs that
-the functional is good and congruent.
+We define $\mathsf{Set}ˢ$ as the following record type.  The meaning
+is given by a functional and we require proofs that the functional is
+good and congruent.
 
 \begin{code}
 record Setˢ Γ Δ where
@@ -676,9 +616,7 @@ record Setˢ Γ Δ where
 open Setˢ public
 \end{code}
 
-
 \subsection{Recursive Predicates}
-
 
 Next we define an auxilliary function $μₒ$ that takes a function $f$
 over step-indexed predicates and produces a raw step-indexed predicate
