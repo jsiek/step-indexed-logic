@@ -7,7 +7,7 @@ open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
 open import Data.Nat.Properties
-   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤)
+   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s)
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -154,7 +154,7 @@ equivalence relation.
 \end{code}
 
 \section{Functionals, Approximation, and Iteration}
-\label{sec:rec-pred}
+\label{sec:fun-approx-iter}
 
 The definition of recursive predicates and their fixpoint theorem rely
 on three concepts that we introduce in this section: functionals,
@@ -271,11 +271,11 @@ iter (suc n) f  =  f ∘ iter n f
 followed by $k ∸ j$ times, assuming that $j \leq k$.
 
 \begin{code}
-iter-subtract : ∀{ℓ}{A : Set ℓ}{P : A} (F : A → A) (j k : ℕ) → j ≤ k
-  → iter j F (iter (k ∸ j) F P) ≡ iter k F P
-iter-subtract {A = A} {P} F .zero k z≤n = refl
-iter-subtract {A = A} {P} F (suc j) (suc k) (s≤s j≤k)
-  rewrite iter-subtract{A = A}{P} F j k j≤k = refl
+iter-subtract : ∀{ℓ}{A : Set ℓ}{a : A} (F : A → A) (j k : ℕ) → j ≤ k
+  → iter j F (iter (k ∸ j) F a) ≡ iter k F a
+iter-subtract {A = A} {a} F .zero k z≤n = refl
+iter-subtract {A = A} {a} F (suc j) (suc k) (s≤s j≤k)
+  rewrite iter-subtract{A = A}{a} F j k j≤k = refl
 \end{code}
 
 Suppose a functional is wellfounded and congruent.  If you iterate the
@@ -310,16 +310,24 @@ lemma15b {A}{P} k j f a j≤k wf-f cong-f =
 \end{code}
 
 Appoximations are idempotent in the sense that applying the $k$ and
-$k \plus 1$ approximations in sequence to a predicate is equivalent to
-just applying the $k$ approximation.
+$j$ approximations in sequence, when $j \leq k$, is equivalent to
+just applying the $j$ approximation.
+
+\begin{code}
+double-↓ : ∀{j k a} (P : Predᵒ A) → j ≤ k → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
+double-↓ {A}{j}{k}{a} P j≤k = ≡ᵒ-intro aux
+  where
+  aux : ∀ i → # (↓ᵖ j (↓ᵖ k P) a) i ⇔ # (↓ᵖ j P a) i
+  aux zero = (λ _ → tt) , (λ _ → tt)
+  aux (suc i) = (λ { (i≤j , ↓kPasi) → i≤j , proj₂ ↓kPasi}) , λ {(i≤j , Pasi) → i≤j , ((≤-trans i≤j j≤k) , Pasi)}
+\end{code}
+
+This is a generalization of Lemma 17 of \citet{Appel:2001aa}, in which
+$j = k - 1$.
 
 \begin{code}
 lemma17 : ∀{k}{a} → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
-lemma17 {A}{P}{k}{a} = ≡ᵒ-intro aux
-  where
-  aux : (i : ℕ) → # (↓ᵖ k (↓ᵖ (suc k) P) a) i ⇔ # (↓ᵖ k P a) i
-  aux zero = (λ _ → tt) , (λ _ → tt)
-  aux (suc i) = (λ {(x , (y , z)) → x , z}) , (λ {(x , y) → x , (s≤s (<⇒≤ x) , y)})
+lemma17 {A}{P}{k}{a} = double-↓ P (n≤1+n k)
 \end{code}
 
 %===============================================================================
@@ -401,7 +409,7 @@ variable F G H : Setˢ Γ Δ
 \end{code}
 
 We explain the type system for \textsf{Set}$^s$ in
-Figure~\ref{fig:SIL-type-system}.  The membership formula $M ∈ x$ is
+Figure~\ref{fig:SIL-type-system}.  The membership formula $a ∈ x$ is
 well-typed when variable $x$ is in $Γ$ and $Δ$ assigns $x$ to $\Now$ and all
 the other variables in $Γ$ to $\Later$. We use the function $\varnow$
 to express this constraint, which also relies on the
@@ -441,7 +449,7 @@ choose Later Later = Later
 \begin{code}
 _∪_ : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
 _∪_ {[]} Δ₁ Δ₂ = ∅
-_∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (_∪_ Δ₁ Δ₂)
+_∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (Δ₁ ∪ Δ₂)
 \end{code}
 
 The universal and exists quantifiers use Agda functions, as one would
@@ -467,8 +475,8 @@ by the $μˢ$ has type $A$ and may only be used later.
 \raggedright
 \fbox{$F : \mathsf{Set}ˢ \, Γ \, Δ$}
 \begin{gather*}
-\inference{M : A & x : Γ ∋ A}
-          {M ∈ x  : \mathsf{Set}ˢ \,Γ \,\varnow(Γ,x)} \quad
+\inference{a : A & x : Γ ∋ A}
+          {a ∈ x  : \mathsf{Set}ˢ \,Γ \,\varnow\,Γ\,x} \quad
 \inference{F : \mathsf{Set}ˢ\,Γ\, Δ}
           {▷ˢ F : \mathsf{Set}ˢ \,Γ\,\laters(Γ)} \\[2ex]
 \inference{F : \mathsf{Set}ˢ\, Γ \, Δ₁  & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
@@ -489,31 +497,43 @@ by the $μˢ$ has type $A$ and may only be used later.
 \label{fig:SIL-type-system}
 \end{figure}
 
-The type system is implemented in the type signatures for the logical
-operators, which we declare as follows.
+The type system is implemented by the type signatures for the logical
+operators, which we declare in Figure~{fig:SIL-decl}.
 
+\begin{figure}
 \begin{code}
 _∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
+
 ▷ˢ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
+
 infixr 6 _→ˢ_
 _→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+
 infixr 7 _×ˢ_
 _×ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+
 infixr 7 _⊎ˢ_
 _⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
+
 ∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
+
 ∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
+
 _ˢ : Set → Setˢ Γ (laters Γ)
+
 μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 \end{code}
+\caption{Declarations of the Open Step-Indexed Formula}
+\label{fig:SIL-decl}
+\end{figure}
 
-Above we declared the type $\mathsf{Set}ˢ$ for open propositions but
-we have not yet given its definition. Similar to $\mathsf{Set}ᵒ$ it
-will be a record type. Its principal field is an environment
-functional ($\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$) that represents
-the meaning of the formula. Furthermore the record will include two
-properties, that the functional is congruent and that it is
-wellfounded in a sense that will take some effort to define.
+We have declared the type $\mathsf{Set}ˢ$ for open propositions but we
+have not yet given its definition. Similar to $\mathsf{Set}ᵒ$ it will
+be a record type. Its principal field is an environment functional
+($\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$) that represents the meaning
+of the formula. The record will also include two properties, that the
+functional is congruent and that it is wellfounded in a sense that is
+somewhat involved.
 
 We apply $k$-approximation to one of the predicates in an environment
 with the $↓ᵈ$ operator. The second parameter, a variable, specifies
@@ -616,7 +636,110 @@ record Setˢ Γ Δ where
 open Setˢ public
 \end{code}
 
-\subsection{Recursive Predicates}
+In the following subsections we define the logic operators that are
+declared in Figure~\ref{fig:SIL-decl}. We start with the membership
+formula to get warmed up, and then dive into the most difficult case,
+of recursive predicates.
+
+\subsection{Membership in Recursive Predicate}
+
+The following \textsf{lookup} function retrieves from the environment
+the predicate associated with a particular variable.
+
+\begin{code}
+lookup : Γ ∋ A → RecEnv Γ → Predᵒ A
+lookup zeroˢ (P , δ) = P
+lookup (sucˢ x) (P , δ) = lookup x δ
+\end{code}
+
+The lemma $\mathsf{double}\mbox{-}↓$ that we defined in Section~\ref{sec:fun-approx-iter}
+generalizes to the \textsf{lookup} function as follows.
+
+\begin{code}
+↓-lookup : ∀{a}{k j}{δ : RecEnv Γ} (x : Γ ∋ A) (y : Γ ∋ B) → k ≤ j
+   → ↓ᵒ k (lookup{Γ}{A} x δ a) ≡ᵒ ↓ᵒ k (lookup{Γ}{A} x (↓ᵈ j y δ) a)
+↓-lookup {δ = P , δ} zeroˢ zeroˢ k≤j = ≡ᵒ-sym (double-↓ P k≤j)
+↓-lookup zeroˢ (sucˢ y) k≤j = ≡ᵒ-refl refl
+↓-lookup (sucˢ x) zeroˢ k≤j = ≡ᵒ-refl refl
+↓-lookup (sucˢ x) (sucˢ y) k≤j = ↓-lookup x y k≤j
+\end{code}
+
+Approximating an environment δ with respect to variable $y$ does not
+change the result of lookup for any other variable $x$. Because
+$x$ and $y$ have different types, it is not convenient in Agda to
+compare them directly, so we instead compare their times in Δ.
+
+\begin{code}
+lookup-diff : ∀{Γ}{Δ : Times Γ}{A}{B}{δ : RecEnv Γ}{j} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≢ timeof y Δ
+   → lookup{Γ}{A} x (↓ᵈ j y δ) ≡ lookup{Γ}{A} x δ
+lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
+lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ (sucˢ y) neq = refl
+lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) zeroˢ neq = refl
+lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
+\end{code}
+
+The time of a variable $x$ in the list of times produced by $\varnow\,Γ\,x$
+is \textsf{Now}.
+
+\begin{code}
+timeof-var-now : ∀{Γ}{A} → (x : Γ ∋ A) → timeof x (var-now Γ x) ≡ Now
+timeof-var-now {B ∷ Γ} zeroˢ = refl
+timeof-var-now {B ∷ Γ} (sucˢ x) = timeof-var-now x
+\end{code}
+
+The time of a variable $x$ in the list of times produced by $\laters(Γ)$
+is \textsf{Later}.
+
+\begin{code}
+timeof-later : ∀{Γ}{A} (x : Γ ∋ A) → (timeof x (laters Γ)) ≡ Later
+timeof-later {B ∷ Γ} zeroˢ = refl
+timeof-later {B ∷ Γ} (sucˢ x) = timeof-later x
+\end{code}
+
+The \textsf{lookup} function for a variable $x$ is a ``good'' functional
+when the list of times Δ is the result of $\varnow\,Γ\,x$. Because the
+time of $x$ in $\varnow\,Γ\,x$ is \textsf{Now}, this amounts to proving
+that \textsf{lookup} is strongly nonexpansive.
+
+\begin{code}
+good-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → good-fun (var-now Γ x) (λ δ → lookup x δ a)
+good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ (P , δ) j k k≤j = ≡ᵒ-sym (double-↓ P k≤j)
+good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y =
+   λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
+good-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
+good-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
+    with timeof y (var-now Γ x) in eq-y
+... | Now = λ{(P , δ) j k k≤j → ↓-lookup x y k≤j }
+... | Later =
+      λ{(P , δ) j k k≤j →
+          let eq = (lookup-diff{Γ}{_}{_}{_}{δ}{j} x y
+                        (timeof-diff x y (timeof-var-now x) eq-y)) in
+          subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a))
+                (sym eq) (≡ᵒ-refl refl)}
+    where
+    timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B)
+       → timeof x Δ ≡ Now → timeof y Δ ≡ Later
+       → timeof x Δ ≢ timeof y Δ
+    timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
+\end{code}
+
+
+\begin{code}
+congruent-lookup : ∀{Γ}{A} (x : Γ ∋ A) (a : A) → congruent (λ δ → lookup x δ a)
+congruent-lookup {Γ}{A} x a d=d′ = aux x a d=d′
+  where
+  aux : ∀{Γ}{A}{δ δ′ : RecEnv Γ} (x : Γ ∋ A) (a : A) → δ ≡ᵈ δ′
+     → lookup x δ a ≡ᵒ lookup x δ′ a
+  aux {B ∷ Γ} {.B}{P , δ}{P′ , δ′} zeroˢ a (P=P′ , d=d′) = P=P′ a
+  aux {B ∷ Γ} {A}{P , δ}{P′ , δ′} (sucˢ x) a (P=P′ , d=d′) =
+     aux x a d=d′
+\end{code}
+
+\begin{code}
+a ∈ x = record { ♯ = λ δ → (lookup x δ) a ; good = good-lookup x ; congr = congruent-lookup x a }
+\end{code}
+
+\subsection{Recursive Predicate}
 
 Next we define an auxilliary function $μₒ$ that takes a function $f$
 over step-indexed predicates and produces a raw step-indexed predicate
@@ -948,132 +1071,6 @@ congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
 \end{code}
 
 
-
-\subsection{Membership in Recursive Predicate}
-
-\begin{code}
-lookup : ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → Predᵒ A
-lookup {B ∷ Γ} {.B} zeroˢ (P , δ) = P
-lookup {B ∷ Γ} {A} (sucˢ x) (P , δ) = lookup{Γ}{A} x δ
-\end{code}
-
-\begin{code}
-lemma17b : ∀{A}{P : Predᵒ A}{j}{k}{a : A}
-   → suc j ≤′ k
-   → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
-lemma17b {A} {P} {j} {.(suc j)} {a} _≤′_.≤′-refl = lemma17{A}{P}{j}{a}
-lemma17b {A} {P} {j} {suc k} {a} (≤′-step j≤k) =
-    ↓ᵖ j (↓ᵖ (suc k) P) a           ⩦⟨ ≡ᵒ-sym (lemma17b{A}{↓ᵖ (suc k) P} j≤k) ⟩
-    ↓ᵖ j (↓ᵖ k (↓ᵖ (suc k) P)) a      ⩦⟨ E1 ⟩
-    ↓ᵖ j (↓ᵖ k P) a                   ⩦⟨ lemma17b{A}{P}{j}{k}{a} j≤k ⟩ 
-    ↓ᵖ j P a   ∎
-    where
-    E1 = cong-↓{A}{j}{(↓ᵖ k (↓ᵖ (suc k) P))}{(↓ᵖ k P)}
-         (λ a → lemma17{A}{P}{k}{a}) a 
-
-lemma17c : ∀{A}{P : Predᵒ A}{j}{k}{a : A} → j < k
-   → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
-lemma17c {A} {P} {j} {k} {a} j<k = lemma17b{A}{P}{j}{k}{a} (≤⇒≤′ j<k)
-
-abstract 
-  lemma17d : ∀{A}{P : Predᵒ A}{k}{a : A}
-     → ↓ᵖ k (↓ᵖ k P) a ≡ᵒ ↓ᵖ k P a
-  lemma17d {A} {P} {k} {a} zero = (λ x → tt) , (λ x → tt)
-  lemma17d {A} {P} {k} {a} (suc i) = (λ {(x , (y , z)) → y , z}) , λ {(x , y) → x , (x , y)}
-
-lemma17e : ∀{A}{P : Predᵒ A}{j}{k}{a : A} → j ≤ k
-   → ↓ᵖ j (↓ᵖ k P) a ≡ᵒ ↓ᵖ j P a
-lemma17e {A} {P} {j} {k} {a} j≤k
-    with ≤⇒≤′ j≤k
-... | _≤′_.≤′-refl = lemma17d{A}{P}
-... | ≤′-step j≤n = lemma17c{A}{P} (s≤s (≤′⇒≤ j≤n))
-\end{code}
-
-
-\begin{code}
-↓-lookup : ∀{Γ}{A}{B}{a}{k}{j}{δ : RecEnv Γ}
-   → (x : Γ ∋ A)
-   → (y : Γ ∋ B)
-   → k ≤ j
-   → ↓ᵒ k (lookup{Γ}{A} x δ a) ≡ᵒ ↓ᵒ k (lookup{Γ}{A} x (↓ᵈ j y δ) a)
-↓-lookup {C ∷ Γ}  {.C} {.C} {a} {k} {j} {P , δ} zeroˢ zeroˢ k≤j =
-    ≡ᵒ-sym (lemma17e{_}{P}{k}{j}{a} k≤j)
-↓-lookup {C ∷ Γ} {.C} {B} {a} {k} {j} {P , δ} zeroˢ (sucˢ y) k≤j =
-    ≡ᵒ-refl refl
-↓-lookup {C ∷ Γ} {A} {.C} {a} {k} {j} {P , δ} (sucˢ x) zeroˢ k≤j =
-   ≡ᵒ-refl refl
-↓-lookup {C ∷ Γ} {A}{B}{a}{k} {j} {P , δ} (sucˢ x) (sucˢ y) k≤j =
-   ↓-lookup x y k≤j
-
-lookup-diff : ∀{Γ}{Δ : Times Γ}{A}{B}{δ : RecEnv Γ}{j}
-   → (x : Γ ∋ A)
-   → (y : Γ ∋ B)
-   → timeof x Δ ≢ timeof y Δ
-   → lookup{Γ}{A} x (↓ᵈ j y δ) ≡ lookup{Γ}{A} x δ
-lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
-lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ (sucˢ y) neq = refl
-lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) zeroˢ neq = refl
-lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
-
-timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B)
-   → timeof x Δ ≡ Now → timeof y Δ ≡ Later
-   → timeof x Δ ≢ timeof y Δ
-timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
-
-timeof-var-now : ∀{Γ}{A}
-   → (x : Γ ∋ A)
-   → timeof x (var-now Γ x) ≡ Now
-timeof-var-now {B ∷ Γ} zeroˢ = refl
-timeof-var-now {B ∷ Γ} (sucˢ x) = timeof-var-now x
-
-timeof-later : ∀{Γ}{A}
-   → (x : Γ ∋ A)
-   → (timeof x (laters Γ)) ≡ Later
-timeof-later {B ∷ Γ} zeroˢ = refl
-timeof-later {B ∷ Γ} (sucˢ x) = timeof-later x
-\end{code}
-
-
-
-\begin{code}
-good-lookup : ∀{Γ}{A}{a}
-  → (x : Γ ∋ A)
-  → good-fun (var-now Γ x) (λ δ → lookup x δ a)
-good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ (P , δ) j k k≤j =
-   ≡ᵒ-sym (lemma17e{_}{P} k≤j)
-good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y =
-   λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
-good-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ =
-   λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
-good-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
-    with timeof y (var-now Γ x) in eq-y
-... | Now = λ{(P , δ) j k k≤j → ↓-lookup x y k≤j }
-... | Later =
-      λ{(P , δ) j k k≤j →
-          let eq = (lookup-diff{Γ}{_}{_}{_}{δ}{j} x y
-                        (timeof-diff x y (timeof-var-now x) eq-y)) in
-          subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a))
-                (sym eq) (≡ᵒ-refl refl)}
-
-cong-lookup : ∀{Γ}{A}{δ δ′ : RecEnv Γ}
-   → (x : Γ ∋ A)
-   → (a : A)
-   → δ ≡ᵈ δ′
-   → lookup x δ a ≡ᵒ lookup x δ′ a
-cong-lookup {B ∷ Γ} {.B}{P , δ}{P′ , δ′} zeroˢ a (P=P′ , d=d′) = P=P′ a
-cong-lookup {B ∷ Γ} {A}{P , δ}{P′ , δ′} (sucˢ x) a (P=P′ , d=d′) =
-   cong-lookup x a d=d′
-
-congruent-lookup : ∀{Γ}{A}
-   → (x : Γ ∋ A)
-   → (a : A)
-   → congruent (λ δ → lookup x δ a)
-congruent-lookup {Γ}{A} x a d=d′ = cong-lookup x a d=d′
-
-a ∈ x = record { ♯ = λ δ → (lookup x δ) a
-               ; good = good-lookup x
-               ; congr = congruent-lookup x a }
-\end{code}
 
 \subsection{False}
 
