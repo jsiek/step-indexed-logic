@@ -696,44 +696,55 @@ timeof-later {B ∷ Γ} zeroˢ = refl
 timeof-later {B ∷ Γ} (sucˢ x) = timeof-later x
 \end{code}
 
-The \textsf{lookup} function for a variable $x$ is a ``good'' functional
-when the list of times Δ is the result of $\varnow\,Γ\,x$. Because the
-time of $x$ in $\varnow\,Γ\,x$ is \textsf{Now}, this amounts to proving
-that \textsf{lookup} is strongly nonexpansive.
+The \textsf{lookup} function for a variable $x$ is a ``good''
+functional when the list of times Δ is the result of
+$\varnow\,Γ\,x$. Because the time of $x$ in $\varnow\,Γ\,x$ is
+\textsf{Now}, this amounts to proving that \textsf{lookup} is strongly
+nonexpansive in $x$ and strongly wellfounded in the other variables.
 
 \begin{code}
 good-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → good-fun (var-now Γ x) (λ δ → lookup x δ a)
-good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ (P , δ) j k k≤j = ≡ᵒ-sym (double-↓ P k≤j)
-good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y =
-   λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
-good-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = λ{(P , δ) j k k≤j → ≡ᵒ-refl refl}
+good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ = SNE where
+  SNE : strongly-nonexpansive zeroˢ (λ {(P , δ) → P a})
+  SNE (P , δ) j k k≤j = ≡ᵒ-sym (double-↓ P k≤j)
+good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y = SWF where
+  SWF : strongly-wellfounded (sucˢ y) (λ {(P , δ) → P a})
+  SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
+good-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = SWF where
+  SWF : strongly-wellfounded zeroˢ (λ (P , δ) → lookup x δ a)
+  SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
 good-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
     with timeof y (var-now Γ x) in eq-y
-... | Now = λ{(P , δ) j k k≤j → ↓-lookup x y k≤j }
-... | Later =
-      λ{(P , δ) j k k≤j →
-          let eq = (lookup-diff{Γ}{_}{_}{_}{δ}{j} x y
-                        (timeof-diff x y (timeof-var-now x) eq-y)) in
-          subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a))
-                (sym eq) (≡ᵒ-refl refl)}
-    where
-    timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B)
-       → timeof x Δ ≡ Now → timeof y Δ ≡ Later
+... | Now = SNE where
+    SNE : strongly-nonexpansive (sucˢ y) (λ {(P , δ) → lookup x δ a})
+    SNE (P , δ) j k k≤j = ↓-lookup x y k≤j 
+... | Later = SWF where
+    timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≡ Now → timeof y Δ ≡ Later
        → timeof x Δ ≢ timeof y Δ
     timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
+    
+    SWF : strongly-wellfounded (sucˢ y) (λ {(P , δ) → lookup x δ a})
+    SWF (P , δ) j k k≤j =
+      let eq = (lookup-diff{Γ}{_}{_}{_}{δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
+      subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a)) (sym eq) (≡ᵒ-refl refl)
 \end{code}
 
+The \textsf{lookup} function for a variable $x$ is congruent. That is,
+given two equivalent environments, \textsf{lookup} produces equivalent
+predicates.
 
 \begin{code}
-congruent-lookup : ∀{Γ}{A} (x : Γ ∋ A) (a : A) → congruent (λ δ → lookup x δ a)
-congruent-lookup {Γ}{A} x a d=d′ = aux x a d=d′
+congruent-lookup : ∀ (x : Γ ∋ A) (a : A) → congruent (λ δ → lookup x δ a)
+congruent-lookup x a d=d′ = aux x a d=d′
   where
-  aux : ∀{Γ}{A}{δ δ′ : RecEnv Γ} (x : Γ ∋ A) (a : A) → δ ≡ᵈ δ′
-     → lookup x δ a ≡ᵒ lookup x δ′ a
+  aux : ∀{Γ}{A}{δ δ′ : RecEnv Γ} (x : Γ ∋ A) (a : A) → δ ≡ᵈ δ′ → lookup x δ a ≡ᵒ lookup x δ′ a
   aux {B ∷ Γ} {.B}{P , δ}{P′ , δ′} zeroˢ a (P=P′ , d=d′) = P=P′ a
   aux {B ∷ Γ} {A}{P , δ}{P′ , δ′} (sucˢ x) a (P=P′ , d=d′) =
      aux x a d=d′
 \end{code}
+
+We conclude by constructing the \textsf{Set}ˢ record for the predicate
+membership operator as follows.
 
 \begin{code}
 a ∈ x = record { ♯ = λ δ → (lookup x δ) a ; good = good-lookup x ; congr = congruent-lookup x a }
@@ -741,30 +752,26 @@ a ∈ x = record { ♯ = λ δ → (lookup x δ) a ; good = good-lookup x ; cong
 
 \subsection{Recursive Predicate}
 
-Next we define an auxilliary function $μₒ$ that takes a function $f$
-over step-indexed predicates and produces a raw step-indexed predicate
-(without the proofs.) It iterates the function $k \plus 1$ times,
-starting at the true formula.
+As mentioned previously, we use iteration to define recursive
+predicates. We begin this process by defining an auxilliary function
+$μᵖ$ that takes a functional $f$ and produces a raw step-indexed
+predicate (without the proofs.) It iterates the function $k \plus 1$
+times, starting at the true formula.
 
 \begin{code}
-μₒ : ∀{A} → (Predᵒ A → Predᵒ A) → A → (ℕ → Set)
-μₒ {A} f a k = #(iter{A = Predᵒ A} (suc k) f (λ a → ⊤ᵒ) a) k
+μᵖ : (Predᵒ A → Predᵒ A) → A → (ℕ → Set)
+μᵖ f a k = #(iter (suc k) f (λ a → ⊤ᵒ) a) k
 \end{code}
 
 Now, recall that the body $f$ of a $μˢ f$ has type
 \[
     A → \mathsf{Set}ˢ (A ∷ Γ) (\mathsf{cons}\, \Later\, Δ))
 \]
-and not $\mathsf{Pred}ᵒ A → \mathsf{Pred}ᵒ A$.
-So we define the following function to convert
-from the former to the later.
+and not $\mathsf{Pred}ᵒ A → \mathsf{Pred}ᵒ A$.  So we define the
+following function to convert from the former to the later.
 
 \begin{code}
-toFun : ∀{Γ}{ts : Times Γ}{A}
-   → RecEnv Γ
-   → (A → Setˢ (A ∷ Γ) (cons Later ts))
-     ----------------------------------
-   → (Predᵒ A → Predᵒ A)
+toFun : RecEnv Γ → (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (Predᵒ A → Predᵒ A)
 toFun δ f μf = λ a → ♯ (f a) (μf , δ)
 \end{code}
 
@@ -841,14 +848,14 @@ dc-iter zero F = λ a n _ k _ → tt
 dc-iter (suc i) F = λ a → down (F (iter i F ⊤ᵖ) a)
 \end{code}
 
-The $μₒ$ function is downward closed when applied to the
+The $μᵖ$ function is downward closed when applied to the
 result of $\mathsf{toFun}$.
 \begin{code}
-down-μₒ : ∀{Γ}{ts : Times Γ}{A}{P : A → Setˢ (A ∷ Γ) (cons Later ts)}
+down-μᵖ : ∀{Γ}{ts : Times Γ}{A}{P : A → Setˢ (A ∷ Γ) (cons Later ts)}
     {a : A}{δ : RecEnv Γ}
-  → downClosed (μₒ (toFun δ P) a)
-down-μₒ {Γ}{ts}{A}{P}{a}{δ} k iterskPk zero j≤k = tz (toFun δ P (id ⊤ᵖ) a)
-down-μₒ {Γ}{ts}{A}{P}{a}{δ} (suc k′) μPa (suc j′) (s≤s j′≤k′) =
+  → downClosed (μᵖ (toFun δ P) a)
+down-μᵖ {Γ}{ts}{A}{P}{a}{δ} k iterskPk zero j≤k = tz (toFun δ P (id ⊤ᵖ) a)
+down-μᵖ {Γ}{ts}{A}{P}{a}{δ} (suc k′) μPa (suc j′) (s≤s j′≤k′) =
   let f = toFun δ P in
   let dc-iter-ssk : downClosed (# ((iter (suc (suc k′)) f ⊤ᵖ) a))
       dc-iter-ssk = dc-iter (suc (suc k′)) (toFun δ P) a in
@@ -872,8 +879,8 @@ muᵒ : ∀{Γ}{ts : Times Γ}{A}
      ----------------------------------
    → (A → Setᵒ)
 muᵒ {Γ}{ts}{A} f δ a =
-  record { # = μₒ (toFun δ f) a
-         ; down = down-μₒ {Γ}{ts}{A}{f}{a}{δ}
+  record { # = μᵖ (toFun δ f) a
+         ; down = down-μᵖ {Γ}{ts}{A}{f}{a}{δ}
          ; tz = tz ((toFun δ f) ⊤ᵖ a) }
 \end{code}
 
@@ -1056,7 +1063,7 @@ congruent-mu : ∀{Γ}{Δ : Times Γ}{A} (P : A → Setˢ (A ∷ Γ) (cons Later
    → congruent (λ δ → muᵒ P δ a)
 congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
   where
-  Goal : (k : ℕ) → μₒ (toFun δ P) a k ⇔ μₒ (toFun δ′ P) a k
+  Goal : (k : ℕ) → μᵖ (toFun δ P) a k ⇔ μᵖ (toFun δ′ P) a k
   Goal k = ≡ᵒ-elim (cong-iter{A}{a} (suc k) (toFun δ P) (toFun δ′ P)
                     (cong-toFun P δ=δ′) ⊤ᵖ)
 \end{code}
