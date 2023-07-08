@@ -377,7 +377,10 @@ variable δ : RecEnv Γ
 \end{code}
 
 \noindent We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
-\emph{environment functional}.
+\emph{environment functional}. Let $S$ range over environment functionals.
+\begin{code}
+variable S : RecEnv Γ → Setᵒ
+\end{code}
 
 To keep track of whether a variable has been used underneath a later
 operator or not, we introduce a notion of time and we introduce a
@@ -615,6 +618,14 @@ _≡ᵈ_ {[]} δ δ′ = ⊤
 _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡ᵈ δ′
 \end{code}
 
+\noindent This relation is reflexive.
+
+\begin{code}
+≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ} → δ ≡ᵈ δ
+≡ᵈ-refl {[]} {δ} = tt
+≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ᵒ-refl refl) , ≡ᵈ-refl
+\end{code}
+
 \noindent A functional is congruent if applying it to equivalent
 environments produces equivalent step-indexed propositions.
 
@@ -784,41 +795,24 @@ down-μᵖ : ∀{Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)} {a : A}{δ : Rec
 The proof relies on \textsf{lemma15b}, but applies them to a
 functional obtained by \textsf{env}-\textsf{fun}⇒\textsf{fun}.  So we
 need to prove that such a functional is wellfounded and congruent.
-The fact that $\eff\, δ\, F$ is wellfounded is a consequence of $F$
+The fact that $\eff\, δ\, Fᵃ$ is wellfounded is a consequence of $Fᵃ\app a$
 being ``good''.
 
 \begin{code}
-wf-env-fun : ∀ (δ : RecEnv Γ) (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
-   → wellfoundedᵖ (env-fun⇒fun δ F)
-wf-env-fun δ F = λ a P k → good (F a) zeroˢ (P , δ) k k ≤-refl
+wf-env-fun : ∀ (δ : RecEnv Γ) (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → wellfoundedᵖ (env-fun⇒fun δ Fᵃ)
+wf-env-fun δ Fᵃ = λ a P k → good (Fᵃ a) zeroˢ (P , δ) k k ≤-refl
 \end{code}
 
-
+\noindent Similarly, $\eff\,δ\,Fᵃ$ is congruent because $Fᵃ\app a$ is congruent.
 
 \begin{code}
-≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ} → δ ≡ᵈ δ
-≡ᵈ-refl {[]} {δ} = tt
-≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ᵒ-refl refl) , ≡ᵈ-refl
+cong-env-fun : ∀ (δ : RecEnv Γ) (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → congruentᵖ (env-fun⇒fun δ Fᵃ)
+cong-env-fun δ Fᵃ = λ P=Q a → congr (Fᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 \end{code}
 
-\begin{code}
-cong-head : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
-cong-head {[]} S = topᵖ
-cong-head {A ∷ Γ} S = ∀{P Q} → (∀ a → P a ≡ᵒ Q a) → (∀ δ → S (P , δ) ≡ᵒ S (Q , δ))
-\end{code}
-
-\begin{code}
-cong⇒head : ∀{Γ : Context}{S : RecEnv Γ → Setᵒ} → congruent S → cong-head S
-cong⇒head {[]} {S} congS′ = ttᵖ
-cong⇒head {A ∷ Γ} {S} congS′ P=Q δ = congS′ (P=Q , ≡ᵈ-refl{Γ}{δ})
-\end{code}
-
-
-\begin{code}
-cong-env-fun : ∀ (δ : RecEnv Γ) (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
-   → congruentᵖ (env-fun⇒fun δ F)
-cong-env-fun δ F = λ P=Q a → cong⇒head (congr (F a)) P=Q δ
-\end{code}
+\noindent So we have the following adaptation of \textsf{lemma15b}.
 
 \begin{code}
 lemma15b-env-fun : ∀{Γ}{A}{Δ : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ} (k j : ℕ) (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
@@ -828,36 +822,46 @@ lemma15b-env-fun{Γ}{A}{Δ}{P}{δ} k j Fᵃ a j≤k =
   lemma15b k j (env-fun⇒fun δ Fᵃ) a j≤k (wf-env-fun δ Fᵃ) (cong-env-fun δ Fᵃ)
 \end{code}
 
+The one other fact we need to prove that $μᵖ$ is downward closed is
+that \textsf{iter} is downward closed when applied to a functional.
+
 \begin{code}
-dc-iter : ∀(i : ℕ){A} (F : Predᵒ A → Predᵒ A) → ∀ a
-   → downClosed (#(iter i F ⊤ᵖ a))
+dc-iter : ∀(i : ℕ){A} (F : Predᵒ A → Predᵒ A) → ∀ a → downClosed (#(iter i F ⊤ᵖ a))
 dc-iter zero F = λ a n _ k _ → tt
 dc-iter (suc i) F = λ a → down (F (iter i F ⊤ᵖ) a)
 \end{code}
 
-The $μᵖ$ function is downward closed when applied to the
-result of $\mathsf{env-fun⇒fun}$.
+We now prove that the $μᵖ$ function is downward closed when applied to
+the result of $\eff$.
+
 \begin{code}
-down-μᵖ {Γ}{Δ}{A}{P}{a}{δ} k iterskPk zero j≤k = tz (env-fun⇒fun δ P (id ⊤ᵖ) a)
-down-μᵖ {Γ}{Δ}{A}{P}{a}{δ} (suc k′) μPa (suc j′) (s≤s j′≤k′) =
-  let f = env-fun⇒fun δ P in
+down-μᵖ {Fᵃ = Fᵃ}{a}{δ} k iterskFᵃk zero j≤k = tz (env-fun⇒fun δ Fᵃ (id ⊤ᵖ) a)
+down-μᵖ {Fᵃ = Fᵃ}{a}{δ} (suc k′) μFᵃa (suc j′) (s≤s j′≤k′) =
+  let f = env-fun⇒fun δ Fᵃ in
   let dc-iter-ssk : downClosed (# ((iter (2 + k′) f ⊤ᵖ) a))
-      dc-iter-ssk = dc-iter (2 + k′) (env-fun⇒fun δ P) a in
+      dc-iter-ssk = dc-iter (2 + k′) (env-fun⇒fun δ Fᵃ) a in
   let ↓-iter-ssk : #(↓ᵒ (2 + j′) ((iter (2 + k′) f ⊤ᵖ) a))(suc j′)
-      ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μPa (suc j′) (s≤s j′≤k′)) in
-  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (env-fun⇒fun δ P) ⊤ᵖ) a)
-        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (env-fun⇒fun δ P) ⊤ᵖ) a)
-      eq = lemma15b-env-fun {P = ⊤ᵖ}{δ} (2 + k′) (2 + j′) P a (s≤s (s≤s j′≤k′)) in
+      ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μFᵃa (suc j′) (s≤s j′≤k′)) in
+  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (env-fun⇒fun δ Fᵃ) ⊤ᵖ) a)
+        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (env-fun⇒fun δ Fᵃ) ⊤ᵖ) a)
+      eq = lemma15b-env-fun {P = ⊤ᵖ}{δ} (2 + k′) (2 + j′) Fᵃ a (s≤s (s≤s j′≤k′)) in
   let ↓-iter-ssj : #(↓ᵒ (2 + j′) ((iter (2 + j′) f ⊤ᵖ) a)) (suc j′)
       ↓-iter-ssj = ⇔-to (≡ᵒ-elim (≡ᵒ-sym eq)) ↓-iter-ssk in
   proj₂ ↓-iter-ssj
 \end{code}
 
+With these proofs complete, we can use μᵖ to define another auxilliary
+function, \textsf{mu}ᵒ, that builds a \textsf{Set}ᵒ record given a
+predicate into \textsf{Set}ˢ, an environment, and an element of $A$.
+
 \begin{code}
-muᵒ : ∀{Γ}{Δ : Times Γ}{A} → (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → (A → Setᵒ)
-muᵒ {Γ}{Δ}{A} Fᵃ δ a =
-  record { # = μᵖ (env-fun⇒fun δ Fᵃ) a ; down = down-μᵖ {Fᵃ = Fᵃ} ; tz = tz (env-fun⇒fun δ Fᵃ ⊤ᵖ a) }
+muᵒ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → A → Setᵒ
+muᵒ Fᵃ δ a = record { # = μᵖ (env-fun⇒fun δ Fᵃ) a
+                    ; down = down-μᵖ {Fᵃ = Fᵃ}
+                    ; tz = tz (env-fun⇒fun δ Fᵃ ⊤ᵖ a) }
 \end{code}
+
+UNDER CONSTRUCTION
 
 \begin{code}
 abstract
@@ -928,14 +932,12 @@ lemma18b : ∀{Γ}{Δ : Times Γ}{A} (j : ℕ) (F : A → Setˢ (A ∷ Γ) (cons
      → ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))
        ≡ᵒ ↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)
 lemma18b{Γ}{Δ}{A} j F a δ =
-   ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))      ⩦⟨ good-fun⇒env-fun (good (F a)) δ (muᵒ F δ) j ⟩
-   ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (muᵒ F δ) , δ))
-                                     ⩦⟨ cong-↓ (λ a → cong⇒head (congr (F a))
-                                               (λ a → lemma18a j F a δ ) δ) a ⟩
+   ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))           ⩦⟨ good-fun⇒env-fun (good (F a)) δ (muᵒ F δ) j ⟩
+   ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (muᵒ F δ) , δ))    ⩦⟨ cong-↓ (λ a → congr (F a) ((λ a → lemma18a j F a δ) , ≡ᵈ-refl)) a ⟩
    ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (iter j (env-fun⇒fun δ F) ⊤ᵖ) , δ))
-             ⩦⟨ ≡ᵖ-sym{A} (good-fun⇒env-fun (good (F a)) δ (iter j (env-fun⇒fun δ F) ⊤ᵖ) j) {a} ⟩
-   ↓ᵒ (suc j) (♯ (F a) (iter j (env-fun⇒fun δ F) ⊤ᵖ , δ))           ⩦⟨ ≡ᵒ-refl refl ⟩
-   ↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)     ∎
+                                  ⩦⟨ ≡ᵖ-sym{A} (good-fun⇒env-fun (good (F a)) δ (iter j (env-fun⇒fun δ F) ⊤ᵖ) j) {a} ⟩
+   ↓ᵒ (suc j) (♯ (F a) (iter j (env-fun⇒fun δ F) ⊤ᵖ , δ))   ⩦⟨ ≡ᵒ-refl refl ⟩
+   ↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)         ∎
 \end{code}
 
 \begin{code}
