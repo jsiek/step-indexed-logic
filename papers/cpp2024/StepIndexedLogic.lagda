@@ -872,36 +872,28 @@ abstract
   lemma18a zero F a δ (suc j) = (λ {()}) , λ {()}
   lemma18a (suc k) F a δ zero = (λ {x → tt}) , λ {x → tt}
   lemma18a (suc k′) F a δ (suc j′) =
-    let k = suc k′ in
-    let j = suc j′ in 
     ↓ k (λ j₁ → # (env-fun⇒fun δ F (iter j₁ (env-fun⇒fun δ F) ⊤ᵖ) a) j₁) j
          ⩦⟨ ⩦-refl refl ⟩    
     j < k  ×  # (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a) j
-         ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y})
-            , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
+         ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y}) , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
     j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)) j
          ⩦⟨ EQ  ⟩    
     j < k  ×  # (↓ᵒ (suc j) (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j
-         ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z})
-             , (λ {(x , y) → x , (≤-refl , y)})  ⟩
+         ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z}) , (λ {(x , y) → x , (≤-refl , y)})  ⟩
     j < k  ×  # (iter k (env-fun⇒fun δ F) ⊤ᵖ a) j
        ⩦⟨ ⩦-refl refl  ⟩    
     ↓ k (# (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j   ∎
     where
-    k : ℕ
     k = suc k′
-    j : ℕ
     j = suc j′
     EQ : (j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)) j)
          ⇔ (j < k  ×  # (↓ᵒ (suc j) (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j)
-    EQ =
-      (λ {(s≤s x , y) →
-        let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc j) F a (s≤s x)) j) y in
-        (s≤s x) , (≤-refl , proj₂ xx)})
-      ,
-      λ {(s≤s x , (s≤s y , z)) →
-        let xx = proj₂ ((lemma15b-env-fun(suc k′)(suc j) F a (s≤s x)) j) (≤-refl , z) in
-        s≤s x , (≤-refl , (proj₂ xx))}
+    EQ = (λ {(s≤s x , y) →
+           let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc j) F a (s≤s x)) j) y in
+           (s≤s x) , (≤-refl , proj₂ xx)})
+       , (λ {(s≤s x , (s≤s y , z)) →
+           let xx = proj₂ ((lemma15b-env-fun(suc k′)(suc j) F a (s≤s x)) j) (≤-refl , z) in
+           s≤s x , (≤-refl , (proj₂ xx))})
 \end{code}
 
 TODO: try to remove the following
