@@ -322,12 +322,22 @@ double-↓ {A}{j}{k}{a} P j≤k = ≡ᵒ-intro aux
   aux (suc i) = (λ { (i≤j , ↓kPasi) → i≤j , proj₂ ↓kPasi}) , λ {(i≤j , Pasi) → i≤j , ((≤-trans i≤j j≤k) , Pasi)}
 \end{code}
 
-This is a generalization of Lemma 17 of \citet{Appel:2001aa}, in which
-$j = k - 1$.
+This is a generalization of Lemma 17 of \citet{Appel:2001aa}, in which $j = k - 1$.
 
 \begin{code}
 lemma17 : ∀{k}{a} → ↓ᵖ k (↓ᵖ (suc k) P) a ≡ᵒ ↓ᵖ k P a
 lemma17 {A}{P}{k}{a} = double-↓ P (n≤1+n k)
+\end{code}
+
+TODO, explain, remove lemma17
+
+\begin{code}
+abstract
+  lemma17ᵒ : ∀{S : Setᵒ}
+     → (k : ℕ)
+     → ↓ᵒ k (↓ᵒ (suc k) S) ≡ᵒ ↓ᵒ k S
+  lemma17ᵒ {S} k zero = (λ _ → tt) , (λ _ → tt)
+  lemma17ᵒ {S} k (suc i) = (λ {(x , (y , z)) → x , z}) , λ {(x , y) → x , ((s≤s (<⇒≤ x)) , y)}
 \end{code}
 
 %===============================================================================
@@ -436,6 +446,14 @@ with partial proofs.
 The later formula $▷ˢ F$ is well-typed at $\laters(Γ)$ when $F$ is
 well-typed at $Δ$.
 
+The approximation formula $↓ˢ\,k\,F$ is well-typed when $F$ is well-typed.
+
+The ``let`` formula
+
+The recursive formula $μˢ F$ is well-typed in $Γ$ at $Δ$ if $F$ is
+well typed in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
+by the $μˢ$ has type $A$ and may only be used later.
+
 The implication formula $F →ˢ G$ is well-typed in $Γ$ at the combined
 times $Δ₁ ∪ Δ₂$ when $F$ is well-typed in $Γ$ at $Δ₁$ and $G$ is
 well-typed in $Γ$ at $Δ₂$. We combine lists of times using the
@@ -455,8 +473,8 @@ _∪_ {[]} Δ₁ Δ₂ = ∅
 _∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (Δ₁ ∪ Δ₂)
 \end{code}
 
-The universal and exists quantifiers use Agda functions, as one would
-do in higher-order abstract syntax.  The exists quantifier requires
+The universal and existential quantifiers use Agda functions, as one would
+do in higher-order abstract syntax.  The existential quantifier requires
 that the type $A$ be inhabited to obtain the true-at-zero property. We
 do not wish this requirement to clutter every use of the exists
 quantifier, so we use Agda's support for instance arguments (think
@@ -469,45 +487,51 @@ record Inhabited (A : Set) : Set where
 open Inhabited {{...}} public
 \end{code}
 
-The recursive formula $μˢ F$ is well-typed in $Γ$ at $Δ$ if $F$ is
-well typed in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
-by the $μˢ$ has type $A$ and may only be used later.
-
 
 \begin{figure}
 \raggedright
 \fbox{$F : \mathsf{Set}ˢ \, Γ \, Δ$}
 \begin{gather*}
 \inference{a : A & x : Γ ∋ A}
-          {a ∈ x  : \mathsf{Set}ˢ \,Γ \,\varnow\,Γ\,x} \quad
+          {a ∈ x  : \mathsf{Set}ˢ \,Γ \,(\varnow\,Γ\,x)} \quad
 \inference{F : \mathsf{Set}ˢ\,Γ\, Δ}
-          {▷ˢ F : \mathsf{Set}ˢ \,Γ\,\laters(Γ)} \\[2ex]
+          {▷ˢ F : \mathsf{Set}ˢ \,Γ\,(\laters\,Γ)} \quad
+\inference{F : \mathsf{Set}ˢ\, Γ\, Δ}
+          {↓ˢ \, k\, F : \mathsf{Set}ˢ\, Γ\, Δ} \\[2ex]
+\inference{Fᵃ : A → \mathsf{Set}ˢ\, Γ\, Δ & G : \mathsf{Set}ˢ\, (Γ,A) (Δ, \mathsf{Later})}
+          {\mathsf{let}ˢ\, Fᵃ\,G : \mathsf{Set}ˢ\, Γ\, Δ} \quad
+\inference{F : \mathsf{Set}ˢ\,(Γ,A)\, (Δ,\mathsf{Later})}
+          {μˢ F : \mathsf{Set}ˢ\,Γ\, Δ} \\[2ex]
 \inference{F : \mathsf{Set}ˢ\, Γ \, Δ₁  & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
           {F →ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \quad
 \inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
           {F ×ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \quad
 \inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
           {F ⊎ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \\[2ex]
-\inference{∀ a ∈ A.\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
+\inference{∀ a ∈ A,\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
           {∀ˢ f : \mathsf{Set}ˢ\,Γ\, Δ} \quad
-\inference{∀ a ∈ A.\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
+\inference{∀ a ∈ A,\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
           {∃ˢ f : \mathsf{Set}ˢ\,Γ\, Δ} \quad
-\inference{}{p ˢ : \mathsf{Set}ˢ\,Γ\, \laters(Δ)}\\[2ex]
-\inference{F : \mathsf{Set}ˢ\,(Γ,A)\, Δ,\mathsf{Later}}
-          {μˢ F : \mathsf{Set}ˢ\,Γ\, Δ}
+\inference{}{p ˢ : \mathsf{Set}ˢ\,Γ\, (\laters\,Δ)}
 \end{gather*}
 \caption{Type System for Open Step-Indexed Formulas}
 \label{fig:SIL-type-system}
 \end{figure}
 
 The type system is implemented by the type signatures for the logical
-operators, which we declare in Figure~{fig:SIL-decl}.
+operators, which we declare in Figure~\ref{fig:SIL-decl}.
 
 \begin{figure}
 \begin{code}
 _∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
 
 ▷ˢ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
+
+↓ˢ : ℕ → Setˢ Γ Δ → Setˢ Γ Δ
+
+letˢ : (A → Setˢ Γ Δ) → Setˢ (A ∷ Γ) (cons Later Δ) → Setˢ Γ Δ   
+
+μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 
 infixr 6 _→ˢ_
 _→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
@@ -523,8 +547,6 @@ _⊎ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
 ∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
 
 _ˢ : Set → Setˢ Γ (laters Γ)
-
-μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
 \end{code}
 \caption{Declarations of the Open Step-Indexed Formula}
 \label{fig:SIL-decl}
@@ -647,12 +669,45 @@ record Setˢ Γ Δ where
 open Setˢ public
 \end{code}
 
-In the following subsections we define the logic operators that are
-declared in Figure~\ref{fig:SIL-decl}. We start with the membership
-formula to get warmed up, and then dive into the most difficult case,
-of recursive predicates.
+\subsection{Equivalence for Open Step-Indexed Formulas}
 
-\subsection{Membership in Recursive Predicate}
+We define two open step-indexed formulas to be equivalent if their
+applications to the same environment are equivalent.
+
+\begin{code}
+abstract
+  infix 2 _≡ˢ_
+  _≡ˢ_ : Setˢ Γ Δ → Setˢ Γ Δ → Set₁
+  S ≡ˢ T = ∀ δ → ♯ S δ ≡ᵒ ♯ T δ
+
+  ≡ˢ-intro : ∀{S T : Setˢ Γ Δ} → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ) → S ≡ˢ T
+  ≡ˢ-intro S=T eq δ = S=T eq δ
+
+  ≡ˢ-elim : ∀{S T : Setˢ Γ Δ} → S ≡ˢ T → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ)
+  ≡ˢ-elim S=T δ = S=T δ
+
+  ≡ˢ-refl : ∀{S T : Setˢ Γ Δ} → S ≡ T → S ≡ˢ T
+  ≡ˢ-refl{S = S}{T} refl δ = ≡ᵒ-refl{♯ S δ}{♯ T δ} refl
+
+  ≡ˢ-sym : ∀{S T : Setˢ Γ Δ} → S ≡ˢ T → T ≡ˢ S
+  ≡ˢ-sym{S = S}{T} ST δ = ≡ᵒ-sym{♯ S δ}{♯ T δ} (ST δ)
+
+  ≡ˢ-trans : ∀{S T R : Setˢ Γ Δ} → S ≡ˢ T → T ≡ˢ R → S ≡ˢ R
+  ≡ˢ-trans{S = S}{T}{R} ST TR δ = ≡ᵒ-trans{♯ S δ}{♯ T δ}{♯ R δ} (ST δ) (TR δ)
+  
+instance
+  SIL-Eqˢ : EquivalenceRelation (Setˢ Γ Δ)
+  SIL-Eqˢ = record { _⩦_ = _≡ˢ_ ; ⩦-refl = ≡ˢ-refl ; ⩦-sym = ≡ˢ-sym ; ⩦-trans = ≡ˢ-trans }
+\end{code}
+
+In the following subsections we define the logic operators that are
+declared in Figure~\ref{fig:SIL-decl}. We start with the logical
+operators for membership, later, approximation, and predicate
+application and then dive into the most difficult case, of recursive
+predicates. After that we define the logical opereators from
+first-order logic.
+
+\subsection{Membership}
 
 The following \textsf{lookup} function retrieves from the environment
 the predicate associated with a particular variable.
@@ -760,7 +815,194 @@ membership operator as follows.
 a ∈ x = record { ♯ = λ δ → (lookup x δ) a ; good = good-lookup x ; congr = congruent-lookup x a }
 \end{code}
 
-\subsection{Recursive Predicate}
+\subsection{Later Operator}
+
+Next we come to the important ``later`` operator, written $▷ᵒ ϕ$.  Of
+course, at zero it is true. For any other index of the form
+$\mathsf{suc}\app k$, $▷ᵒ ϕ$ means $ϕ$ at $k$, that is, subtract
+one from the step index.
+
+\begin{code}
+▷ᵒ_ : Setᵒ → Setᵒ
+▷ᵒ ϕ = record { # = λ { zero → ⊤ ; (suc k) → # ϕ k }
+              ; down = λ { zero ▷ϕn .zero z≤n → tt
+                         ; (suc n) ▷ϕn .zero z≤n → tt
+                         ; (suc n) ▷ϕn (suc k) (s≤s k≤n) → down ϕ n ▷ϕn k k≤n}
+              ; tz = tt }
+\end{code}
+
+\begin{code}
+abstract
+  cong-▷ : ∀{S T : Setᵒ}
+    → S ≡ᵒ T
+    → ▷ᵒ S ≡ᵒ ▷ᵒ T
+  cong-▷ S=T zero = (λ x → tt) , (λ x → tt)
+  cong-▷ S=T (suc i) = (proj₁ (S=T i)) , (proj₂ (S=T i))
+
+abstract
+  down-▷ : ∀{k} (S : Setᵒ)
+    → ↓ᵒ (suc k) (▷ᵒ S) ≡ᵒ ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))
+  down-▷ S zero = ⇔-intro (λ x → tt) (λ x → tt)
+  down-▷ S (suc zero) =
+      ⇔-intro (λ {(a , b) → a , tt}) (λ {(a , b) → a , (tz S)})
+  down-▷ S (suc (suc i)) =
+    ⇔-intro
+    (λ {(s≤s i≤1+k , ▷Si) →
+                 s≤s i≤1+k , i≤1+k , ▷Si})
+    (λ {(i≤1+k , (_ , ▷Si)) → i≤1+k , ▷Si})
+
+good-▷ : ∀{Γ}{Δ : Times Γ}
+   → (S : Setˢ Γ Δ)
+   → good-fun (laters Γ) (λ δ → ▷ᵒ (♯ S δ))
+good-▷{Γ}{Δ} S x
+    with good S x
+... | gS
+    with timeof x Δ
+... | Now rewrite timeof-later{Γ} x =
+  λ δ j k k≤j →
+  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                              ⩦⟨ down-▷ {k} (♯ S δ) ⟩ 
+  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S δ)))  ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (gS δ j k k≤j)) ⟩ 
+  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ))))
+                                     ⩦⟨ ≡ᵒ-sym (down-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
+  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))   ∎
+... | Later rewrite timeof-later{Γ} x =
+  λ δ j k k≤j →
+  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                       ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
+  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S δ)))    ⩦⟨ cong-↓ᵒ (suc k) (down-▷ _) ⟩
+  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S δ))))
+           ⩦⟨ cong-↓ᵒ (suc k) (cong-↓ᵒ (suc (suc k)) (cong-▷ (gS δ j k k≤j))) ⟩
+  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))))
+                                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ (suc k) (down-▷ _)) ⟩
+  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S (↓ᵈ j x δ))))     ⩦⟨ lemma17ᵒ (suc k) ⟩
+  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))    ∎
+
+▷ˢ S = record { ♯ = λ δ → ▷ᵒ (♯ S δ)
+              ; good = good-▷ S
+              ; congr = λ d=d′ → cong-▷ (congr S d=d′)
+              }
+\end{code}
+
+\subsection{Approximation}
+
+\begin{code}
+good-now : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-var x (timeof x Δ) S → timeof x Δ ≡ Now
+   → ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
+good-now gS eq rewrite eq = gS
+
+good-later : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
+   → good-var x (timeof x Δ) S → timeof x Δ ≡ Later
+   → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
+good-later gS eq rewrite eq = gS
+\end{code}
+
+\begin{code}
+abstract
+  permute-↓ : ∀{S : Setᵒ}{j}{k}
+     → ↓ᵒ k (↓ᵒ j S) ≡ᵒ ↓ᵒ j (↓ᵒ k S)
+  permute-↓ {S} {j} {k} zero = (λ x → tt) , (λ x → tt)
+  permute-↓ {S} {j} {k} (suc i) =
+    (λ {(x , (y , z)) → y , x , z}) , λ {(x , (y , z)) → y , x , z}
+\end{code}
+
+\begin{code}
+good-↓ : ∀{Γ}{Δ : Times Γ}{i}
+   (S : Setˢ Γ Δ)
+   → good-fun Δ (λ δ → ↓ᵒ i (♯ S δ))
+good-↓ {Γ}{Δ}{i} S {A} x
+    with timeof x Δ in time-x
+... | Now = λ δ j k k≤j → 
+    let gS = good-now (good S x) time-x δ j k k≤j in
+    ↓ᵒ k (↓ᵒ i (♯ S δ))              ⩦⟨ permute-↓  ⟩ 
+    ↓ᵒ i (↓ᵒ k (♯ S δ))              ⩦⟨ cong-↓ᵒ i gS ⟩ 
+    ↓ᵒ i (↓ᵒ k (♯ S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
+    ↓ᵒ k (↓ᵒ i (♯ S (↓ᵈ j x δ)))  ∎
+... | Later = λ δ j k k≤j →
+    let gS = good-later (good S x) time-x δ j k k≤j in
+    ↓ᵒ (suc k) (↓ᵒ i (♯ S δ))              ⩦⟨ permute-↓  ⟩ 
+    ↓ᵒ i (↓ᵒ (suc k) (♯ S δ))              ⩦⟨ cong-↓ᵒ i gS ⟩ 
+    ↓ᵒ i (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
+    ↓ᵒ (suc k) (↓ᵒ i (♯ S (↓ᵈ j x δ)))  ∎
+\end{code}
+
+\begin{code}
+↓ˢ k S = record { ♯ = λ δ → ↓ᵒ k (♯ S δ)
+                ; good = good-↓ S
+                ; congr = λ d=d′ → cong-↓ᵒ k (congr S d=d′)}
+\end{code}
+
+not used:
+⇓ˢ : ℕ → ∀{Γ} → RecEnv Γ → RecEnv Γ
+⇓ˢ k {[]} ttᵖ = ttᵖ
+⇓ˢ k {A ∷ Γ} (P , δ) = ↓ᵖ k P , ⇓ˢ k δ
+
+
+\subsection{Predicate Application}
+
+\begin{code}
+good-apply : ∀{Γ}{Δ : Times Γ}{A}
+   (S : Setˢ (A ∷ Γ) (cons Later Δ))
+   (P : A → Setˢ Γ Δ)
+   → good-fun Δ (λ δ → ♯ S ((λ a → ♯ (P a) δ) , δ))
+good-apply {Γ}{Δ}{A} S P x
+   with timeof x Δ in time-x
+... | Now = λ δ j k k≤j →
+    let gSz = ((good S) zeroˢ) ((λ a → ♯ (P a) δ) , δ) j k k≤j in
+    let gSz2 = ((good S) zeroˢ) ((λ a → ♯ (P a) (↓ᵈ j x δ)) , (↓ᵈ j x δ))
+                   j k k≤j in
+    let gSsx = good-now{x = sucˢ x}{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
+                 ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ) j k k≤j in
+
+    let EQ : ((λ a → ↓ᵒ j (♯ (P a) δ)) , ↓ᵈ j x δ)
+              ≡ᵈ ((λ a → ↓ᵒ j  (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
+        EQ = (λ a → good-now (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
+    
+    ↓ᵒ k (♯ S ((λ a → ♯ (P a) δ) , δ))               ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) δ) , δ)))
+      ⩦⟨ cong-↓ᵒ k gSz ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ)))
+      ⩦⟨ lemma17ᵒ k ⟩
+    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ))
+      ⩦⟨ gSsx ⟩
+    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , ↓ᵈ j x δ))
+      ⩦⟨ cong-↓ᵒ k (congr S EQ) ⟩
+    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ))
+                        ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ↓ᵒ j (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)))
+      ⩦⟨ cong-↓ᵒ k (≡ᵒ-sym gSz2) ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)))
+      ⩦⟨ lemma17ᵒ k ⟩
+    ↓ᵒ k (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ∎
+
+... | Later = λ δ j k k≤j →
+    let gSz = ((good S) zeroˢ) ((λ a → ♯ (P a) δ) , δ) (suc j) k
+                    (≤-trans k≤j (n≤1+n _)) in
+    let gSz2 = ((good S) zeroˢ) (((λ a → ♯ (P a) (↓ᵈ j x δ))) , δ) (suc j) k
+                    (≤-trans k≤j (n≤1+n _)) in
+    let EQ : ((λ a → ↓ᵒ (suc j) (♯ (P a) δ)) , δ)
+              ≡ᵈ ((λ a → ↓ᵒ (suc j)  (♯ (P a) (↓ᵈ j x δ))) , δ)
+        EQ = (λ a → good-later (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
+    let gSsx = good-later{x = sucˢ x}{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
+                 ((λ a → ♯ (P a) (↓ᵈ j x δ)) , δ) j k k≤j in
+    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) δ) , δ)) 
+      ⩦⟨ gSz ⟩
+    ↓ᵒ (suc k) (♯ S (↓ᵖ (suc j) (λ a → ♯ (P a) δ) , δ)) 
+      ⩦⟨ cong-↓ᵒ (suc k) (congr S EQ) ⟩
+    ↓ᵒ (suc k) (♯ S (↓ᵖ (suc j) (λ a → ♯ (P a) (↓ᵈ j x δ)) , δ)) 
+      ⩦⟨ ≡ᵒ-sym gSz2 ⟩
+    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , δ)) 
+      ⩦⟨ gSsx ⟩
+    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))  ∎
+\end{code}
+
+\begin{code}
+letˢ P S =
+  record { ♯ = λ δ → (♯ S) ((λ a → ♯ (P a) δ) , δ)
+         ; good = good-apply S P
+         ; congr = λ d=d′ → congr S ((λ a → congr (P a) d=d′) , d=d′) }
+\end{code}
+
+\subsection{Recursive Predicates and the Fixpoint Theorem}
 
 As mentioned previously, we use iteration to define recursive
 predicates. We begin this process by defining an auxilliary function
@@ -884,7 +1126,9 @@ abstract
        ⩦⟨ ⩦-refl refl  ⟩    
     ↓ k (# (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j   ∎
     where
+    k : ℕ
     k = suc k′
+    j : ℕ
     j = suc j′
     EQ : (j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)) j)
          ⇔ (j < k  ×  # (↓ᵒ (suc j) (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j)
@@ -947,17 +1191,6 @@ lemma19a{Γ}{Δ}{A} F a j δ =
     ↓ᵒ j (♯ (F a) (muᵒ F δ , δ))                      ∎
 \end{code}
 
-\begin{code}
-good-now : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-var x (timeof x Δ) S → timeof x Δ ≡ Now
-   → ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
-good-now gS eq rewrite eq = gS
-
-good-later : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-var x (timeof x Δ) S → timeof x Δ ≡ Later
-   → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
-good-later gS eq rewrite eq = gS
-\end{code}
 
 \begin{code}
 good-now-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
@@ -1073,6 +1306,80 @@ congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
 \end{code}
 
 
+\begin{code}
+abstract
+  equiv-downᵒ : ∀{S T : Setᵒ}
+    → (∀ j → ↓ᵒ j S ≡ᵒ ↓ᵒ j T)
+    → S ≡ᵒ T
+  equiv-downᵒ {S} {T} ↓S=↓T zero = (λ _ → tz T) , (λ _ → tz S)
+  equiv-downᵒ {S} {T} ↓S=↓T (suc k) =
+    (λ Ssk → proj₂ (proj₁ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Ssk)))
+    ,
+    λ Δk → proj₂ (proj₂ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Δk))
+  
+  equiv-downˢ : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
+    → (∀ j → ↓ˢ j S ≡ˢ ↓ˢ j T)
+    → S ≡ˢ T
+  equiv-downˢ {Γ}{Δ}{S}{T} ↓S=↓T δ =
+     equiv-downᵒ{♯ S δ}{♯ T δ} λ j → (↓S=↓T j) δ
+
+nonexpansive : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
+nonexpansive F a = ∀ P k → ↓ᵒ k (F P a) ≡ᵒ ↓ᵒ k (F (↓ᵖ k P) a)
+
+nonexpansive′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
+nonexpansive′{Γ}{A}{Δ}{δ} F a =
+  ∀ P k → ↓ᵒ k (♯ (F a) (P , δ)) ≡ᵒ ↓ᵒ k (♯ (F a) ((↓ᵖ k P) , δ))
+
+{- sanity check -}
+cont-env-fun⇒fun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
+  → (a : A)
+  → nonexpansive′{δ = δ} F a
+  → nonexpansive (env-fun⇒fun δ F) a
+cont-env-fun⇒fun{Γ}{A}{Δ}{δ} F a cont′ = cont′
+
+wellfounded : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
+wellfounded F a = ∀ P k → ↓ᵒ (suc k) (F P a) ≡ᵒ ↓ᵒ (suc k) (F (↓ᵖ k P) a)
+
+wellfounded′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
+wellfounded′{Γ}{A}{Δ}{δ} F a =
+  ∀ P k → ↓ᵒ (suc k) (♯ (F a) (P , δ))
+       ≡ᵒ ↓ᵒ (suc k) (♯ (F a) ((↓ᵖ k P) , δ))
+
+{- sanity check -}
+WF-env-fun⇒fun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
+  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
+  → (a : A)
+  → wellfounded′{δ = δ} F a
+  → wellfounded (env-fun⇒fun δ F) a
+WF-env-fun⇒fun{Γ}{A}{Δ}{δ} F a cont′ = cont′
+
+lemma19 : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (j : ℕ)
+   → ↓ˢ j (μˢ F a) ≡ˢ ↓ˢ j (letˢ (μˢ F) (F a))
+lemma19{Γ}{Δ}{A} F a j = ≡ˢ-intro (lemma19a F a j)
+
+fixpointˢ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+   → μˢ F a ≡ˢ letˢ (μˢ F) (F a)
+fixpointˢ F a = equiv-downˢ (lemma19 F a)
+
+μᵒ : ∀{A}
+   → (A → Setˢ (A ∷ []) (cons Later ∅))
+     ----------------------------------
+   → (A → Setᵒ)
+μᵒ {A} P = muᵒ P ttᵖ
+
+fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A)
+   → μᵒ P a ≡ᵒ ♯ (P a) (μᵒ P , ttᵖ)
+fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
+
+fixpoint-step : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A) (k : ℕ)
+   → (#(μᵒ P a) k) ⇔ #(♯ (P a) (μᵒ P , ttᵖ)) k
+fixpoint-step P a k = ≡ᵒ-elim{k = k} (fixpointᵒ P a)
+\end{code}
+
+
 
 \subsection{False}
 
@@ -1122,7 +1429,7 @@ S ˢ = record { ♯ = λ δ → S ᵒ
 \end{code}
 
 
-\subsection{Forall}
+\subsection{For all}
 
 The forall quantifier maps a step-indexed predicate to $Setᵒ$.
 
@@ -1269,98 +1576,6 @@ infix 1 ∃ˢ-syntax
 syntax ∃ˢ-syntax (λ x → P) = ∃ˢ[ x ] P
 \end{code}
 
-\subsection{Later Operator}
-
-Next we come to the important ``later`` operator, written $▷ᵒ ϕ$.  Of
-course, at zero it is true. For any other index of the form
-$\mathsf{suc}\app k$, $▷ᵒ ϕ$ means $ϕ$ at $k$, that is, subtract
-one from the step index.
-
-\begin{code}
-▷ᵒ_ : Setᵒ → Setᵒ
-▷ᵒ ϕ = record { # = λ { zero → ⊤ ; (suc k) → # ϕ k }
-              ; down = λ { zero ▷ϕn .zero z≤n → tt
-                         ; (suc n) ▷ϕn .zero z≤n → tt
-                         ; (suc n) ▷ϕn (suc k) (s≤s k≤n) → down ϕ n ▷ϕn k k≤n}
-              ; tz = tt }
-\end{code}
-
-\begin{code}
-abstract
-  cong-▷ : ∀{S T : Setᵒ}
-    → S ≡ᵒ T
-    → ▷ᵒ S ≡ᵒ ▷ᵒ T
-  cong-▷ S=T zero = (λ x → tt) , (λ x → tt)
-  cong-▷ S=T (suc i) = (proj₁ (S=T i)) , (proj₂ (S=T i))
-
-abstract
-  down-▷ : ∀{k} (S : Setᵒ)
-    → ↓ᵒ (suc k) (▷ᵒ S) ≡ᵒ ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))
-  down-▷ S zero = ⇔-intro (λ x → tt) (λ x → tt)
-  down-▷ S (suc zero) =
-      ⇔-intro (λ {(a , b) → a , tt}) (λ {(a , b) → a , (tz S)})
-  down-▷ S (suc (suc i)) =
-    ⇔-intro
-    (λ {(s≤s i≤1+k , ▷Si) →
-                 s≤s i≤1+k , i≤1+k , ▷Si})
-    (λ {(i≤1+k , (_ , ▷Si)) → i≤1+k , ▷Si})
-
-abstract
-  lemma17ᵒ : ∀{S : Setᵒ}
-     → (k : ℕ)
-     → ↓ᵒ k (↓ᵒ (suc k) S) ≡ᵒ ↓ᵒ k S
-  lemma17ᵒ {S} k zero = (λ _ → tt) , (λ _ → tt)
-  lemma17ᵒ {S} k (suc i) = (λ {(x , (y , z)) → x , z}) , λ {(x , y) → x , ((s≤s (<⇒≤ x)) , y)}
-
-good-▷ : ∀{Γ}{Δ : Times Γ}
-   → (S : Setˢ Γ Δ)
-   → good-fun (laters Γ) (λ δ → ▷ᵒ (♯ S δ))
-good-▷{Γ}{Δ} S x
-    with good S x
-... | gS
-    with timeof x Δ
-... | Now rewrite timeof-later{Γ} x =
-  λ δ j k k≤j →
-  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                              ⩦⟨ down-▷ {k} (♯ S δ) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S δ)))  ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (gS δ j k k≤j)) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ))))
-                                     ⩦⟨ ≡ᵒ-sym (down-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))   ∎
-... | Later rewrite timeof-later{Γ} x =
-  λ δ j k k≤j →
-  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                       ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S δ)))    ⩦⟨ cong-↓ᵒ (suc k) (down-▷ _) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S δ))))
-           ⩦⟨ cong-↓ᵒ (suc k) (cong-↓ᵒ (suc (suc k)) (cong-▷ (gS δ j k k≤j))) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))))
-                                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ (suc k) (down-▷ _)) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S (↓ᵈ j x δ))))     ⩦⟨ lemma17ᵒ (suc k) ⟩
-  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))    ∎
-
-▷ˢ S = record { ♯ = λ δ → ▷ᵒ (♯ S δ)
-              ; good = good-▷ S
-              ; congr = λ d=d′ → cong-▷ (congr S d=d′)
-              }
-\end{code}
-
-{---------------------- Only Step-indexed  ------------------------------------}
-
-\begin{code}
-step-indexed-good : ∀{Γ}{Δ : Times Γ}{A}
-   → (S : Setᵒ)
-   → (x : Γ ∋ A)
-   → good-var x (timeof x Δ) (λ δ → S)
-step-indexed-good{Γ}{Δ} S x
-    with timeof x Δ
-... | Now = λ δ j k x₁ → ≡ᵒ-refl refl
-... | Later = λ δ j k x₁ → ≡ᵒ-refl refl
-
-_ⁱ : ∀{Γ} → Setᵒ → Setˢ Γ (laters Γ)
-S ⁱ = record { ♯ = λ δ → S
-             ; good = λ x → step-indexed-good S x
-             ; congr = λ d=d′ → ≡ᵒ-refl refl
-             }
-\end{code}
 
 \subsection{Conjunction}
 
@@ -1714,231 +1929,9 @@ S →ˢ T = record { ♯ = λ δ → ♯ S δ →ᵒ ♯ T δ
                 }
 \end{code}
 
-\subsection{Approximation Operator}
-
-\begin{code}
-abstract
-  permute-↓ : ∀{S : Setᵒ}{j}{k}
-     → ↓ᵒ k (↓ᵒ j S) ≡ᵒ ↓ᵒ j (↓ᵒ k S)
-  permute-↓ {S} {j} {k} zero = (λ x → tt) , (λ x → tt)
-  permute-↓ {S} {j} {k} (suc i) =
-    (λ {(x , (y , z)) → y , x , z}) , λ {(x , (y , z)) → y , x , z}
-
-good-↓ : ∀{Γ}{Δ : Times Γ}{i}
-   (S : Setˢ Γ Δ)
-   → good-fun Δ (λ δ → ↓ᵒ i (♯ S δ))
-good-↓ {Γ}{Δ}{i} S {A} x
-    with timeof x Δ in time-x
-... | Now = λ δ j k k≤j → 
-    let gS = good-now (good S x) time-x δ j k k≤j in
-    ↓ᵒ k (↓ᵒ i (♯ S δ))              ⩦⟨ permute-↓  ⟩ 
-    ↓ᵒ i (↓ᵒ k (♯ S δ))              ⩦⟨ cong-↓ᵒ i gS ⟩ 
-    ↓ᵒ i (↓ᵒ k (♯ S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
-    ↓ᵒ k (↓ᵒ i (♯ S (↓ᵈ j x δ)))  ∎
-... | Later = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x δ j k k≤j in
-    ↓ᵒ (suc k) (↓ᵒ i (♯ S δ))              ⩦⟨ permute-↓  ⟩ 
-    ↓ᵒ i (↓ᵒ (suc k) (♯ S δ))              ⩦⟨ cong-↓ᵒ i gS ⟩ 
-    ↓ᵒ i (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
-    ↓ᵒ (suc k) (↓ᵒ i (♯ S (↓ᵈ j x δ)))  ∎
-
-↓ˢ : ∀{Γ}{Δ : Times Γ}
-   → ℕ
-   → Setˢ Γ Δ
-     ----------
-   → Setˢ Γ Δ
-↓ˢ k S = record { ♯ = λ δ → ↓ᵒ k (♯ S δ)
-                ; good = good-↓ S
-                ; congr = λ d=d′ → cong-↓ᵒ k (congr S d=d′)}
-
-⇓ˢ : ℕ → ∀{Γ} → RecEnv Γ → RecEnv Γ
-⇓ˢ k {[]} ttᵖ = ttᵖ
-⇓ˢ k {A ∷ Γ} (P , δ) = ↓ᵖ k P , ⇓ˢ k δ
-
-{---------------------- Predicate Application ----------------------------}
-
-good-apply : ∀{Γ}{Δ : Times Γ}{A}
-   (S : Setˢ (A ∷ Γ) (cons Later Δ))
-   (P : A → Setˢ Γ Δ)
-   → good-fun Δ (λ δ → ♯ S ((λ a → ♯ (P a) δ) , δ))
-good-apply {Γ}{Δ}{A} S P x
-   with timeof x Δ in time-x
-... | Now = λ δ j k k≤j →
-    let gSz = ((good S) zeroˢ) ((λ a → ♯ (P a) δ) , δ) j k k≤j in
-    let gSz2 = ((good S) zeroˢ) ((λ a → ♯ (P a) (↓ᵈ j x δ)) , (↓ᵈ j x δ))
-                   j k k≤j in
-    let gSsx = good-now{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
-                 ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ) j k k≤j in
-
-    let EQ : ((λ a → ↓ᵒ j (♯ (P a) δ)) , ↓ᵈ j x δ)
-              ≡ᵈ ((λ a → ↓ᵒ j  (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
-        EQ = (λ a → good-now (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    
-    ↓ᵒ k (♯ S ((λ a → ♯ (P a) δ) , δ))               ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) δ) , δ)))
-      ⩦⟨ cong-↓ᵒ k gSz ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ)))
-      ⩦⟨ lemma17ᵒ k ⟩
-    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ))
-      ⩦⟨ gSsx ⟩
-    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , ↓ᵈ j x δ))
-      ⩦⟨ cong-↓ᵒ k (congr S EQ) ⟩
-    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ))
-                        ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ↓ᵒ j (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)))
-      ⩦⟨ cong-↓ᵒ k (≡ᵒ-sym gSz2) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)))
-      ⩦⟨ lemma17ᵒ k ⟩
-    ↓ᵒ k (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ∎
-
-... | Later = λ δ j k k≤j →
-    let gSz = ((good S) zeroˢ) ((λ a → ♯ (P a) δ) , δ) (suc j) k
-                    (≤-trans k≤j (n≤1+n _)) in
-    let gSz2 = ((good S) zeroˢ) (((λ a → ♯ (P a) (↓ᵈ j x δ))) , δ) (suc j) k
-                    (≤-trans k≤j (n≤1+n _)) in
-    let EQ : ((λ a → ↓ᵒ (suc j) (♯ (P a) δ)) , δ)
-              ≡ᵈ ((λ a → ↓ᵒ (suc j)  (♯ (P a) (↓ᵈ j x δ))) , δ)
-        EQ = (λ a → good-later (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    let gSsx = good-later{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
-                 ((λ a → ♯ (P a) (↓ᵈ j x δ)) , δ) j k k≤j in
-    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) δ) , δ)) 
-      ⩦⟨ gSz ⟩
-    ↓ᵒ (suc k) (♯ S (↓ᵖ (suc j) (λ a → ♯ (P a) δ) , δ)) 
-      ⩦⟨ cong-↓ᵒ (suc k) (congr S EQ) ⟩
-    ↓ᵒ (suc k) (♯ S (↓ᵖ (suc j) (λ a → ♯ (P a) (↓ᵈ j x δ)) , δ)) 
-      ⩦⟨ ≡ᵒ-sym gSz2 ⟩
-    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , δ)) 
-      ⩦⟨ gSsx ⟩
-    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))  ∎
-
-applyˢ : ∀ {Γ}{Δ : Times Γ}{A}
-   (S : Setˢ (A ∷ Γ) (cons Later Δ))
-   (P : A → Setˢ Γ Δ)
-   → Setˢ Γ Δ   
-applyˢ S P =
-  record { ♯ = λ δ → (♯ S) ((λ a → ♯ (P a) δ) , δ)
-         ; good = good-apply S P
-         ; congr = λ d=d′ → congr S ((λ a → congr (P a) d=d′) , d=d′)
-         }
-\end{code}
 
 
-\subsection{Equivalence for Open Step-Indexed Formulas}
 
-\begin{code}
-abstract
-  infix 2 _≡ˢ_
-  _≡ˢ_ : ∀{Γ}{Δ : Times Γ} → Setˢ Γ Δ → Setˢ Γ Δ → Set₁
-  S ≡ˢ T = ∀ δ → ♯ S δ ≡ᵒ ♯ T δ
-
-  ≡ˢ-intro : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
-    → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ)
-      ---------------------
-    → S ≡ˢ T
-  ≡ˢ-intro S=T eq δ = S=T eq δ
-
-  ≡ˢ-elim : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
-    → S ≡ˢ T
-      ---------------------
-    → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ)
-  ≡ˢ-elim S=T δ = S=T δ
-
-  ≡ˢ-refl : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
-    → S ≡ T
-    → S ≡ˢ T
-  ≡ˢ-refl{S = S}{T} refl δ = ≡ᵒ-refl{♯ S δ}{♯ T δ} refl
-
-  ≡ˢ-sym : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
-    → S ≡ˢ T
-    → T ≡ˢ S
-  ≡ˢ-sym{S = S}{T} ST δ = ≡ᵒ-sym{♯ S δ}{♯ T δ} (ST δ)
-
-  ≡ˢ-trans : ∀{Γ}{Δ : Times Γ}{S T R : Setˢ Γ Δ}
-    → S ≡ˢ T
-    → T ≡ˢ R
-    → S ≡ˢ R
-  ≡ˢ-trans{S = S}{T}{R} ST TR δ = ≡ᵒ-trans{♯ S δ}{♯ T δ}{♯ R δ} (ST δ) (TR δ)
-  
-instance
-  SIL-Eqˢ : ∀{Γ}{Δ : Times Γ} → EquivalenceRelation (Setˢ Γ Δ)
-  SIL-Eqˢ = record { _⩦_ = _≡ˢ_ ; ⩦-refl = ≡ˢ-refl
-                   ; ⩦-sym = ≡ˢ-sym ; ⩦-trans = ≡ˢ-trans }
-\end{code}
-
-\section{Fixpoint Theorem}
-
-\begin{code}
-abstract
-  equiv-downᵒ : ∀{S T : Setᵒ}
-    → (∀ j → ↓ᵒ j S ≡ᵒ ↓ᵒ j T)
-    → S ≡ᵒ T
-  equiv-downᵒ {S} {T} ↓S=↓T zero = (λ _ → tz T) , (λ _ → tz S)
-  equiv-downᵒ {S} {T} ↓S=↓T (suc k) =
-    (λ Ssk → proj₂ (proj₁ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Ssk)))
-    ,
-    λ Δk → proj₂ (proj₂ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Δk))
-  
-  equiv-downˢ : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
-    → (∀ j → ↓ˢ j S ≡ˢ ↓ˢ j T)
-    → S ≡ˢ T
-  equiv-downˢ {Γ}{Δ}{S}{T} ↓S=↓T δ =
-     equiv-downᵒ{♯ S δ}{♯ T δ} λ j → (↓S=↓T j) δ
-
-nonexpansive : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
-nonexpansive F a = ∀ P k → ↓ᵒ k (F P a) ≡ᵒ ↓ᵒ k (F (↓ᵖ k P) a)
-
-nonexpansive′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
-nonexpansive′{Γ}{A}{Δ}{δ} F a =
-  ∀ P k → ↓ᵒ k (♯ (F a) (P , δ)) ≡ᵒ ↓ᵒ k (♯ (F a) ((↓ᵖ k P) , δ))
-
-{- sanity check -}
-cont-env-fun⇒fun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
-  → (a : A)
-  → nonexpansive′{δ = δ} F a
-  → nonexpansive (env-fun⇒fun δ F) a
-cont-env-fun⇒fun{Γ}{A}{Δ}{δ} F a cont′ = cont′
-
-wellfounded : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
-wellfounded F a = ∀ P k → ↓ᵒ (suc k) (F P a) ≡ᵒ ↓ᵒ (suc k) (F (↓ᵖ k P) a)
-
-wellfounded′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
-wellfounded′{Γ}{A}{Δ}{δ} F a =
-  ∀ P k → ↓ᵒ (suc k) (♯ (F a) (P , δ))
-       ≡ᵒ ↓ᵒ (suc k) (♯ (F a) ((↓ᵖ k P) , δ))
-
-{- sanity check -}
-WF-env-fun⇒fun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
-  → (a : A)
-  → wellfounded′{δ = δ} F a
-  → wellfounded (env-fun⇒fun δ F) a
-WF-env-fun⇒fun{Γ}{A}{Δ}{δ} F a cont′ = cont′
-
-lemma19 : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (j : ℕ)
-   → ↓ˢ j (μˢ F a) ≡ˢ ↓ˢ j (applyˢ (F a) (μˢ F))
-lemma19{Γ}{Δ}{A} F a j = ≡ˢ-intro (lemma19a F a j)
-
-fixpointˢ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
-   → μˢ F a ≡ˢ applyˢ (F a) (μˢ F)
-fixpointˢ F a = equiv-downˢ (lemma19 F a)
-
-μᵒ : ∀{A}
-   → (A → Setˢ (A ∷ []) (cons Later ∅))
-     ----------------------------------
-   → (A → Setᵒ)
-μᵒ {A} P = muᵒ P ttᵖ
-
-fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A)
-   → μᵒ P a ≡ᵒ ♯ (P a) (μᵒ P , ttᵖ)
-fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
-
-fixpoint-step : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A) (k : ℕ)
-   → (#(μᵒ P a) k) ⇔ #(♯ (P a) (μᵒ P , ttᵖ)) k
-fixpoint-step P a k = ≡ᵒ-elim{k = k} (fixpointᵒ P a)
-\end{code}
 
 \section{Proof Rules for Step-Indexed Logic}
 
