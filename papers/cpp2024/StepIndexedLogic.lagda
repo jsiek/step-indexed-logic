@@ -445,11 +445,14 @@ with partial proofs.
 
 The later formula $▷ˢ F$ is well-typed at $\laters(Γ)$ when $F$ is
 well-typed at $Δ$.
-
+%
 The approximation formula $↓ˢ\,k\,F$ is well-typed when $F$ is well-typed.
-
-The ``let`` formula
-
+%
+The ``let`` formula $\mathsf{let}ˢ\,Fᵃ\,G$ binds a predicate Fᵃ in the
+scope of the body $G$. So it is well-typed in $Γ$ at $Δ$ if
+$Fᵃ$ is a predicate over $A$ that is well-typed in $Γ$ at $Δ$ and if the
+body $G$ is well-typed in $Γ,A$ at $Δ,\mathsf{Later}$.
+%
 The recursive formula $μˢ F$ is well-typed in $Γ$ at $Δ$ if $F$ is
 well typed in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
 by the $μˢ$ has type $A$ and may only be used later.
@@ -457,7 +460,8 @@ by the $μˢ$ has type $A$ and may only be used later.
 The implication formula $F →ˢ G$ is well-typed in $Γ$ at the combined
 times $Δ₁ ∪ Δ₂$ when $F$ is well-typed in $Γ$ at $Δ₁$ and $G$ is
 well-typed in $Γ$ at $Δ₂$. We combine lists of times using the
-following auxiliary functions.
+following auxiliary functions. The story is similar for conjunction $F ×ˢ G$
+and disjunction $F ⊎ˢ G$.
 
 \begin{code}
 choose : Time → Time → Time
@@ -503,9 +507,9 @@ open Inhabited {{...}} public
 \inference{F : \mathsf{Set}ˢ\,(Γ,A)\, (Δ,\mathsf{Later})}
           {μˢ F : \mathsf{Set}ˢ\,Γ\, Δ} \\[2ex]
 \inference{F : \mathsf{Set}ˢ\, Γ \, Δ₁  & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
-          {F →ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \quad
+          {F →ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \;\;
 \inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
-          {F ×ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \quad
+          {F ×ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \;\;
 \inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
           {F ⊎ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \\[2ex]
 \inference{∀ a ∈ A,\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
