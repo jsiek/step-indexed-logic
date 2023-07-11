@@ -904,14 +904,12 @@ strong-▷ {Γ}{Δ} S x
     with strong S x
 ... | gS
     with timeof x Δ
-... | Now rewrite timeof-later{Γ} x =
-  λ δ j k k≤j →
+... | Now rewrite timeof-later{Γ} x = λ δ j k k≤j →
   ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                      ⩦⟨ WF-▷ {k} (♯ S δ) ⟩ 
   ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S δ)))               ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (gS δ j k k≤j)) ⟩ 
   ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ))))      ⩦⟨ ≡ᵒ-sym (WF-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
   ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))             ∎
-... | Later rewrite timeof-later{Γ} x =
-  λ δ j k k≤j →
+... | Later rewrite timeof-later{Γ} x = λ δ j k k≤j →
   ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                         ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
   ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S δ)))            ⩦⟨ cong-↓ᵒ (suc k) (WF-▷ _) ⟩
   ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S δ))))
