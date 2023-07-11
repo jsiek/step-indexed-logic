@@ -798,6 +798,7 @@ in $x$ and strongly wellfounded in the other variables, which we show
 in Figure~\ref{fig:strong-lookup}.
 
 \begin{figure}[tbp]
+\small
 \begin{code}
 strong-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → strong-fun (var-now Γ x) (λ δ → lookup x δ a)
 strong-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ = SNE where
@@ -892,9 +893,11 @@ WF-▷ {k} S = ≡ᵒ-intro aux
 \end{code}
 
 The operator $▷ᵒ$ is a strong environment functional, which we prove in
-Figure~\ref{fig:strong-later}.
+Figure~\ref{fig:strong-later}. In addition to using the above two lemmas,
+the proof also relies on \textsf{lemma17}.
 
 \begin{figure}[tbp]
+\small
 \begin{code}
 strong-▷ : (S : Setˢ Γ Δ) → strong-fun (laters Γ) (λ δ → ▷ᵒ (♯ S δ))
 strong-▷ {Γ}{Δ} S x
