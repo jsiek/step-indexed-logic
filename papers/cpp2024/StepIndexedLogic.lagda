@@ -130,7 +130,7 @@ variable A B C : Set
 \noindent and let $P, Q$ range over step-indexed predicates.
 
 \begin{code}
-variable P Q : Predᵒ A
+variable P Q R : Predᵒ A
 \end{code}
 
 We define the constantly true predicate as follows.
@@ -143,13 +143,13 @@ The equivalence of predicates applied to the same argument forms and
 equivalence relation.
 
 \begin{code}
-≡ᵖ-refl : ∀{A}{P Q : Predᵒ A} → P ≡ Q → ∀ {a} → P a ≡ᵒ Q a
+≡ᵖ-refl : P ≡ Q → ∀ {a} → P a ≡ᵒ Q a
 ≡ᵖ-refl refl {a} = ≡ᵒ-refl refl
 
-≡ᵖ-sym : ∀{A}{P Q : Predᵒ A} → (∀ {a} → P a ≡ᵒ Q a) → ∀ {a} → Q a ≡ᵒ P a
+≡ᵖ-sym : (∀ {a} → P a ≡ᵒ Q a) → ∀ {a} → Q a ≡ᵒ P a
 ≡ᵖ-sym P=Q {a} = ≡ᵒ-sym P=Q
 
-≡ᵖ-trans : ∀{A}{P Q R : Predᵒ A} → (∀ {a} → P a ≡ᵒ Q a) → (∀ {a} → Q a ≡ᵒ R a) → ∀ {a} → P a ≡ᵒ R a
+≡ᵖ-trans : (∀ {a} → P a ≡ᵒ Q a) → (∀ {a} → Q a ≡ᵒ R a) → ∀ {a} → P a ≡ᵒ R a
 ≡ᵖ-trans P=Q Q=R {a} = ≡ᵒ-trans P=Q Q=R
 \end{code}
 
@@ -174,7 +174,7 @@ We say that a functional is congruent if it maps equivalent predicates
 to equivalent predicates.
 
 \begin{code}
-congruentᵖ : ∀{A}{B} (f : Predᵒ A → Predᵒ B) → Set₁
+congruentᵖ : (Predᵒ A → Predᵒ B) → Set₁
 congruentᵖ f = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (f P b) ≡ᵒ (f Q b)
 \end{code}
 
@@ -387,9 +387,9 @@ variable δ : RecEnv Γ
 \end{code}
 
 \noindent We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
-\emph{environment functional}. Let $S$ range over environment functionals.
+\emph{environment functional}. Let $F, G, H$ range over environment functionals.
 \begin{code}
-variable S : RecEnv Γ → Setᵒ
+variable F G H : RecEnv Γ → Setᵒ
 \end{code}
 
 To keep track of whether a variable has been used underneath a later
@@ -411,22 +411,23 @@ Let $Δ$ range over these lists of times.
 variable Δ Δ₁ Δ₂ : Times Γ
 \end{code}
 
-We define another record type, $\mathsf{Set}ˢ$ for open step-indexed
+We declare another record type, $\mathsf{Set}ˢ$ for open step-indexed
 propositions, that is, propositions that may contain free variables.
 \begin{code}
 record Setˢ (Γ : Context) (Δ : Times Γ) : Set₁
 \end{code}
-Let $F,G,H$ range over $\mathsf{Set}ˢ$.
+Let $S,T,R$ range over $\mathsf{Set}ˢ$.
 \begin{code}
-variable F G H : Setˢ Γ Δ
+variable S T U : Setˢ Γ Δ
 \end{code}
 
 We explain the type system for \textsf{Set}$^s$ in
 Figure~\ref{fig:SIL-type-system}.  The membership formula $a ∈ x$ is
-well-typed when variable $x$ is in $Γ$ and $Δ$ assigns $x$ to $\Now$ and all
+well-typed when variable $x$ is bound to a predicate on $A$ in $Γ$,
+$a$ has type $A$, and $Δ$ assigns $x$ to $\Now$ and all
 the other variables in $Γ$ to $\Later$. We use the function $\varnow$
 to express this constraint, which also relies on the
-auxiliary $\laters$ function.
+following auxiliary $\laters$ function.
 \begin{code}
 laters : ∀ (Γ : Context) → Times Γ
 laters [] = ∅
@@ -443,25 +444,25 @@ $x$ to $\Now$ and not place any constraints on the other variables.
 However, the redundancy helps Agda's inference algorithm when working
 with partial proofs.
 
-The later formula $▷ˢ F$ is well-typed at $\laters(Γ)$ when $F$ is
+The later formula $▷ˢ S$ is well-typed at $\laters(Γ)$ when $S$ is
 well-typed at $Δ$.
 %
-The approximation formula $↓ˢ\,k\,F$ is well-typed when $F$ is well-typed.
+The approximation formula $↓ˢ\,k\,S$ is well-typed when $S$ is well-typed.
 %
-The ``let`` formula $\mathsf{let}ˢ\,Fᵃ\,G$ binds a predicate Fᵃ in the
-scope of the body $G$. So it is well-typed in $Γ$ at $Δ$ if
-$Fᵃ$ is a predicate over $A$ that is well-typed in $Γ$ at $Δ$ and if the
-body $G$ is well-typed in $Γ,A$ at $Δ,\mathsf{Later}$.
+The ``let`` formula $\mathsf{let}ˢ\,Sᵃ\,T$ binds a predicate Sᵃ in the
+scope of the body $T$. So it is well-typed in $Γ$ at $Δ$ if
+$Sᵃ$ is a predicate over $A$ that is well-typed in $Γ$ at $Δ$ and if the
+body $T$ is well-typed in $Γ,A$ at $Δ,\mathsf{Later}$.
 %
-The recursive formula $μˢ F$ is well-typed in $Γ$ at $Δ$ if $F$ is
+The recursive formula $μˢ S$ is well-typed in $Γ$ at $Δ$ if $S$ is
 well typed in $Γ,A$ at $Δ,\Later$. That is, the variable $\zero$ bound
 by the $μˢ$ has type $A$ and may only be used later.
 
-The implication formula $F →ˢ G$ is well-typed in $Γ$ at the combined
-times $Δ₁ ∪ Δ₂$ when $F$ is well-typed in $Γ$ at $Δ₁$ and $G$ is
+The implication formula $S →ˢ T$ is well-typed in $Γ$ at the combined
+times $Δ₁ ∪ Δ₂$ when $S$ is well-typed in $Γ$ at $Δ₁$ and $T$ is
 well-typed in $Γ$ at $Δ₂$. We combine lists of times using the
-following auxiliary functions. The story is similar for conjunction $F ×ˢ G$
-and disjunction $F ⊎ˢ G$.
+following auxiliary functions. The story is similar for conjunction $S ×ˢ T$
+and disjunction $S ⊎ˢ T$. 
 
 \begin{code}
 choose : Time → Time → Time
@@ -477,13 +478,15 @@ _∪_ {[]} Δ₁ Δ₂ = ∅
 _∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (Δ₁ ∪ Δ₂)
 \end{code}
 
-The universal and existential quantifiers use Agda functions, as one would
-do in higher-order abstract syntax.  The existential quantifier requires
-that the type $A$ be inhabited to obtain the true-at-zero property. We
-do not wish this requirement to clutter every use of the exists
-quantifier, so we use Agda's support for instance arguments (think
-type classes). So we define the following record type and use it as an
-implicit instance argument in the definition of the exists quantifier.
+The universal and existential quantifiers of SIL use Agda functions,
+as one would do in higher-order abstract syntax.  The existential
+quantifier requires that the type $A$ be inhabited to obtain the
+true-at-zero property. We do not wish this requirement to clutter
+every use of the exists quantifier, so we use Agda's support for
+instance arguments~\citep{Devriese:2011aa} (an adaptation of type
+classes~\citep{hall96:_typeclasses}). So we define the following
+record type and use it as an implicit instance argument in the
+definition of the existential quantifier.
 
 \begin{code}
 record Inhabited (A : Set) : Set where
@@ -491,34 +494,37 @@ record Inhabited (A : Set) : Set where
 open Inhabited {{...}} public
 \end{code}
 
+The constant formula $pˢ$ takes a (non-indexed) proposition $p$ and
+turns it into an open step-indexed proposition, so $p$ must have type
+$\mathsf{Set}$ and the result is well-typed at $\laters\, Γ$.
 
 \begin{figure}
 \raggedright
-\fbox{$F : \mathsf{Set}ˢ \, Γ \, Δ$}
+\fbox{$S : \mathsf{Set}ˢ \, Γ \, Δ$}
 \begin{gather*}
 \inference{a : A & x : Γ ∋ A}
           {a ∈ x  : \mathsf{Set}ˢ \,Γ \,(\varnow\,Γ\,x)} \quad
-\inference{F : \mathsf{Set}ˢ\,Γ\, Δ}
-          {▷ˢ F : \mathsf{Set}ˢ \,Γ\,(\laters\,Γ)} \quad
-\inference{F : \mathsf{Set}ˢ\, Γ\, Δ}
-          {↓ˢ \, k\, F : \mathsf{Set}ˢ\, Γ\, Δ} \\[2ex]
-\inference{Fᵃ : A → \mathsf{Set}ˢ\, Γ\, Δ & G : \mathsf{Set}ˢ\, (Γ,A) (Δ, \mathsf{Later})}
-          {\mathsf{let}ˢ\, Fᵃ\,G : \mathsf{Set}ˢ\, Γ\, Δ} \quad
-\inference{F : \mathsf{Set}ˢ\,(Γ,A)\, (Δ,\mathsf{Later})}
-          {μˢ F : \mathsf{Set}ˢ\,Γ\, Δ} \\[2ex]
-\inference{F : \mathsf{Set}ˢ\, Γ \, Δ₁  & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
-          {F →ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \;\;
-\inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
-          {F ×ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \;\;
-\inference{F : \mathsf{Set}ˢ\,Γ\, Δ₁ & G : \mathsf{Set}ˢ\,Γ\, Δ₂}
-          {F ⊎ˢ G : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \\[2ex]
+\inference{S : \mathsf{Set}ˢ\,Γ\, Δ}
+          {▷ˢ S : \mathsf{Set}ˢ \,Γ\,(\laters\,Γ)} \quad
+\inference{S : \mathsf{Set}ˢ\, Γ\, Δ}
+          {↓ˢ \, k\, S : \mathsf{Set}ˢ\, Γ\, Δ} \\[2ex]
+\inference{Sᵃ : A → \mathsf{Set}ˢ\, Γ\, Δ & T : \mathsf{Set}ˢ\, (Γ,A) (Δ, \mathsf{Later})}
+          {\mathsf{let}ˢ\, Sᵃ\,T : \mathsf{Set}ˢ\, Γ\, Δ} \quad
+\inference{S : \mathsf{Set}ˢ\,(Γ,A)\, (Δ,\mathsf{Later})}
+          {μˢ S : \mathsf{Set}ˢ\,Γ\, Δ} \\[2ex]
+\inference{S : \mathsf{Set}ˢ\, Γ \, Δ₁  & T : \mathsf{Set}ˢ\,Γ\, Δ₂}
+          {S →ˢ T : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \;\;
+\inference{S : \mathsf{Set}ˢ\,Γ\, Δ₁ & T : \mathsf{Set}ˢ\,Γ\, Δ₂}
+          {S ×ˢ T : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \;\;
+\inference{S : \mathsf{Set}ˢ\,Γ\, Δ₁ & T : \mathsf{Set}ˢ\,Γ\, Δ₂}
+          {S ⊎ˢ T : \mathsf{Set}ˢ\,Γ\, (Δ₁ ∪ Δ₂)} \\[2ex]
 \inference{∀ a ∈ A,\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
           {∀ˢ f : \mathsf{Set}ˢ\,Γ\, Δ} \quad
 \inference{∀ a ∈ A,\, f a : \mathsf{Set}ˢ\,Γ\, Δ}
           {∃ˢ f : \mathsf{Set}ˢ\,Γ\, Δ} \quad
 \inference{}{p ˢ : \mathsf{Set}ˢ\,Γ\, (\laters\,Δ)}
 \end{gather*}
-\caption{Type System for Open Step-Indexed Formulas}
+\caption{Type System for Open Step-Indexed Logical Formulas}
 \label{fig:SIL-type-system}
 \end{figure}
 
@@ -559,14 +565,14 @@ _ˢ : Set → Setˢ Γ (laters Γ)
 We have declared the type $\mathsf{Set}ˢ$ for open propositions but we
 have not yet given its definition. Similar to $\mathsf{Set}ᵒ$ it will
 be a record type. Its principal field is an environment functional
-($\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$) that represents the meaning
+(of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$) that represents the meaning
 of the formula. The record will also include two properties, that the
 functional is congruent and that it is wellfounded in a sense that is
 somewhat involved.
 
-We apply $k$-approximation to one of the predicates in an environment
-with the $↓ᵈ$ operator. The second parameter, a variable, specifies
-which predicate to apply the $k$-approximation.
+We define the $↓ᵈ$ operator to apply $k$-approximation to one of the
+predicates in an environment. The second parameter of $↓ᵈ$, a
+variable, specifies which predicate to apply the $k$-approximation.
 
 \begin{code}
 ↓ᵈ : ℕ → Γ ∋ A → RecEnv Γ → RecEnv Γ
@@ -575,22 +581,21 @@ which predicate to apply the $k$-approximation.
 \end{code}
 
 The semantic conditions that correspond to using the variable for a
-recursive predicate now vs. later are the notion of nonexpansive
-and wellfounded we reviewed in Section~\ref{sec:intro}.
-A direct adaptation of nonexpansive to our setting yields the following,
-which says that given any environment $δ$ and variable $x$,
-the $k$-approximation of $P\app δ$ is equivalent to the
-$k$-approximation of $P$ applied to the $k$ approximation of
-the $δ$ with respect to variable $x$.
+recursive predicate now vs. later are the notion of nonexpansive and
+wellfounded of \citet{Appel:2001aa}.  A direct adaptation of
+nonexpansive to our setting yields the following, which says that
+given any environment $δ$ and variable $x$, the $k$-approximation of
+$P\app δ$ is equivalent to the $k$-approximation of $P$ applied to the
+$k$ approximation of the $δ$ with respect to variable $x$.
 \[
-  ↓ k (P δ) ≡ᵒ ↓ k (P (↓ᵈ k x δ)
+  ↓\, k\, (P\, δ) ≡ᵒ ↓\, k\, (P\, (↓ᵈ\, k\, x\, δ)
 \]
 Simlarly, the direct adaption of wellfounded to our setting says
 that the $k \plus 1$ approximation of $P\app δ$ is equivalent to the
 $k \plus 1$ approximation of $P$ applied to the $k$ approximation of
 the $δ$ with respect to variable $x$.
 \[
-  ↓ (suc \app k) (P δ) ≡ᵒ ↓ (suc\app k) (P (↓ᵈ k x δ)
+  ↓\, (k \plus 1) \, (P\, δ) ≡ᵒ ↓\, (k \plus 1) \, (P\, (↓ᵈ\, k\, x\, δ)
 \]
 However, these definitions of nonexpansive and wellfounded were not
 general enough to handle more than one recursive predicate in scope.
@@ -609,42 +614,59 @@ strongly-wellfounded : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
 strongly-wellfounded x f = ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (f δ) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵈ j x δ))
 \end{code}
 
-We say that a functional $f$ is ``good'' with respect to variable $x$
-at time $t$ if it is either \textsf{nonexpansive} (when $t = \Now$) or
-\textsf{wellfounded} (when $t = \Later$).
+We say that an environment functional $F$ is \emph{strong in variable $x$
+at time $t$} if it is either strongly nonexpansive (when $t = \Now$) or
+strongly wellfounded (when $t = \Later$).
 
 \begin{code}
-good-var : (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
-good-var x Now f = strongly-nonexpansive x f
-good-var x Later f = strongly-wellfounded x f
+strong-var : (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
+strong-var x Now F = strongly-nonexpansive x F
+strong-var x Later F = strongly-wellfounded x F
 \end{code}
 
 \noindent Next we define the \textsf{timeof} function to lookup the
 time for a variable $x$ in $Δ$.
 
 \begin{code}
-timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
+timeof : (x : Γ ∋ A) → Times Γ → Time
 timeof {B ∷ Γ} zeroˢ (cons t Δ) = t
 timeof {B ∷ Γ} (sucˢ x) (cons t Δ) = timeof x Δ
 \end{code}
 
-\noindent We say that a functional is ``good'' if it is good with respect to
-every variable that is in scope.
+For convenience, we define the following two elimination principles
+for functionals that are strong in a variable. If the variable's time
+is \textsf{Now}, then the functional is strongly nonexpansive, and if
+the time is \textsf{Later}, then the functional is strongly
+wellfounded.
 
 \begin{code}
-good-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-good-fun {Γ} Δ f = ∀{A} (x : Γ ∋ A) → good-var x (timeof x Δ) f
+strong-now : ∀{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setᵒ}
+   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Now → strongly-nonexpansive x F
+strong-now gF eq rewrite eq = gF
+
+strong-later : ∀{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setᵒ}
+   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Later → strongly-wellfounded x F
+strong-later gF eq rewrite eq = gF
+\end{code}
+
+
+\noindent We say that an environment functional is \emph{strong} if it
+is strong with respect to every variable that is in scope.
+
+\begin{code}
+strong-fun : Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
 \end{code}
 
 \noindent Two environments are equivalent if they are point-wise equivalent.
 
 \begin{code}
-_≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
+_≡ᵈ_ : RecEnv Γ → RecEnv Γ → Set
 _≡ᵈ_ {[]} δ δ′ = ⊤
 _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡ᵈ δ′
 \end{code}
 
-\noindent This relation is reflexive.
+\noindent Environment equivalence is reflexive.
 
 \begin{code}
 ≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ} → δ ≡ᵈ δ
@@ -656,22 +678,24 @@ _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ᵒ Q a) × δ ≡�
 environments produces equivalent step-indexed propositions.
 
 \begin{code}
-congruent : ∀{Γ : Context} → (RecEnv Γ → Setᵒ) → Set₁
+congruent : (RecEnv Γ → Setᵒ) → Set₁
 congruent f = ∀{δ δ′} → δ ≡ᵈ δ′ → (f δ) ≡ᵒ (f δ′)
 \end{code}
 
 We define $\mathsf{Set}ˢ$ as the following record type.  The meaning
-is given by a functional and we require proofs that the functional is
-good and congruent.
+of the open step-indexed logical formula is given by an environment
+functional and we require proofs that the functional is strong and
+congruent.
 
 \begin{code}
 record Setˢ Γ Δ where
   field
     ♯ : RecEnv Γ → Setᵒ 
-    good : good-fun Δ ♯
+    strong : strong-fun Δ ♯
     congr : congruent ♯
 open Setˢ public
 \end{code}
+
 
 \subsection{Equivalence for Open Step-Indexed Formulas}
 
@@ -684,20 +708,20 @@ abstract
   _≡ˢ_ : Setˢ Γ Δ → Setˢ Γ Δ → Set₁
   S ≡ˢ T = ∀ δ → ♯ S δ ≡ᵒ ♯ T δ
 
-  ≡ˢ-intro : ∀{S T : Setˢ Γ Δ} → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ) → S ≡ˢ T
+  ≡ˢ-intro : (∀ δ → ♯ S δ ≡ᵒ ♯ T δ) → S ≡ˢ T
   ≡ˢ-intro S=T eq δ = S=T eq δ
 
-  ≡ˢ-elim : ∀{S T : Setˢ Γ Δ} → S ≡ˢ T → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ)
+  ≡ˢ-elim : S ≡ˢ T → (∀ δ → ♯ S δ ≡ᵒ ♯ T δ)
   ≡ˢ-elim S=T δ = S=T δ
 
-  ≡ˢ-refl : ∀{S T : Setˢ Γ Δ} → S ≡ T → S ≡ˢ T
+  ≡ˢ-refl : S ≡ T → S ≡ˢ T
   ≡ˢ-refl{S = S}{T} refl δ = ≡ᵒ-refl{♯ S δ}{♯ T δ} refl
 
-  ≡ˢ-sym : ∀{S T : Setˢ Γ Δ} → S ≡ˢ T → T ≡ˢ S
+  ≡ˢ-sym : S ≡ˢ T → T ≡ˢ S
   ≡ˢ-sym{S = S}{T} ST δ = ≡ᵒ-sym{♯ S δ}{♯ T δ} (ST δ)
 
-  ≡ˢ-trans : ∀{S T R : Setˢ Γ Δ} → S ≡ˢ T → T ≡ˢ R → S ≡ˢ R
-  ≡ˢ-trans{S = S}{T}{R} ST TR δ = ≡ᵒ-trans{♯ S δ}{♯ T δ}{♯ R δ} (ST δ) (TR δ)
+  ≡ˢ-trans : S ≡ˢ T → T ≡ˢ U → S ≡ˢ U
+  ≡ˢ-trans{S = S}{T}{U} ST TU δ = ≡ᵒ-trans{♯ S δ}{♯ T δ}{♯ U δ} (ST δ) (TU δ)
   
 instance
   SIL-Eqˢ : EquivalenceRelation (Setˢ Γ Δ)
@@ -706,10 +730,9 @@ instance
 
 In the following subsections we define the logic operators that are
 declared in Figure~\ref{fig:SIL-decl}. We start with the logical
-operators for membership, later, approximation, and predicate
-application and then dive into the most difficult case, of recursive
-predicates. After that we define the logical opereators from
-first-order logic.
+operators for membership, later, approximation, and let. We then dive
+into the most difficult case, of recursive predicates. After that we
+define the logical opereators from first-order logic.
 
 \subsection{Membership}
 
@@ -722,8 +745,9 @@ lookup zeroˢ (P , δ) = P
 lookup (sucˢ x) (P , δ) = lookup x δ
 \end{code}
 
-The lemma $\mathsf{double}\mbox{-}↓$ that we defined in Section~\ref{sec:fun-approx-iter}
-generalizes to the \textsf{lookup} function as follows.
+The lemma $\mathsf{double}\mbox{-}↓$ that we proved in
+Section~\ref{sec:fun-approx-iter} generalizes to the \textsf{lookup}
+function as follows.
 
 \begin{code}
 ↓-lookup : ∀{a}{k j}{δ : RecEnv Γ} (x : Γ ∋ A) (y : Γ ∋ B) → k ≤ j
@@ -748,8 +772,8 @@ lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) zeroˢ neq = refl
 lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
 \end{code}
 
-The time of a variable $x$ in the list of times produced by $\varnow\,Γ\,x$
-is \textsf{Now}.
+The time of a variable $x$ is \textsf{Now} in the list of times
+produced by $\varnow\,Γ\,x$.
 
 \begin{code}
 timeof-var-now : ∀{Γ}{A} → (x : Γ ∋ A) → timeof x (var-now Γ x) ≡ Now
@@ -757,8 +781,8 @@ timeof-var-now {B ∷ Γ} zeroˢ = refl
 timeof-var-now {B ∷ Γ} (sucˢ x) = timeof-var-now x
 \end{code}
 
-The time of a variable $x$ in the list of times produced by $\laters(Γ)$
-is \textsf{Later}.
+The time of a variable $x$ is \textsf{Later} in the list of times
+produced by $\laters(Γ)$.
 
 \begin{code}
 timeof-later : ∀{Γ}{A} (x : Γ ∋ A) → (timeof x (laters Γ)) ≡ Later
@@ -766,24 +790,26 @@ timeof-later {B ∷ Γ} zeroˢ = refl
 timeof-later {B ∷ Γ} (sucˢ x) = timeof-later x
 \end{code}
 
-The \textsf{lookup} function for a variable $x$ is a ``good''
+The \textsf{lookup} function for a given variable $x$ is a strong
 functional when the list of times Δ is the result of
-$\varnow\,Γ\,x$. Because the time of $x$ in $\varnow\,Γ\,x$ is
-\textsf{Now}, this amounts to proving that \textsf{lookup} is strongly
-nonexpansive in $x$ and strongly wellfounded in the other variables.
+$\varnow\,Γ\,x$. The time of $x$ in $\varnow\,Γ\,x$ is \textsf{Now},
+so it suffices to prove that \textsf{lookup} is strongly nonexpansive
+in $x$ and strongly wellfounded in the other variables, which we show
+in Figure~\ref{fig:strong-lookup}.
 
+\begin{figure}[tbp]
 \begin{code}
-good-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → good-fun (var-now Γ x) (λ δ → lookup x δ a)
-good-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ = SNE where
+strong-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → strong-fun (var-now Γ x) (λ δ → lookup x δ a)
+strong-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ = SNE where
   SNE : strongly-nonexpansive zeroˢ (λ {(P , δ) → P a})
   SNE (P , δ) j k k≤j = ≡ᵒ-sym (double-↓ P k≤j)
-good-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y = SWF where
+strong-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y = SWF where
   SWF : strongly-wellfounded (sucˢ y) (λ {(P , δ) → P a})
   SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
-good-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = SWF where
+strong-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = SWF where
   SWF : strongly-wellfounded zeroˢ (λ (P , δ) → lookup x δ a)
   SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
-good-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
+strong-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
     with timeof y (var-now Γ x) in eq-y
 ... | Now = SNE where
     SNE : strongly-nonexpansive (sucˢ y) (λ {(P , δ) → lookup x δ a})
@@ -792,12 +818,14 @@ good-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
     timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≡ Now → timeof y Δ ≡ Later
        → timeof x Δ ≢ timeof y Δ
     timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
-    
     SWF : strongly-wellfounded (sucˢ y) (λ {(P , δ) → lookup x δ a})
     SWF (P , δ) j k k≤j =
       let eq = (lookup-diff{Γ}{δ = δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
       subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a)) (sym eq) (≡ᵒ-refl refl)
 \end{code}
+\caption{The variable \textsf{lookup} function is a strong environment functional.}
+\label{fig:strong-lookup}
+\end{figure}
 
 The \textsf{lookup} function for a variable $x$ is congruent. That is,
 given two equivalent environments, \textsf{lookup} produces equivalent
@@ -813,18 +841,22 @@ congruent-lookup x a d=d′ = aux x a d=d′
 \end{code}
 
 We conclude by constructing the \textsf{Set}ˢ record for the predicate
-membership operator as follows.
+membership formula as follows.
 
 \begin{code}
-a ∈ x = record { ♯ = λ δ → (lookup x δ) a ; good = good-lookup x ; congr = congruent-lookup x a }
+a ∈ x = record { ♯ = λ δ → (lookup x δ) a ; strong = strong-lookup x ; congr = congruent-lookup x a }
 \end{code}
 
-\subsection{Later Operator}
+\subsection{Later}
 
-Next we come to the important ``later`` operator, written $▷ᵒ ϕ$.  Of
-course, at zero it is true. For any other index of the form
-$\mathsf{suc}\app k$, $▷ᵒ ϕ$ means $ϕ$ at $k$, that is, subtract
-one from the step index.
+Next we come to the later formula. We first define a closed variant of
+the operator, written $▷ᵒ ϕ$, and then define the open formula $▷ˢ S$.
+The following is the definition for $▷ᵒ ϕ$, with the meaning of the
+formula given by the \texttt{\#} field. Of course, at zero, $▷ᵒ ϕ$ is
+true. For any other index $\mathsf{suc}\app k$, $▷ᵒ ϕ$ means $ϕ$ is
+true at $k$, that is, subtract one from the step index.  So we
+construct the record for $▷ᵒ ϕ$ as follows, proving in-line that it is
+downward closed and true-at-zero.
 
 \begin{code}
 ▷ᵒ_ : Setᵒ → Setᵒ
@@ -835,175 +867,167 @@ one from the step index.
               ; tz = tt }
 \end{code}
 
+To define the record for the open formula $▷ˢ S$, we need to show that
+$▷ˢ$ is strong and congruent. We begin by showing that $▷ᵒ$ is congruent
+becuase it turns out that this fact is need to show that $▷ˢ$ is strong.
+
 \begin{code}
-abstract
-  cong-▷ : ∀{S T : Setᵒ}
-    → S ≡ᵒ T
-    → ▷ᵒ S ≡ᵒ ▷ᵒ T
-  cong-▷ S=T zero = (λ x → tt) , (λ x → tt)
-  cong-▷ S=T (suc i) = (proj₁ (S=T i)) , (proj₂ (S=T i))
+cong-▷ : ϕ ≡ᵒ ψ → ▷ᵒ ϕ ≡ᵒ ▷ᵒ ψ
+cong-▷ {ϕ}{ψ} ϕ=ψ = ≡ᵒ-intro aux
+  where aux : ∀ i → #(▷ᵒ ϕ) i ⇔ #(▷ᵒ ψ) i
+        aux zero = (λ _ → tt) , (λ _ → tt)
+        aux (suc i) = (λ ϕi → ⇔-to (≡ᵒ-elim ϕ=ψ) ϕi) , (λ ψi → ⇔-fro (≡ᵒ-elim ϕ=ψ) ψi)
+\end{code}
 
-abstract
-  down-▷ : ∀{k} (S : Setᵒ)
-    → ↓ᵒ (suc k) (▷ᵒ S) ≡ᵒ ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))
-  down-▷ S zero = ⇔-intro (λ x → tt) (λ x → tt)
-  down-▷ S (suc zero) =
-      ⇔-intro (λ {(a , b) → a , tt}) (λ {(a , b) → a , (tz S)})
-  down-▷ S (suc (suc i)) =
-    ⇔-intro
-    (λ {(s≤s i≤1+k , ▷Si) →
-                 s≤s i≤1+k , i≤1+k , ▷Si})
-    (λ {(i≤1+k , (_ , ▷Si)) → i≤1+k , ▷Si})
+The operator $▷ᵒ$ is also wellfounded.
 
-good-▷ : ∀{Γ}{Δ : Times Γ}
-   → (S : Setˢ Γ Δ)
-   → good-fun (laters Γ) (λ δ → ▷ᵒ (♯ S δ))
-good-▷{Γ}{Δ} S x
-    with good S x
+\begin{code}
+WF-▷ : ∀{k} (S : Setᵒ) → ↓ᵒ (suc k) (▷ᵒ S) ≡ᵒ ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))
+WF-▷ {k} S = ≡ᵒ-intro aux
+  where aux : ∀ i → #(↓ᵒ (suc k) (▷ᵒ S)) i ⇔ #(↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))) i
+        aux zero = (λ _ → tt) , (λ _ → tt)
+        aux 1 = (λ {(si<sk , Si) → si<sk , tt}) , λ {(1<sk , _) → 1<sk , tz S}
+        aux (suc (suc i)) = (λ {(s≤s i≤1+k , ▷Si) → s≤s i≤1+k , i≤1+k , ▷Si})
+                            , (λ {(i≤1+k , (_ , ▷Si)) → i≤1+k , ▷Si})
+\end{code}
+
+The operator $▷ᵒ$ is a strong environment functional, which we prove in
+Figure~\ref{fig:strong-later}.
+
+\begin{figure}[tbp]
+\begin{code}
+strong-▷ : (S : Setˢ Γ Δ) → strong-fun (laters Γ) (λ δ → ▷ᵒ (♯ S δ))
+strong-▷ {Γ}{Δ} S x
+    with strong S x
 ... | gS
     with timeof x Δ
 ... | Now rewrite timeof-later{Γ} x =
   λ δ j k k≤j →
-  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                              ⩦⟨ down-▷ {k} (♯ S δ) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S δ)))  ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (gS δ j k k≤j)) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ))))
-                                     ⩦⟨ ≡ᵒ-sym (down-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))   ∎
+  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                      ⩦⟨ WF-▷ {k} (♯ S δ) ⟩ 
+  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S δ)))               ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (gS δ j k k≤j)) ⟩ 
+  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ))))      ⩦⟨ ≡ᵒ-sym (WF-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
+  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))             ∎
 ... | Later rewrite timeof-later{Γ} x =
   λ δ j k k≤j →
-  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                       ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S δ)))    ⩦⟨ cong-↓ᵒ (suc k) (down-▷ _) ⟩
+  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                         ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
+  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S δ)))            ⩦⟨ cong-↓ᵒ (suc k) (WF-▷ _) ⟩
   ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S δ))))
-           ⩦⟨ cong-↓ᵒ (suc k) (cong-↓ᵒ (suc (suc k)) (cong-▷ (gS δ j k k≤j))) ⟩
+                            ⩦⟨ cong-↓ᵒ (suc k) (cong-↓ᵒ (suc (suc k)) (cong-▷ (gS δ j k k≤j))) ⟩
   ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))))
-                                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ (suc k) (down-▷ _)) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S (↓ᵈ j x δ))))     ⩦⟨ lemma17ᵒ (suc k) ⟩
-  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))    ∎
-
-▷ˢ S = record { ♯ = λ δ → ▷ᵒ (♯ S δ)
-              ; good = good-▷ S
-              ; congr = λ d=d′ → cong-▷ (congr S d=d′)
-              }
+                                                  ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ (suc k) (WF-▷ _)) ⟩
+  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S (↓ᵈ j x δ))))   ⩦⟨ lemma17ᵒ (suc k) ⟩
+  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))                ∎
 \end{code}
+\caption{The later operator is a strong environment functional.}
+\label{fig:strong-later}
+\end{figure}
+
+We conclude by defining the record for the $▷ˢ$ formula of SIL.
+
+\begin{code}
+▷ˢ S = record { ♯ = λ δ → ▷ᵒ (♯ S δ) ; strong = strong-▷ S ; congr = λ d=d′ → cong-▷ (congr S d=d′) }
+\end{code}
+
 
 \subsection{Approximation}
 
-\begin{code}
-good-now : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-var x (timeof x Δ) S → timeof x Δ ≡ Now
-   → ∀ δ j k → k ≤ j → ↓ᵒ k (S δ) ≡ᵒ ↓ᵒ k (S (↓ᵈ j x δ))
-good-now gS eq rewrite eq = gS
+We have already defined a closed variant of $k$-approximation, written
+$↓ᵒ$. and we have proved that it is congruent. So it remains to show
+that $↓ᵒ$ is a strong environment functional. For that we need the
+following lemma, that allows us to permute two uses of approximation.
 
-good-later : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ}
-   → good-var x (timeof x Δ) S → timeof x Δ ≡ Later
-   → ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (S δ) ≡ᵒ ↓ᵒ (suc k) (S (↓ᵈ j x δ))
-good-later gS eq rewrite eq = gS
+\begin{code}
+permute-↓ : ∀{S : Setᵒ}{j}{k} → ↓ᵒ k (↓ᵒ j S) ≡ᵒ ↓ᵒ j (↓ᵒ k S)
+permute-↓ {S} {j} {k} = ≡ᵒ-intro aux
+  where aux : ∀ i → #(↓ᵒ k (↓ᵒ j S)) i ⇔ #(↓ᵒ j (↓ᵒ k S)) i
+        aux zero = (λ _ → tt) , (λ _ → tt)
+        aux (suc i) = (λ {(x , (y , z)) → y , x , z}) , λ {(x , (y , z)) → y , x , z}
 \end{code}
 
-\begin{code}
-abstract
-  permute-↓ : ∀{S : Setᵒ}{j}{k}
-     → ↓ᵒ k (↓ᵒ j S) ≡ᵒ ↓ᵒ j (↓ᵒ k S)
-  permute-↓ {S} {j} {k} zero = (λ x → tt) , (λ x → tt)
-  permute-↓ {S} {j} {k} (suc i) =
-    (λ {(x , (y , z)) → y , x , z}) , λ {(x , (y , z)) → y , x , z}
-\end{code}
+The fact that $↓ᵒ$ is strong now follows from this permutation lemma
+and from $↓ᵒ$ being congruent.
 
 \begin{code}
-good-↓ : ∀{Γ}{Δ : Times Γ}{i}
-   (S : Setˢ Γ Δ)
-   → good-fun Δ (λ δ → ↓ᵒ i (♯ S δ))
-good-↓ {Γ}{Δ}{i} S {A} x
+strong-↓ : ∀{Γ}{Δ : Times Γ}{i} (S : Setˢ Γ Δ) → strong-fun Δ (λ δ → ↓ᵒ i (♯ S δ))
+strong-↓ {Γ}{Δ}{i} S {A} x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → 
-    let gS = good-now (good S x) time-x δ j k k≤j in
-    ↓ᵒ k (↓ᵒ i (♯ S δ))              ⩦⟨ permute-↓  ⟩ 
-    ↓ᵒ i (↓ᵒ k (♯ S δ))              ⩦⟨ cong-↓ᵒ i gS ⟩ 
-    ↓ᵒ i (↓ᵒ k (♯ S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
-    ↓ᵒ k (↓ᵒ i (♯ S (↓ᵈ j x δ)))  ∎
+    let gS = strong-now (strong S x) time-x δ j k k≤j in
+    ↓ᵒ k (↓ᵒ i (♯ S δ))                 ⩦⟨ permute-↓  ⟩ 
+    ↓ᵒ i (↓ᵒ k (♯ S δ))                 ⩦⟨ cong-↓ᵒ i gS ⟩ 
+    ↓ᵒ i (↓ᵒ k (♯ S (↓ᵈ j x δ)))        ⩦⟨ permute-↓ ⟩
+    ↓ᵒ k (↓ᵒ i (♯ S (↓ᵈ j x δ)))        ∎
 ... | Later = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x δ j k k≤j in
-    ↓ᵒ (suc k) (↓ᵒ i (♯ S δ))              ⩦⟨ permute-↓  ⟩ 
-    ↓ᵒ i (↓ᵒ (suc k) (♯ S δ))              ⩦⟨ cong-↓ᵒ i gS ⟩ 
-    ↓ᵒ i (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))     ⩦⟨ permute-↓ ⟩
-    ↓ᵒ (suc k) (↓ᵒ i (♯ S (↓ᵈ j x δ)))  ∎
+    let gS = strong-later (strong S x) time-x δ j k k≤j in
+    ↓ᵒ (suc k) (↓ᵒ i (♯ S δ))                 ⩦⟨ permute-↓  ⟩ 
+    ↓ᵒ i (↓ᵒ (suc k) (♯ S δ))                 ⩦⟨ cong-↓ᵒ i gS ⟩ 
+    ↓ᵒ i (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))        ⩦⟨ permute-↓ ⟩
+    ↓ᵒ (suc k) (↓ᵒ i (♯ S (↓ᵈ j x δ)))        ∎
 \end{code}
 
+To conclude, we construct $↓ˢ\,k\,S$ with the following record.
+
 \begin{code}
-↓ˢ k S = record { ♯ = λ δ → ↓ᵒ k (♯ S δ)
-                ; good = good-↓ S
+↓ˢ k S = record { ♯ = λ δ → ↓ᵒ k (♯ S δ) ; strong = strong-↓ S
                 ; congr = λ d=d′ → cong-↓ᵒ k (congr S d=d′)}
 \end{code}
 
-not used:
-⇓ˢ : ℕ → ∀{Γ} → RecEnv Γ → RecEnv Γ
-⇓ˢ k {[]} ttᵖ = ttᵖ
-⇓ˢ k {A ∷ Γ} (P , δ) = ↓ᵖ k P , ⇓ˢ k δ
 
+\subsection{Let}
 
-\subsection{Predicate Application}
+The meaning of the $\mathsf{let}ˢ\,Sᵃ\,T$ formula is the meaning of its body $T$
+where the zero variable is bound to the predicate $Sᵃ$. The proof that
+$\mathsf{let}ˢ$ is a strong environment functional is somewhat involved,
+and given in Figure~\ref{fig:strong-let}. The proof relies on \textsf{lemma17}.
 
+\begin{figure}[tbp]
+\small
 \begin{code}
-good-apply : ∀{Γ}{Δ : Times Γ}{A}
-   (S : Setˢ (A ∷ Γ) (cons Later Δ))
-   (P : A → Setˢ Γ Δ)
-   → good-fun Δ (λ δ → ♯ S ((λ a → ♯ (P a) δ) , δ))
-good-apply {Γ}{Δ}{A} S P x
+strong-let : ∀{Γ}{Δ : Times Γ}{A} (T : Setˢ (A ∷ Γ) (cons Later Δ)) (Sᵃ : A → Setˢ Γ Δ)
+   → strong-fun Δ (λ δ → ♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))
+strong-let {Γ}{Δ}{A} T Sᵃ x
    with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
-    let gSz = ((good S) zeroˢ) ((λ a → ♯ (P a) δ) , δ) j k k≤j in
-    let gSz2 = ((good S) zeroˢ) ((λ a → ♯ (P a) (↓ᵈ j x δ)) , (↓ᵈ j x δ))
+    let gTz = ((strong T) zeroˢ) ((λ a → ♯ (Sᵃ a) δ) , δ) j k k≤j in
+    let gTz2 = ((strong T) zeroˢ) ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , (↓ᵈ j x δ))
                    j k k≤j in
-    let gSsx = good-now{x = sucˢ x}{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
-                 ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ) j k k≤j in
-
-    let EQ : ((λ a → ↓ᵒ j (♯ (P a) δ)) , ↓ᵈ j x δ)
-              ≡ᵈ ((λ a → ↓ᵒ j  (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
-        EQ = (λ a → good-now (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    
-    ↓ᵒ k (♯ S ((λ a → ♯ (P a) δ) , δ))               ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) δ) , δ)))
-      ⩦⟨ cong-↓ᵒ k gSz ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ)))
-      ⩦⟨ lemma17ᵒ k ⟩
-    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , δ))
-      ⩦⟨ gSsx ⟩
-    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) δ)) , ↓ᵈ j x δ))
-      ⩦⟨ cong-↓ᵒ k (congr S EQ) ⟩
-    ↓ᵒ k (♯ S ((λ a → ↓ᵒ j (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ))
-                        ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ↓ᵒ j (♯ (P a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)))
-      ⩦⟨ cong-↓ᵒ k (≡ᵒ-sym gSz2) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)))
-      ⩦⟨ lemma17ᵒ k ⟩
-    ↓ᵒ k (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ∎
-
+    let gTsx = strong-now{x = sucˢ x}{Δ = cons Now Δ} ((strong T) (sucˢ x)) time-x
+                 ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ) j k k≤j in
+    let EQ : ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , ↓ᵈ j x δ)
+          ≡ᵈ ((λ a → ↓ᵒ j  (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
+        EQ = (λ a → strong-now (strong (Sᵃ a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
+    ↓ᵒ k (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))                      ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ)))         ⩦⟨ cong-↓ᵒ k gTz ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ)))  ⩦⟨ lemma17ᵒ k ⟩
+    ↓ᵒ k (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ))               ⩦⟨ gTsx ⟩
+    ↓ᵒ k (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , ↓ᵈ j x δ))        ⩦⟨ cong-↓ᵒ k (congr T EQ) ⟩
+    ↓ᵒ k (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ))               ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)))  ⩦⟨ cong-↓ᵒ k (≡ᵒ-sym gTz2) ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)))         ⩦⟨ lemma17ᵒ k ⟩
+    ↓ᵒ k (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))                      ∎
 ... | Later = λ δ j k k≤j →
-    let gSz = ((good S) zeroˢ) ((λ a → ♯ (P a) δ) , δ) (suc j) k
-                    (≤-trans k≤j (n≤1+n _)) in
-    let gSz2 = ((good S) zeroˢ) (((λ a → ♯ (P a) (↓ᵈ j x δ))) , δ) (suc j) k
-                    (≤-trans k≤j (n≤1+n _)) in
-    let EQ : ((λ a → ↓ᵒ (suc j) (♯ (P a) δ)) , δ)
-              ≡ᵈ ((λ a → ↓ᵒ (suc j)  (♯ (P a) (↓ᵈ j x δ))) , δ)
-        EQ = (λ a → good-later (good (P a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    let gSsx = good-later{x = sucˢ x}{Δ = cons Now Δ} ((good S) (sucˢ x)) time-x
-                 ((λ a → ♯ (P a) (↓ᵈ j x δ)) , δ) j k k≤j in
-    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) δ) , δ)) 
-      ⩦⟨ gSz ⟩
-    ↓ᵒ (suc k) (♯ S (↓ᵖ (suc j) (λ a → ♯ (P a) δ) , δ)) 
-      ⩦⟨ cong-↓ᵒ (suc k) (congr S EQ) ⟩
-    ↓ᵒ (suc k) (♯ S (↓ᵖ (suc j) (λ a → ♯ (P a) (↓ᵈ j x δ)) , δ)) 
-      ⩦⟨ ≡ᵒ-sym gSz2 ⟩
-    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , δ)) 
-      ⩦⟨ gSsx ⟩
-    ↓ᵒ (suc k) (♯ S ((λ a → ♯ (P a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))  ∎
+    let gTz = ((strong T) zeroˢ) ((λ a → ♯ (Sᵃ a) δ) , δ) (suc j) k (≤-trans k≤j (n≤1+n _)) in
+    let gTz2 = ((strong T) zeroˢ) (((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ))) , δ) (suc j) k (≤-trans k≤j (n≤1+n _)) in
+    let EQ : ((λ a → ↓ᵒ (suc j) (♯ (Sᵃ a) δ)) , δ) ≡ᵈ ((λ a → ↓ᵒ (suc j)  (♯ (Sᵃ a) (↓ᵈ j x δ))) , δ)
+        EQ = (λ a → strong-later (strong (Sᵃ a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
+    let gTsx = strong-later{x = sucˢ x}{Δ = cons Now Δ} ((strong T) (sucˢ x)) time-x
+                 ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ) j k k≤j in
+    ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))                       ⩦⟨ gTz ⟩
+    ↓ᵒ (suc k) (♯ T (↓ᵖ (suc j) (λ a → ♯ (Sᵃ a) δ) , δ))            ⩦⟨ cong-↓ᵒ (suc k) (congr T EQ) ⟩
+    ↓ᵒ (suc k) (♯ T (↓ᵖ (suc j) (λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ))   ⩦⟨ ≡ᵒ-sym gTz2 ⟩
+    ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ))              ⩦⟨ gTsx ⟩
+    ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))       ∎
 \end{code}
+\caption{The \textsf{let}ˢ operator is a strong environment functional.}
+\label{fig:strong-let}
+\end{figure}
+
+We define $\mathsf{let}ˢ\,Sᵃ\,T$ by constructing the following record.
 
 \begin{code}
-letˢ P S =
-  record { ♯ = λ δ → (♯ S) ((λ a → ♯ (P a) δ) , δ)
-         ; good = good-apply S P
-         ; congr = λ d=d′ → congr S ((λ a → congr (P a) d=d′) , d=d′) }
+letˢ Sᵃ T = record { ♯ = λ δ → (♯ T) ((λ a → ♯ (Sᵃ a) δ) , δ)
+                   ; strong = strong-let T Sᵃ
+                   ; congr = λ d=d′ → congr T ((λ a → congr (Sᵃ a) d=d′) , d=d′) }
 \end{code}
 
 \subsection{Recursive Predicates and the Fixpoint Theorem}
@@ -1028,44 +1052,44 @@ following function to convert from the former to the later.
 
 \begin{code}
 env-fun⇒fun : RecEnv Γ → (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (Predᵒ A → Predᵒ A)
-env-fun⇒fun δ Fᵃ μF = λ a → ♯ (Fᵃ a) (μF , δ)
+env-fun⇒fun δ Sᵃ μS = λ a → ♯ (Sᵃ a) (μS , δ)
 \end{code}
 
 Our next goal is to prove that μᵖ is downward closed in the following sense.
 
 \begin{code}
-down-μᵖ : ∀{Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)} {a : A}{δ : RecEnv Γ}
-  → downClosed (μᵖ (env-fun⇒fun δ Fᵃ) a)
+down-μᵖ : ∀{Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)} {a : A}{δ : RecEnv Γ}
+  → downClosed (μᵖ (env-fun⇒fun δ Sᵃ) a)
 \end{code}
 
 The proof relies on \textsf{lemma15b}, but applies them to a
 functional obtained by \textsf{env}-\textsf{fun}⇒\textsf{fun}.  So we
 need to prove that such a functional is wellfounded and congruent.
-The fact that $\eff\, δ\, Fᵃ$ is wellfounded is a consequence of $Fᵃ\app a$
-being ``good''.
+The fact that $\eff\, δ\, Sᵃ$ is wellfounded is a consequence of $Sᵃ\app a$
+being ``strong''.
 
 \begin{code}
-wf-env-fun : ∀ (δ : RecEnv Γ) (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
-   → wellfoundedᵖ (env-fun⇒fun δ Fᵃ)
-wf-env-fun δ Fᵃ = λ a P k → good (Fᵃ a) zeroˢ (P , δ) k k ≤-refl
+wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → wellfoundedᵖ (env-fun⇒fun δ Sᵃ)
+wf-env-fun δ Sᵃ = λ a P k → strong (Sᵃ a) zeroˢ (P , δ) k k ≤-refl
 \end{code}
 
-\noindent Similarly, $\eff\,δ\,Fᵃ$ is congruent because $Fᵃ\app a$ is congruent.
+\noindent Similarly, $\eff\,δ\,Sᵃ$ is congruent because $Sᵃ\app a$ is congruent.
 
 \begin{code}
-cong-env-fun : ∀ (δ : RecEnv Γ) (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
-   → congruentᵖ (env-fun⇒fun δ Fᵃ)
-cong-env-fun δ Fᵃ = λ P=Q a → congr (Fᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
+cong-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
+   → congruentᵖ (env-fun⇒fun δ Sᵃ)
+cong-env-fun δ Sᵃ = λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 \end{code}
 
 \noindent So we have the following adaptation of \textsf{lemma15b}.
 
 \begin{code}
-lemma15b-env-fun : ∀{Γ}{A}{Δ : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ} (k j : ℕ) (Fᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+lemma15b-env-fun : ∀{Γ}{A}{Δ : Times Γ}{P : Predᵒ A}{δ : RecEnv Γ} (k j : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
   → j ≤ k
-  → ↓ᵒ j (iter j (env-fun⇒fun δ Fᵃ) P a) ≡ᵒ ↓ᵒ j (iter k (env-fun⇒fun δ Fᵃ) P a)
-lemma15b-env-fun{Γ}{A}{Δ}{P}{δ} k j Fᵃ a j≤k =
-  lemma15b k j (env-fun⇒fun δ Fᵃ) a j≤k (wf-env-fun δ Fᵃ) (cong-env-fun δ Fᵃ)
+  → ↓ᵒ j (iter j (env-fun⇒fun δ Sᵃ) P a) ≡ᵒ ↓ᵒ j (iter k (env-fun⇒fun δ Sᵃ) P a)
+lemma15b-env-fun{Γ}{A}{Δ}{P}{δ} k j Sᵃ a j≤k =
+  lemma15b k j (env-fun⇒fun δ Sᵃ) a j≤k (wf-env-fun δ Sᵃ) (cong-env-fun δ Sᵃ)
 \end{code}
 
 The one other fact we need to prove that $μᵖ$ is downward closed is
@@ -1081,16 +1105,16 @@ We now prove that the $μᵖ$ function is downward closed when applied to
 the result of $\eff$.
 
 \begin{code}
-down-μᵖ {Fᵃ = Fᵃ}{a}{δ} k iterskFᵃk zero j≤k = tz (env-fun⇒fun δ Fᵃ (id ⊤ᵖ) a)
-down-μᵖ {Fᵃ = Fᵃ}{a}{δ} (suc k′) μFᵃa (suc j′) (s≤s j′≤k′) =
-  let f = env-fun⇒fun δ Fᵃ in
+down-μᵖ {Sᵃ = Sᵃ}{a}{δ} k iterskSᵃk zero j≤k = tz (env-fun⇒fun δ Sᵃ (id ⊤ᵖ) a)
+down-μᵖ {Sᵃ = Sᵃ}{a}{δ} (suc k′) μSᵃa (suc j′) (s≤s j′≤k′) =
+  let f = env-fun⇒fun δ Sᵃ in
   let dc-iter-ssk : downClosed (# ((iter (2 + k′) f ⊤ᵖ) a))
-      dc-iter-ssk = dc-iter (2 + k′) (env-fun⇒fun δ Fᵃ) a in
+      dc-iter-ssk = dc-iter (2 + k′) (env-fun⇒fun δ Sᵃ) a in
   let ↓-iter-ssk : #(↓ᵒ (2 + j′) ((iter (2 + k′) f ⊤ᵖ) a))(suc j′)
-      ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μFᵃa (suc j′) (s≤s j′≤k′)) in
-  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (env-fun⇒fun δ Fᵃ) ⊤ᵖ) a)
-        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (env-fun⇒fun δ Fᵃ) ⊤ᵖ) a)
-      eq = lemma15b-env-fun {P = ⊤ᵖ}{δ} (2 + k′) (2 + j′) Fᵃ a (s≤s (s≤s j′≤k′)) in
+      ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μSᵃa (suc j′) (s≤s j′≤k′)) in
+  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (env-fun⇒fun δ Sᵃ) ⊤ᵖ) a)
+        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (env-fun⇒fun δ Sᵃ) ⊤ᵖ) a)
+      eq = lemma15b-env-fun {P = ⊤ᵖ}{δ} (2 + k′) (2 + j′) Sᵃ a (s≤s (s≤s j′≤k′)) in
   let ↓-iter-ssj : #(↓ᵒ (2 + j′) ((iter (2 + j′) f ⊤ᵖ) a)) (suc j′)
       ↓-iter-ssj = ⇔-to (≡ᵒ-elim (≡ᵒ-sym eq)) ↓-iter-ssk in
   proj₂ ↓-iter-ssj
@@ -1102,9 +1126,9 @@ predicate into \textsf{Set}ˢ, an environment, and an element of $A$.
 
 \begin{code}
 muᵒ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → A → Setᵒ
-muᵒ Fᵃ δ a = record { # = μᵖ (env-fun⇒fun δ Fᵃ) a
-                    ; down = down-μᵖ {Fᵃ = Fᵃ}
-                    ; tz = tz (env-fun⇒fun δ Fᵃ ⊤ᵖ a) }
+muᵒ Sᵃ δ a = record { # = μᵖ (env-fun⇒fun δ Sᵃ) a
+                    ; down = down-μᵖ {Sᵃ = Sᵃ}
+                    ; tz = tz (env-fun⇒fun δ Sᵃ ⊤ᵖ a) }
 \end{code}
 
 UNDER CONSTRUCTION
@@ -1154,17 +1178,17 @@ wellfoundedˢ{Γ}{A} S δ = ∀ P k → ↓ᵒ (suc k) (S (P , δ)) ≡ᵒ ↓�
 \end{code}
 
 \begin{code}
-good-env-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
-good-env-fun {[]} Δ S = topᵖ
-good-env-fun {A ∷ Γ} (cons Now Δ) S = ∀ δ → nonexpansiveˢ S δ
-good-env-fun {A ∷ Γ} (cons Later Δ) S = ∀ δ → wellfoundedˢ S δ
+strong-env-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setᵒ) → Set₁
+strong-env-fun {[]} Δ S = topᵖ
+strong-env-fun {A ∷ Γ} (cons Now Δ) S = ∀ δ → nonexpansiveˢ S δ
+strong-env-fun {A ∷ Γ} (cons Later Δ) S = ∀ δ → wellfoundedˢ S δ
 \end{code}
 
 \begin{code}
-good-fun⇒env-fun : ∀{Γ}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ} → good-fun Δ S → good-env-fun Δ S
-good-fun⇒env-fun {[]} {Δ} {S} gs = ttᵖ
-good-fun⇒env-fun {A ∷ Γ} {cons Now Δ} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
-good-fun⇒env-fun {A ∷ Γ} {cons Later Δ} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
+strong-fun⇒env-fun : ∀{Γ}{Δ : Times Γ}{S : RecEnv Γ → Setᵒ} → strong-fun Δ S → strong-env-fun Δ S
+strong-fun⇒env-fun {[]} {Δ} {S} gs = ttᵖ
+strong-fun⇒env-fun {A ∷ Γ} {cons Now Δ} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
+strong-fun⇒env-fun {A ∷ Γ} {cons Later Δ} {S} gs δ P k = gs zeroˢ (P , δ) k k ≤-refl
 \end{code}
 
 \begin{code}
@@ -1172,10 +1196,10 @@ lemma18b : ∀{Γ}{Δ : Times Γ}{A} (j : ℕ) (F : A → Setˢ (A ∷ Γ) (cons
      → ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))
        ≡ᵒ ↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)
 lemma18b{Γ}{Δ}{A} j F a δ =
-   ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))           ⩦⟨ good-fun⇒env-fun (good (F a)) δ (muᵒ F δ) j ⟩
+   ↓ᵒ (suc j) (♯ (F a) (muᵒ F δ , δ))           ⩦⟨ strong-fun⇒env-fun (strong (F a)) δ (muᵒ F δ) j ⟩
    ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (muᵒ F δ) , δ))    ⩦⟨ cong-↓ (λ a → congr (F a) ((λ a → lemma18a j F a δ) , ≡ᵈ-refl)) a ⟩
    ↓ᵒ (suc j) (♯ (F a) (↓ᵖ j (iter j (env-fun⇒fun δ F) ⊤ᵖ) , δ))
-                                  ⩦⟨ ≡ᵖ-sym{A} (good-fun⇒env-fun (good (F a)) δ (iter j (env-fun⇒fun δ F) ⊤ᵖ) j) {a} ⟩
+                                  ⩦⟨ ≡ᵖ-sym{A} (strong-fun⇒env-fun (strong (F a)) δ (iter j (env-fun⇒fun δ F) ⊤ᵖ) j) {a} ⟩
    ↓ᵒ (suc j) (♯ (F a) (iter j (env-fun⇒fun δ F) ⊤ᵖ , δ))   ⩦⟨ ≡ᵒ-refl refl ⟩
    ↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)         ∎
 \end{code}
@@ -1197,23 +1221,23 @@ lemma19a{Γ}{Δ}{A} F a j δ =
 
 
 \begin{code}
-good-now-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+strong-now-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
    → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
      (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Now
    → (δ : RecEnv Γ) (k j : ℕ)
    → (k ≤ j)
    → ↓ᵒ k (muᵒ S δ a) ≡ᵒ ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)
-good-now-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j = ↓ᵒ-zero
-good-now-mu {Γ} {Δ} {A}{B} S a x time-x δ (suc k′) j k≤j =
+strong-now-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j = ↓ᵒ-zero
+strong-now-mu {Γ} {Δ} {A}{B} S a x time-x δ (suc k′) j k≤j =
   let k = suc k′ in
-  let gSa = good-now{A = B}{sucˢ x}{Δ = cons Later Δ}
-              (good (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
+  let gSa = strong-now{A = B}{sucˢ x}{Δ = cons Later Δ}
+              (strong (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
               j k k≤j in
-  let gSaz = good (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) k′ k′ ≤-refl in
-  let gSaz2 = good (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ ≤-refl in
+  let gSaz = strong (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) k′ k′ ≤-refl in
+  let gSaz2 = strong (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ ≤-refl in
   let IH = cong-↓ (λ a → congr (S a)
-           ((λ a → good-now-mu S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
+           ((λ a → strong-now-mu S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
             , ≡ᵈ-refl)) a in
   ↓ᵒ k (muᵒ S δ a)                                        ⩦⟨ lemma19a S a k δ ⟩
   ↓ᵒ k (♯ (S a) (muᵒ S δ , δ))                                         ⩦⟨ gSa ⟩
@@ -1234,23 +1258,23 @@ abstract
   down-1-mu S a x δ j zero = (λ _ → tt) , (λ _ → tt)
   down-1-mu S a x δ j (suc i) = (λ { (s≤s () , _)}) , λ { (s≤s () , _)}
 
-good-later-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
+strong-later-mu : ∀{Γ}{Δ : Times Γ}{A}{B}
    → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
      (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Later
    → (δ : RecEnv Γ) (k j : ℕ)
    → (k ≤ j)
    → ↓ᵒ (suc k) (muᵒ S δ a) ≡ᵒ ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)
-good-later-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j = down-1-mu S a x δ j
-good-later-mu {Γ} {Δ} {A} {B} S a x time-x δ (suc k′) j k≤j =
+strong-later-mu {Γ} {Δ} {A} S a x time-x δ zero j k≤j = down-1-mu S a x δ j
+strong-later-mu {Γ} {Δ} {A} {B} S a x time-x δ (suc k′) j k≤j =
   let k = suc k′ in
-  let gSa = good-later{A = B}{sucˢ x}{Δ = cons Later Δ}
-              (good (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
+  let gSa = strong-later{A = B}{sucˢ x}{Δ = cons Later Δ}
+              (strong (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
               j k k≤j in
-  let gSaz = good (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) (suc k′) k ≤-refl in
-  let gSaz2 = good (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl in
+  let gSaz = strong (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) (suc k′) k ≤-refl in
+  let gSaz2 = strong (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl in
   let IH = cong-↓ (λ a → congr (S a)
-           ((λ a → good-later-mu S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
+           ((λ a → strong-later-mu S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
             , ≡ᵈ-refl)) a in
 
   ↓ᵒ (suc k) (muᵒ S δ a)                            ⩦⟨ lemma19a S a (suc k) δ ⟩
@@ -1264,14 +1288,14 @@ good-later-mu {Γ} {Δ} {A} {B} S a x time-x δ (suc k′) j k≤j =
 \end{code}
 
 \begin{code}
-good-fun-mu : ∀{Γ}{Δ : Times Γ}{A}
+strong-fun-mu : ∀{Γ}{Δ : Times Γ}{A}
    → (S : A → Setˢ (A ∷ Γ) (cons Later Δ))
    → (a : A)
-   → good-fun Δ (λ δ → muᵒ S δ a)
-good-fun-mu {Γ} {Δ} {A} S a x
+   → strong-fun Δ (λ δ → muᵒ S δ a)
+strong-fun-mu {Γ} {Δ} {A} S a x
     with timeof x Δ in time-x
-... | Now = λ δ j k k≤j → good-now-mu S a x time-x δ k j k≤j
-... | Later = λ δ j k k≤j → good-later-mu S a x time-x δ k j k≤j
+... | Now = λ δ j k k≤j → strong-now-mu S a x time-x δ k j k≤j
+... | Later = λ δ j k k≤j → strong-later-mu S a x time-x δ k j k≤j
 \end{code}
 
 \begin{code}
@@ -1285,13 +1309,13 @@ cong-env-fun⇒fun{A}{Γ}{δ}{δ′} S δ=δ′ P Q a P=Q =
 \end{code}
 
 \begin{code}
-cong-iter : ∀{A}{a : A} (i : ℕ) (F G : Predᵒ A → Predᵒ A)
-  → (∀ P Q a → (∀ b → P b ≡ᵒ Q b) → F P a ≡ᵒ G Q a) → (I : Predᵒ A)
-  → iter i F I a ≡ᵒ iter i G I a
-cong-iter zero F G F=G I = ≡ᵒ-refl refl
-cong-iter{A}{a} (suc i) F G F=G I =
-  let IH = λ b → cong-iter{A}{b} i F G F=G I in
-  F=G (iter i F I) (iter i G I) a IH
+cong-iter : ∀{A}{a : A} (i : ℕ) (f g : Predᵒ A → Predᵒ A)
+  → (∀ P Q a → (∀ b → P b ≡ᵒ Q b) → f P a ≡ᵒ g Q a) → (I : Predᵒ A)
+  → iter i f I a ≡ᵒ iter i g I a
+cong-iter zero f g f=g I = ≡ᵒ-refl refl
+cong-iter{A}{a} (suc i) f g f=g I =
+  let IH = λ b → cong-iter{A}{b} i f g f=g I in
+  f=g (iter i f I) (iter i g I) a IH
 \end{code}
 
 \begin{code}
@@ -1306,7 +1330,7 @@ congruent-mu{Γ}{Δ}{A} P a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
 
 
 \begin{code}
-μˢ {Γ}{Δ}{A} P a = record { ♯ = λ δ → muᵒ P δ a ; good = good-fun-mu P a ; congr = congruent-mu P a }
+μˢ {Γ}{Δ}{A} P a = record { ♯ = λ δ → muᵒ P δ a ; strong = strong-fun-mu P a ; congr = congruent-mu P a }
 \end{code}
 
 
@@ -1417,17 +1441,17 @@ _ᵒ : Set → Setᵒ
 \end{code}
 
 \begin{code}
-const-good : ∀{Γ}{Δ : Times Γ}{A}
+const-strong : ∀{Γ}{Δ : Times Γ}{A}
    → (S : Set)
    → (x : Γ ∋ A)
-   → good-var x (timeof x Δ) (λ δ → S ᵒ)
-const-good{Γ}{Δ} S x
+   → strong-var x (timeof x Δ) (λ δ → S ᵒ)
+const-strong{Γ}{Δ} S x
     with timeof x Δ
 ... | Now = λ δ j k k≤j → ≡ᵒ-refl refl
 ... | Later = λ δ j k k≤j → ≡ᵒ-refl refl
 
 S ˢ = record { ♯ = λ δ → S ᵒ
-             ; good = λ x → const-good S x
+             ; strong = λ x → const-strong S x
              ; congr = λ d=d′ → ≡ᵒ-refl refl
              }
 \end{code}
@@ -1485,15 +1509,15 @@ abstract
         (λ z a → proj₁ (P=Q a (suc i)) (z a))
       , (λ z a → proj₂ (P=Q a (suc i)) (z a))
   
-good-all : ∀{Γ}{Δ : Times Γ}{A : Set}
+strong-all : ∀{Γ}{Δ : Times Γ}{A : Set}
    (P : A → Setˢ Γ Δ)
-  → good-fun Δ (λ δ → ∀ᵒ[ a ] ♯ (P a) δ)
-good-all {Γ}{Δ}{A} P x
+  → strong-fun Δ (λ δ → ∀ᵒ[ a ] ♯ (P a) δ)
+strong-all {Γ}{Δ}{A} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
       ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ down-∀ ⟩
       ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
-          ⩦⟨ cong-↓ᵒ k (cong-∀(λ a → good-now(good(P a) x) time-x δ j k k≤j)) ⟩
+          ⩦⟨ cong-↓ᵒ k (cong-∀(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
       ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym down-∀ ⟩
       ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
 
@@ -1501,13 +1525,13 @@ good-all {Γ}{Δ}{A} P x
       ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ down-∀ ⟩
       ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
                       ⩦⟨ cong-↓ᵒ (suc k) (cong-∀
-                          (λ a → good-later (good (P a) x) time-x δ j k k≤j)) ⟩
+                          (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
       ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∀ ⟩
       ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
 
 ∀ˢ{Γ}{Δ}{A} P =
   record { ♯ = λ δ → ∀ᵒ[ a ] ♯ (P a) δ
-         ; good = good-all P
+         ; strong = strong-all P
          ; congr = λ d=d′ → cong-∀ λ a → congr (P a) d=d′
          }
 
@@ -1551,28 +1575,28 @@ abstract
       (λ {(a , b) → a , proj₁ (P=Q a i) b})
       , λ {(a , b) → a , (proj₂ (P=Q a i) b)}
 
-good-exists : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
+strong-exists : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
    (P : A → Setˢ Γ Δ)
-  → good-fun Δ (λ δ → ∃ᵒ[ a ] ♯ (P a) δ)
-good-exists {Γ}{Δ}{A} P x
+  → strong-fun Δ (λ δ → ∃ᵒ[ a ] ♯ (P a) δ)
+strong-exists {Γ}{Δ}{A} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
       ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ down-∃ ⟩
       ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
-          ⩦⟨ cong-↓ᵒ k (cong-∃(λ a → good-now(good(P a) x) time-x δ j k k≤j)) ⟩
+          ⩦⟨ cong-↓ᵒ k (cong-∃(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
       ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym down-∃ ⟩
       ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
 ... | Later = λ δ j k k≤j →
       ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ down-∃ ⟩
       ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
                       ⩦⟨ cong-↓ᵒ (suc k) (cong-∃
-                          (λ a → good-later (good (P a) x) time-x δ j k k≤j)) ⟩
+                          (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
       ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∃ ⟩
       ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
 
 ∃ˢ{Γ}{Δ}{A} P =
   record { ♯ = λ δ → ∃ᵒ[ a ] ♯ (P a) δ
-         ; good = good-exists P
+         ; strong = strong-exists P
          ; congr = λ d=d′ → cong-∃ λ a → congr (P a) d=d′ }
 
 ∃ˢ-syntax = ∃ˢ
@@ -1625,15 +1649,15 @@ abstract
     fro  : #(S′ ×ᵒ T′) k → #(S ×ᵒ T) k
     fro (S′k , T′k) = (⇔-fro (SS′ k) S′k) , (⇔-fro (TT′ k) T′k)
 
-good-pair : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+strong-pair : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
    (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
-   → good-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ×ᵒ ♯ T δ)
-good-pair {Γ}{Δ₁}{Δ₂} S T {A} x
+   → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ×ᵒ ♯ T δ)
+strong-pair {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
     with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
-    let gS = good-now (good S x) time-x1 δ j k k≤j in
-    let gT = good-now (good T x) time-x2 δ j k k≤j in
+    let gS = strong-now (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                                         ⩦⟨ down-× ⟩ 
     ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T δ))
                                      ⩦⟨ cong-↓ᵒ k (cong-×ᵒ gS (≡ᵒ-refl refl)) ⟩ 
@@ -1642,8 +1666,8 @@ good-pair {Γ}{Δ₁}{Δ₂} S T {A} x
     ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-× ⟩
     ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))  ∎
 ... | Now | Later = λ δ j k k≤j →
-    let gS = good-now (good S x) time-x1 δ j k k≤j in
-    let gT = good-later (good T x) time-x2 δ j k k≤j in
+    let gS = strong-now (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-× ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T δ)))
@@ -1660,8 +1684,8 @@ good-pair {Γ}{Δ₁}{Δ₂} S T {A} x
                ⩦⟨ ≡ᵒ-sym down-× ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Now = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x1 δ j k k≤j in
-    let gT = good-now (good T x) time-x2 δ j k k≤j in
+    let gS = strong-later (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-× ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T δ)))
@@ -1678,8 +1702,8 @@ good-pair {Γ}{Δ₁}{Δ₂} S T {A} x
                ⩦⟨ ≡ᵒ-sym down-× ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Later = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x1 δ j k k≤j in
-    let gT = good-later (good T x) time-x2 δ j k k≤j in
+    let gS = strong-later (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T δ)                ⩦⟨ down-× ⟩ 
     ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T δ))
                    ⩦⟨ cong-↓ᵒ (suc k) (cong-×ᵒ gS gT) ⟩ 
@@ -1689,7 +1713,7 @@ good-pair {Γ}{Δ₁}{Δ₂} S T {A} x
     ↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))   ∎
 
 S ×ˢ T = record { ♯ = λ δ → ♯ S δ ×ᵒ ♯ T δ
-                ; good = good-pair S T
+                ; strong = strong-pair S T
                 ; congr = λ d=d′ → cong-×ᵒ (congr S d=d′) (congr T d=d′)
                 }
 \end{code}
@@ -1736,15 +1760,15 @@ abstract
     fro (inj₁ x) = inj₁ (proj₂ (SS′ k) x)
     fro (inj₂ y) = inj₂ (proj₂ (TT′ k) y)
 
-good-sum : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+strong-sum : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
    (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
-   → good-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ⊎ᵒ ♯ T δ)
-good-sum {Γ}{Δ₁}{Δ₂} S T {A} x
+   → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ⊎ᵒ ♯ T δ)
+strong-sum {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
     with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
-    let gS = good-now (good S x) time-x1 δ j k k≤j in
-    let gT = good-now (good T x) time-x2 δ j k k≤j in
+    let gS = strong-now (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                                         ⩦⟨ down-⊎ ⟩ 
     ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T δ))
                                      ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ gS (≡ᵒ-refl refl)) ⟩ 
@@ -1753,8 +1777,8 @@ good-sum {Γ}{Δ₁}{Δ₂} S T {A} x
     ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-⊎ ⟩
     ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))  ∎
 ... | Now | Later = λ δ j k k≤j →
-    let gS = good-now (good S x) time-x1 δ j k k≤j in
-    let gT = good-later (good T x) time-x2 δ j k k≤j in
+    let gS = strong-now (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-⊎ ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ)))
@@ -1771,8 +1795,8 @@ good-sum {Γ}{Δ₁}{Δ₂} S T {A} x
                ⩦⟨ ≡ᵒ-sym down-⊎ ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Now = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x1 δ j k k≤j in
-    let gT = good-now (good T x) time-x2 δ j k k≤j in
+    let gS = strong-later (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-⊎ ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ)))
@@ -1789,8 +1813,8 @@ good-sum {Γ}{Δ₁}{Δ₂} S T {A} x
                ⩦⟨ ≡ᵒ-sym down-⊎ ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Later = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x1 δ j k k≤j in
-    let gT = good-later (good T x) time-x2 δ j k k≤j in
+    let gS = strong-later (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T δ)                ⩦⟨ down-⊎ ⟩ 
     ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ))
                    ⩦⟨ cong-↓ᵒ (suc k) (cong-⊎ᵒ gS gT) ⟩ 
@@ -1800,7 +1824,7 @@ good-sum {Γ}{Δ₁}{Δ₂} S T {A} x
     ↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))   ∎
 
 S ⊎ˢ T = record { ♯ = λ δ → ♯ S δ ⊎ᵒ ♯ T δ
-                ; good = good-sum S T
+                ; strong = strong-sum S T
                 ; congr = λ d=d′ → cong-⊎ᵒ (congr S d=d′) (congr T d=d′)
                 }
 \end{code}
@@ -1854,15 +1878,15 @@ abstract
     (λ x j x₁ x₂ → proj₁ (TT′ j) (x j x₁ (proj₂ (SS′ j) x₂)))
     , (λ z j z₁ z₂ → proj₂ (TT′ j) (z j z₁ (proj₁ (SS′ j) z₂)))
 
-good-imp : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
+strong-imp : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
    (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
-   → good-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ →ᵒ ♯ T δ)
-good-imp {Γ}{Δ₁}{Δ₂} S T {A} x
+   → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ →ᵒ ♯ T δ)
+strong-imp {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
     with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
-    let gS = good-now (good S x) time-x1 δ j k k≤j in
-    let gT = good-now (good T x) time-x2 δ j k k≤j in
+    let gS = strong-now (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                         ⩦⟨ down-→{♯ S δ}{♯ T δ} ⟩ 
     ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T δ))
                                      ⩦⟨ cong-↓ᵒ k (cong-→ gS (≡ᵒ-refl refl)) ⟩ 
@@ -1876,8 +1900,8 @@ good-imp {Γ}{Δ₁}{Δ₂} S T {A} x
                           ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩
     ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))  ∎
 ... | Now | Later = λ δ j k k≤j →
-    let gS = good-now (good S x) time-x1 δ j k k≤j in
-    let gT = good-later (good T x) time-x2 δ j k k≤j in
+    let gS = strong-now (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (down-→{♯ S δ}{♯ T δ}) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T δ)))
@@ -1897,8 +1921,8 @@ good-imp {Γ}{Δ₁}{Δ₂} S T {A} x
                ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Now = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x1 δ j k k≤j in
-    let gT = good-now (good T x) time-x2 δ j k k≤j in
+    let gS = strong-later (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (down-→{♯ S δ}{♯ T δ}) ⟩ 
     ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T δ)))
@@ -1917,8 +1941,8 @@ good-imp {Γ}{Δ₁}{Δ₂} S T {A} x
                ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Later = λ δ j k k≤j →
-    let gS = good-later (good S x) time-x1 δ j k k≤j in
-    let gT = good-later (good T x) time-x2 δ j k k≤j in
+    let gS = strong-later (strong S x) time-x1 δ j k k≤j in
+    let gT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T δ)                ⩦⟨ down-→{♯ S δ}{♯ T δ} ⟩ 
     ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T δ))
                    ⩦⟨ cong-↓ᵒ (suc k) (cong-→ gS gT) ⟩ 
@@ -1928,7 +1952,7 @@ good-imp {Γ}{Δ₁}{Δ₂} S T {A} x
     ↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))   ∎
 
 S →ˢ T = record { ♯ = λ δ → ♯ S δ →ᵒ ♯ T δ
-                ; good = good-imp S T
+                ; strong = strong-imp S T
                 ; congr = λ d=d′ → cong-→ (congr S d=d′) (congr T d=d′)
                 }
 \end{code}
