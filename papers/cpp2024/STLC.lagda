@@ -83,6 +83,8 @@ pattern μ N = op-rec ⦅ cons (bind (ast N)) nil ⦆
 \end{code}
 
 
+\subsection{Dynamic Semantics of STLC}
+
 \begin{code}
 data Value : Term → Set where
   V-ƛ : Value (ƛ N)
@@ -111,11 +113,14 @@ data Frame : Set where
       -------
     → Frame
 
+  suc□ : Frame
+
 {- Plug an expression into a frame. -}
 
 _⟦_⟧ : Frame → Term → Term
 (□· M) ⟦ L ⟧        =  L · M
 (v ·□) ⟦ M ⟧        =  value v · M
+suc□ ⟦ M ⟧          = `suc M
 
 {- Possibly-empty Frame -}
 
@@ -245,6 +250,16 @@ M ⇑ = ∀ k → ∃[ N ] Σ[ r ∈ M —↠ N ] k ≡ len r
 value-irreducible : ∀ {V M : Term} → Value V → ¬ (V —→ M)
 value-irreducible v V—→M = {!!}
 
+
+postulate deterministic : ∀{M N N′} → M —→ N → M —→ N′ → N ≡ N′
+
+postulate frame-inv2 : ∀{L N : Term}{F} → reducible L → F ⟦ L ⟧ —→ N → ∃[ L′ ] ((L —→ L′) × (N ≡ F ⟦ L′ ⟧))
+
+\end{code}
+
+\subsection{Type System of STLC}
+
+\begin{code}
 infix 3 _⊢_⦂_
 
 data _⊢_⦂_ : List Type → Term → Type → Set
@@ -282,6 +297,11 @@ data _⊢_⦂_ where
     → (A ∷ Γ) ⊢ N ⦂ B
       -----------------
     → Γ ⊢ ƛ N ⦂ (A ⇒ B)
+
+  ⊢μ : ∀ {Γ N A}
+    → (A ∷ Γ) ⊢ N ⦂ A
+      -----------------
+    → Γ ⊢ μ N ⦂ A
 \end{code}
 
 \subsection{Definition of the Logical Relation}
@@ -368,15 +388,44 @@ open import EquivalenceRelation public
 \end{code}
 
 \begin{code}
-𝒱-fun : ∀{A B}{N}
-   → 𝒱⟦ A ⇒ B ⟧ (ƛ N)
-      ≡ᵒ (∀ᵒ[ W ] ((▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))))
+𝒱-suc : ∀{M} → 𝒱⟦ `ℕ ⟧ (`suc M) ≡ᵒ 𝒱⟦ `ℕ ⟧ M
+𝒱-suc {M} = let X = inj₁ (`ℕ , `suc M) in
+  𝒱⟦ `ℕ ⟧ (`suc M)              ⩦⟨ ≡ᵒ-refl refl ⟩
+  ℰ⊎𝒱 X                         ⩦⟨ fixpointᵒ pre-ℰ⊎𝒱 X ⟩
+  ♯ (pre-ℰ⊎𝒱 X) (ℰ⊎𝒱 , ttᵖ)     ⩦⟨ ≡ᵒ-sym (fixpointᵒ pre-ℰ⊎𝒱 (inj₁ (`ℕ , M))) ⟩ 
+  𝒱⟦ `ℕ ⟧ M                     ∎
+\end{code}
+
+\begin{code}
+𝒱-fun : ∀{A B}{N} → 𝒱⟦ A ⇒ B ⟧ (ƛ N) ≡ᵒ (∀ᵒ[ W ] ((▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))))
 𝒱-fun {A}{B}{N} =
    let X = (inj₁ (A ⇒ B , ƛ N)) in
    𝒱⟦ A ⇒ B ⟧ (ƛ N)                                         ⩦⟨ ≡ᵒ-refl refl ⟩
    ℰ⊎𝒱 X                                                    ⩦⟨ fixpointᵒ pre-ℰ⊎𝒱 X ⟩
    ♯ (pre-ℰ⊎𝒱 X) (ℰ⊎𝒱 , ttᵖ)                               ⩦⟨ ≡ᵒ-refl refl ⟩ 
    (∀ᵒ[ W ] ((▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))))   ∎
+\end{code}
+
+\begin{code}
+safe-body : List Setᵒ → Term → Type → Type → Set
+safe-body 𝒫 N A B = ∀{W} → 𝒫 ⊢ᵒ (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))
+
+𝒱-fun-elim : ∀{𝒫}{A}{B}{V}{R}
+   → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
+   → (∀ N → V ≡ ƛ N → safe-body 𝒫 N A B → 𝒫 ⊢ᵒ R)
+    ------------------------------------------------
+   → 𝒫 ⊢ᵒ R
+𝒱-fun-elim {𝒫}{A}{B}{V}{R} ⊢𝒱V cont =
+  ⊢ᵒ-sucP ⊢𝒱V λ { 𝒱Vsn → aux {V} 𝒱Vsn ⊢𝒱V cont}
+  where
+  aux : ∀{V}{n}
+     → # (𝒱⟦ A ⇒ B ⟧ V) (suc n)
+     → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
+     → (∀ N → V ≡ ƛ N → safe-body 𝒫 N A B → 𝒫 ⊢ᵒ R)
+     → 𝒫 ⊢ᵒ R
+  aux{ƛ N}{n} 𝒱V ⊢𝒱V cont = cont N refl λ {W} →
+      instᵒ{P = λ W → (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))}
+                 (substᵒ 𝒱-fun ⊢𝒱V) W
 \end{code}
 
 \begin{code}
@@ -414,6 +463,94 @@ _⊨_⦂_ : List Type → Term → Type → Set
 \end{code}
 
 
+\subsection{Bind Lemma}
+
+\begin{code}
+𝒱V→ℰF[V] : Type → Type → Frame → Term → Setᵒ
+𝒱V→ℰF[V] A B F M = ∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
+
+ℰ-bind-M : Type → Type → Frame → Term → Setᵒ
+ℰ-bind-M A B F M = ℰ⟦ B ⟧ M →ᵒ 𝒱V→ℰF[V] A B F M →ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+
+ℰ-bind-prop : Type → Type → Frame → Setᵒ
+ℰ-bind-prop A B F = ∀ᵒ[ M ] ℰ-bind-M A B F M
+
+𝒱V→ℰF[V]-expansion : ∀{𝒫}{A}{B}{F}{M}{M′}
+   → M —→ M′
+   → 𝒫 ⊢ᵒ 𝒱V→ℰF[V] A B F M
+     -----------------------
+   → 𝒫 ⊢ᵒ 𝒱V→ℰF[V] A B F M′
+𝒱V→ℰF[V]-expansion {𝒫}{A}{B}{F}{M}{M′} M→M′ 𝒱V→ℰF[V][M] =
+   Λᵒ[ V ]
+    let M′→V→ℰFV : 𝒱⟦ B ⟧ V ∷ (M′ —↠ V)ᵒ ∷ 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
+        M′→V→ℰFV = ⊢ᵒ-sucP (Sᵒ Zᵒ) λ M′→V → 
+                     let M—↠V = constᵒI (M —→⟨ M→M′ ⟩ M′→V) in
+                     let M→V→ℰFV = Sᵒ(Sᵒ(instᵒ 𝒱V→ℰF[V][M] V)) in
+                     appᵒ (appᵒ M→V→ℰFV M—↠V) Zᵒ in
+    →ᵒI (→ᵒI M′→V→ℰFV)
+\end{code}
+
+
+\begin{code}
+ℰ-bind-aux : ∀{𝒫}{A}{B}{F} → 𝒫 ⊢ᵒ ℰ-bind-prop A B F
+ℰ-bind-aux {𝒫}{A}{B}{F} = lobᵒ (Λᵒ[ M ] →ᵒI (→ᵒI Goal))
+  where
+  Goal : ∀{M} → (𝒱V→ℰF[V] A B F M) ∷ ℰ⟦ B ⟧ M ∷ ▷ᵒ ℰ-bind-prop A B F ∷ 𝒫
+                 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+  Goal{M} =
+   caseᵒ (ℰ-progress (Sᵒ Zᵒ)) Mval Mred 
+   where
+   𝒫′ = (𝒱V→ℰF[V] A B F M) ∷ ℰ⟦ B ⟧ M ∷ ▷ᵒ ℰ-bind-prop A B F ∷ 𝒫
+
+   Mval : 𝒱⟦ B ⟧ M ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+   Mval =
+     let 𝒱V→ℰF[V][M] = λ V → (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧) in
+     appᵒ (appᵒ (instᵒ{P = 𝒱V→ℰF[V][M]} (Sᵒ Zᵒ) M) (constᵒI (M END))) Zᵒ
+
+   Mred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+   Mred = ℰ-intro progressMred preservationMred
+    where
+    progressMred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ progress A (F ⟦ M ⟧)
+    progressMred = inj₂ᵒ (constᵒE Zᵒ λ {(M′ , M→M′) → constᵒI (_ , (ξ F M→M′))})
+
+    preservationMred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ preservation A (F ⟦ M ⟧)
+    preservationMred = (constᵒE Zᵒ λ redM →
+                Sᵒ (Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ FM→N →
+                                          Sᵒ (redM⇒▷ℰN redM FM→N))))
+     where
+     redM⇒▷ℰN : ∀{N} → reducible M → (F ⟦ M ⟧ —→ N) → 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)
+     redM⇒▷ℰN {N} rM FM→N =
+      let finv = frame-inv2{M}{N}{F} rM FM→N in
+      let M′ = proj₁ finv in
+      let M→M′ = proj₁ (proj₂ finv) in
+      let N≡ = proj₂ (proj₂ finv) in
+      let ▷ℰM′ : 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M′
+          ▷ℰM′ = appᵒ (instᵒ{P = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
+                        (ℰ-preservation (Sᵒ Zᵒ)) M′)
+                      (constᵒI M→M′) in
+      let ▷M′→V→𝒱V→ℰFV : 𝒫′ ⊢ᵒ ▷ᵒ (𝒱V→ℰF[V] A B F M′)
+          ▷M′→V→𝒱V→ℰFV = monoᵒ (𝒱V→ℰF[V]-expansion{𝒫′}{A}{B} M→M′ Zᵒ) in
+      let IH : 𝒫′ ⊢ᵒ ▷ᵒ ℰ-bind-prop A B F
+          IH = Sᵒ (Sᵒ Zᵒ) in
+      let ▷ℰFM′ : 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (F ⟦ M′ ⟧))
+          ▷ℰFM′ = frame-prop-lemma IH ▷ℰM′ ▷M′→V→𝒱V→ℰFV in
+      subst (λ N → 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ N) (sym N≡) ▷ℰFM′
+      where
+      frame-prop-lemma : ∀{𝒫}{A}{B}{M}{F}
+         → 𝒫 ⊢ᵒ ▷ᵒ ℰ-bind-prop A B F  →  𝒫 ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M
+         → 𝒫 ⊢ᵒ ▷ᵒ 𝒱V→ℰF[V] A B F M   →  𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (F ⟦ M ⟧))
+      frame-prop-lemma{𝒫}{A}{B}{M}{F} IH ℰM V→FV =
+       appᵒ(▷→ (appᵒ(▷→ (instᵒ(▷∀{P = λ M → ℰ-bind-M A B F M} IH) M)) ℰM)) V→FV
+
+ℰ-bind : ∀{𝒫}{A}{B}{F}{M}
+   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ M
+   → 𝒫 ⊢ᵒ (∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧))
+     ----------------------------------------------------------
+   → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+ℰ-bind {𝒫}{A}{B}{F}{M} ⊢ℰM ⊢𝒱V→ℰFV =
+  appᵒ (appᵒ (instᵒ{𝒫}{P = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
+\end{code}
+
 \subsection{Compatibility Lemmas}
 
 
@@ -426,9 +563,132 @@ compatible-zero {Γ} γ = 𝒱⇒ℰ (⊢ᵒ-intro λ {zero x → tt; (suc i) x 
 
 
 \begin{code}
-compatible-suc : ∀{Γ}
+compatible-suc : ∀{Γ}{M}
    → Γ ⊨ M ⦂ `ℕ
      ----------------
    → Γ ⊨ `suc M ⦂ `ℕ
-compatible-suc {Γ} ⊨M γ = {!!}
+compatible-suc {Γ}{M} ⊨M γ = ⊢ℰsM
+ where
+ ⊢ℰsM : 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ `ℕ ⟧ (⟪ γ ⟫ (`suc M))
+ ⊢ℰsM = ℰ-bind {F = suc□} (⊨M γ) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰsucV))
+  where
+  𝒫₁ = λ V → 𝒱⟦ `ℕ ⟧ V ∷ (⟪ γ ⟫ M —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
+  ⊢ℰsucV : ∀{V} → 𝒫₁ V ⊢ᵒ ℰ⟦ `ℕ ⟧ (`suc V)
+  ⊢ℰsucV {V} = 𝒱⇒ℰ (substᵒ (≡ᵒ-sym 𝒱-suc) Zᵒ)
+\end{code}
+
+\begin{code}
+lookup-𝓖 : (Γ : List Type) → (γ : Subst)  →  ∀ {A}{y} → (Γ ∋ y ⦂ A)  →  𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⟧ (γ y)
+lookup-𝓖 (B ∷ Γ) γ {A} {zero} refl = Zᵒ
+lookup-𝓖 (B ∷ Γ) γ {A} {suc y} ∋y = Sᵒ (lookup-𝓖 Γ (λ x → γ (suc x)) ∋y) 
+\end{code}
+
+\begin{code}
+compatibility-var : ∀ {Γ A x}
+  → Γ ∋ x ⦂ A
+    -----------
+  → Γ ⊨ ` x ⦂ A
+compatibility-var {Γ}{A}{x} ∋x γ rewrite sub-var γ x = 𝒱⇒ℰ (lookup-𝓖 Γ γ ∋x)
+\end{code}
+
+\begin{code}
+compatible-lambda : ∀{Γ}{A}{B}{N}
+   → (A ∷ Γ) ⊨ N ⦂ B
+     -------------------
+   → Γ ⊨ (ƛ N) ⦂ (A ⇒ B)
+compatible-lambda {Γ}{A}{B}{N} ⊨N γ = 𝒱⇒ℰ ⊢𝒱λN
+ where
+ ⊢𝒱λN : 𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (ƛ (⟪ ext γ ⟫ N))
+ ⊢𝒱λN = (substᵒ (≡ᵒ-sym 𝒱-fun) (Λᵒ[ W ] →ᵒI ▷𝓔N[W]))
+  where
+  ▷𝓔N[W] : ∀{W} → ▷ᵒ 𝒱⟦ A ⟧ W ∷ 𝓖⟦ Γ ⟧ γ  ⊢ᵒ  ▷ᵒ ℰ⟦ B ⟧ ((⟪ ext γ ⟫ N) [ W ])
+  ▷𝓔N[W] {W} = appᵒ (Sᵒ (▷→ (monoᵒ (→ᵒI (⊨N (W • γ)))))) Zᵒ
+\end{code}
+
+\begin{code}
+compatible-app : ∀{Γ}{A}{B}{L}{M}
+   → Γ ⊨ L ⦂ (A ⇒ B)
+   → Γ ⊨ M ⦂ A
+     -------------------
+   → Γ ⊨ L · M ⦂ B
+compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ⊢ℰLM
+ where
+ ⊢ℰLM : 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ B ⟧ (⟪ γ ⟫ (L · M))
+ ⊢ℰLM = ℰ-bind {F = □· (⟪ γ ⟫ M)} (⊨L γ) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVM))
+  where
+  𝒫₁ = λ V → 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
+  ⊢ℰVM : ∀{V} → 𝒫₁ V ⊢ᵒ ℰ⟦ B ⟧ (V · ⟪ γ ⟫ M)
+  ⊢ℰVM {V} = ⊢ᵒ-sucP Zᵒ λ 𝒱Vsn →
+       let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
+       let 𝒫₁⊢ℰM : 𝒫₁ V ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M)
+           𝒫₁⊢ℰM = Sᵒ (Sᵒ (⊨M γ)) in
+       ℰ-bind {F = v ·□} 𝒫₁⊢ℰM (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW))
+   where
+   𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ
+                 ∷ 𝓖⟦ Γ ⟧ γ
+   ⊢ℰVW : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
+   ⊢ℰVW {V}{W} =
+     let ⊢𝒱V : 𝒫₂ V W ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
+         ⊢𝒱V = Sᵒ (Sᵒ Zᵒ) in
+     let ⊢𝒱W : 𝒫₂ V W ⊢ᵒ 𝒱⟦ A ⟧ W
+         ⊢𝒱W = Zᵒ in
+     ⊢ᵒ-sucP ⊢𝒱W λ 𝒱Wsn →
+     let w = 𝒱⇒Value A W 𝒱Wsn in
+     𝒱-fun-elim ⊢𝒱V λ {N′ refl 𝒱W→ℰNW →
+     let prog : 𝒫₂ (ƛ N′) W ⊢ᵒ progress B (ƛ N′ · W)
+         prog = (inj₂ᵒ (constᵒI (_ , (β-ƛ w)))) in
+     let pres : 𝒫₂ (ƛ N′) W ⊢ᵒ preservation B (ƛ N′ · W)
+         pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ {r →
+                let ⊢▷ℰN′W = appᵒ 𝒱W→ℰNW (monoᵒ ⊢𝒱W) in
+                let eq = deterministic r (β-ƛ w) in
+                Sᵒ (subst (λ N → 𝒫₂ (ƛ N′) W ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ N) (sym eq) ⊢▷ℰN′W)}) in
+     ℰ-intro prog pres }
+\end{code}
+
+\begin{code}
+β-μ-inv : μ M —→ N → N ≡ M [ μ M ]
+β-μ-inv (ξξ (□· x₂) () x₁ r)
+β-μ-inv (ξξ (x₂ ·□) () x₁ r)
+β-μ-inv (ξξ suc□ () x₁ r)
+β-μ-inv β-μ = refl
+
+\end{code}
+
+\begin{code}
+compatible-rec : ∀{Γ}{A}{M}
+   → (A ∷ Γ) ⊨ M ⦂ A
+     -------------------
+   → Γ ⊨ (μ M) ⦂ A
+compatible-rec {Γ}{A}{M} ⊨M γ = ⊢ℰμM
+ where
+
+ prog : 𝓖⟦ Γ ⟧ γ ⊢ᵒ progress A (⟪ γ ⟫ (μ M))
+ prog = inj₂ᵒ (constᵒI (_ , β-μ))
+
+ pres : 𝓖⟦ Γ ⟧ γ ⊢ᵒ preservation A (⟪ γ ⟫ (μ M))
+ pres = Λᵒ[ N ] (→ᵒI (constᵒE Zᵒ aux))
+   where
+   𝒫₁ : Term → List Setᵒ
+   𝒫₁ N = ((⟪ γ ⟫ (μ M) —→ N)ᵒ) ∷ 𝓖⟦ Γ ⟧ γ
+   aux : ∀{N} → ⟪ γ ⟫ (μ M) —→ N → 𝒫₁ N ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)
+   aux {N} r =
+     let eq : N ≡ ⟪ ext γ ⟫ M [ ⟪ γ ⟫ (μ M) ]
+         eq = β-μ-inv r in
+     let ℰM = ⊨M ((⟪ γ ⟫ (μ M)) • γ) in
+     subst (λ X → ((⟪ γ ⟫ (μ M) —→ X)ᵒ) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ X)) (sym eq)
+     ?
+{-   
+   aux r rewrite β-μ-inv r = ℰMμM
+     where
+     -- (⟪ ext γ ⟫ M) [ ⟪ γ ⟫ (μ M) ] ≡ ⟪ (⟪ γ ⟫ μ M) • γ ⟫ M by exts-sub-cons
+     ℰMμM : 𝒫₁ N ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (⟪ ⟪ γ ⟫ (μ M) • γ ⟫ M))
+     ℰMμM =
+       let xx = ⊨M (⟪ γ ⟫ (μ M) • γ) in
+       {!!}
+-}
+
+ ⊢ℰμM : 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ (μ M))
+ ⊢ℰμM = ℰ-intro prog pres
+ 
+ 
 \end{code}
