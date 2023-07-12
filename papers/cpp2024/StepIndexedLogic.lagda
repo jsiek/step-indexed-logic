@@ -1317,130 +1317,119 @@ We construct the record for the predicate $μˢ \,Sᵃ$ as follows.
 
 \subsubsection{Fixpoint Theorem}
 
-UNDER CONSTRUCTION
+Most of the work to prove the fixpoint theorem is already finished,
+with the series of lemmas that concluded with \textsf{lemma19a}, which
+showed that one unrolling of the recursive predicate is equivalent to
+the recursive predicate under $k$-approximation. It remains to show
+that if two formula are equivalent under $k$-approximation, then they
+are equivalent. This is straightforward to prove by induction on the
+step index, as shown below.
+
+\begin{code}
+equiv-downᵒ : (∀ k → ↓ᵒ k ϕ ≡ᵒ ↓ᵒ k ψ) → ϕ ≡ᵒ ψ
+equiv-downᵒ {ϕ}{ψ} ↓ϕ=↓ψ = ≡ᵒ-intro aux
+  where aux : ∀ i → # ϕ i ⇔ # ψ i
+        aux zero = (λ _ → tz ψ) , (λ _ → tz ϕ)
+        aux (suc i) =
+           let ↓ϕ⇔↓ψ = (≡ᵒ-elim{k = suc i} (↓ϕ=↓ψ (suc (suc i)))) in
+             (λ ϕsi → proj₂ (⇔-to ↓ϕ⇔↓ψ  (≤-refl , ϕsi)))
+           , (λ ψsi → proj₂ (⇔-fro ↓ϕ⇔↓ψ (≤-refl , ψsi)))
+\end{code}
+
+\noindent We lift this lemma from $\mathsf{Set}ᵒ$ to $\mathsf{Set}ˢ$
+with the following corollary.
 
 \begin{code}
 abstract
-  equiv-downᵒ : ∀{S T : Setᵒ}
-    → (∀ j → ↓ᵒ j S ≡ᵒ ↓ᵒ j T)
-    → S ≡ᵒ T
-  equiv-downᵒ {S} {T} ↓S=↓T zero = (λ _ → tz T) , (λ _ → tz S)
-  equiv-downᵒ {S} {T} ↓S=↓T (suc k) =
-    (λ Ssk → proj₂ (proj₁ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Ssk)))
-    ,
-    λ Δk → proj₂ (proj₂ (↓S=↓T (suc (suc k)) (suc k)) (≤-refl , Δk))
-  
-  equiv-downˢ : ∀{Γ}{Δ : Times Γ}{S T : Setˢ Γ Δ}
-    → (∀ j → ↓ˢ j S ≡ˢ ↓ˢ j T)
-    → S ≡ˢ T
-  equiv-downˢ {Γ}{Δ}{S}{T} ↓S=↓T δ =
-     equiv-downᵒ{♯ S δ}{♯ T δ} λ j → (↓S=↓T j) δ
+  equiv-downˢ : (∀ k → ↓ˢ k S ≡ˢ ↓ˢ k T) → S ≡ˢ T
+  equiv-downˢ {S = S}{T} ↓S=↓T δ = equiv-downᵒ{♯ S δ}{♯ T δ} λ k → (↓S=↓T k) δ
+\end{code}
 
-nonexpansive : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
-nonexpansive F a = ∀ P k → ↓ᵒ k (F P a) ≡ᵒ ↓ᵒ k (F (↓ᵖ k P) a)
+The fixpoint theorem is proved by applying \textsf{lemma19a} and then
+\textsf{equiv-down}ˢ.
 
-nonexpansive′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
-nonexpansive′{Γ}{A}{Δ}{δ} F a =
-  ∀ P k → ↓ᵒ k (♯ (F a) (P , δ)) ≡ᵒ ↓ᵒ k (♯ (F a) ((↓ᵖ k P) , δ))
-
-{- sanity check -}
-cont-env-fun⇒fun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
-  → (a : A)
-  → nonexpansive′{δ = δ} F a
-  → nonexpansive (env-fun⇒fun δ F) a
-cont-env-fun⇒fun{Γ}{A}{Δ}{δ} F a cont′ = cont′
-
-wellfounded : ∀{A} (F : Predᵒ A → Predᵒ A) (a : A) → Set₁
-wellfounded F a = ∀ P k → ↓ᵒ (suc k) (F P a) ≡ᵒ ↓ᵒ (suc k) (F (↓ᵖ k P) a)
-
-wellfounded′ : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → Set₁
-wellfounded′{Γ}{A}{Δ}{δ} F a =
-  ∀ P k → ↓ᵒ (suc k) (♯ (F a) (P , δ))
-       ≡ᵒ ↓ᵒ (suc k) (♯ (F a) ((↓ᵖ k P) , δ))
-
-{- sanity check -}
-WF-env-fun⇒fun : ∀{Γ}{A}{Δ : Times Γ}{δ : RecEnv Γ}
-  → (F : A → Setˢ (A ∷ Γ) (cons Later Δ))
-  → (a : A)
-  → wellfounded′{δ = δ} F a
-  → wellfounded (env-fun⇒fun δ F) a
-WF-env-fun⇒fun{Γ}{A}{Δ}{δ} F a cont′ = cont′
-
-lemma19 : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (j : ℕ)
-   → ↓ˢ j (μˢ F a) ≡ˢ ↓ˢ j (letˢ (μˢ F) (F a))
-lemma19{Γ}{Δ}{A} F a j = ≡ˢ-intro (lemma19a F a j)
-
-fixpointˢ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+\begin{code}
+fixpointˢ : ∀ (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
    → μˢ F a ≡ˢ letˢ (μˢ F) (F a)
-fixpointˢ F a = equiv-downˢ (lemma19 F a)
+fixpointˢ F a = equiv-downˢ λ k → ≡ˢ-intro (lemma19a F a k)
+\end{code}
 
-μᵒ : ∀{A}
-   → (A → Setˢ (A ∷ []) (cons Later ∅))
-     ----------------------------------
-   → (A → Setᵒ)
-μᵒ {A} P = muᵒ P ttᵖ
+It is often the case that the creation of a recursive predicate will
+appear at the top of a logical formula, in which case it does not need
+to be an open formula. To streamline this use case, we define the
+following μᵒ formula, which specializes μˢ to the situation where $Γ =
+[]$.
 
+\begin{code}
+μᵒ : (A → Setˢ (A ∷ []) (cons Later ∅)) → (A → Setᵒ)
+μᵒ P = muᵒ P ttᵖ
+\end{code}
+
+\noindent Also for convenience, we provide the following
+specialization of the fixpoint theorem for μᵒ.
+
+\begin{code}
 fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A)
    → μᵒ P a ≡ᵒ ♯ (P a) (μᵒ P , ttᵖ)
 fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
+\end{code}
 
+IS THE FOLLOWING NEEDED?
+\begin{code}
 fixpoint-step : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A) (k : ℕ)
    → (#(μᵒ P a) k) ⇔ #(♯ (P a) (μᵒ P , ttᵖ)) k
 fixpoint-step P a k = ≡ᵒ-elim{k = k} (fixpointᵒ P a)
 \end{code}
 
-
-
-\subsection{False}
-
-The false formula for SIL is embedded in Agda by defining an instance
-of this record type, with the representation function mapping zero
-to true and every other natural number to false. The proofs of
-downward-closedness and true-at-zero are straightforward.
-
-\begin{code}
-⊥ᵒ : Setᵒ
-⊥ᵒ = record { # = λ { zero → ⊤ ; (suc k) → ⊥}
-            ; down = λ { zero x .zero z≤n → tt} ; tz = tt }
-\end{code}
-
-
 \subsection{Constant}
 
 A step-indexed logic such as LSLR is typically specialized to include
 atomic formulas to express properties of programs in a particular
-language. Here instead we simply allow arbitrary Agda propositions to
-be included in a step-indexed proposition by way of the following
-operator. So, given a proposition $ϕ$, the formula $ϕᵒ$ is true at
-zero and everywhere else it is equivalent to $ϕ$.
+language. Here we simply allow arbitrary Agda propositions to be
+included in a step-indexed proposition by way of the following
+constant operator. Given a proposition $p$, the formula $p\,ᵒ$ is true
+at zero and everywhere else it is equivalent to $p$.
 
 \begin{code}
 _ᵒ : Set → Setᵒ
-ϕ ᵒ = record { # = λ { zero → ⊤ ; (suc k) → ϕ }
-             ; down = λ { k ϕk zero j≤k → tt
-                        ; (suc k) ϕk (suc j) j≤k → ϕk}
+p ᵒ = record { # = λ { zero → ⊤ ; (suc k) → p }
+             ; down = λ { k pk zero j≤k → tt
+                        ; (suc k) pk (suc j) j≤k → pk}
              ; tz = tt }
 \end{code}
 
+The constant operator is a strong environment functiuonal.
+
 \begin{code}
-const-strong : ∀{Γ}{Δ : Times Γ}{A}
-   → (S : Set)
-   → (x : Γ ∋ A)
-   → strong-var x (timeof x Δ) (λ δ → S ᵒ)
-const-strong{Γ}{Δ} S x
+const-strong : ∀ (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ᵒ)
+const-strong {Γ}{A}{Δ} p x
     with timeof x Δ
 ... | Now = λ δ j k k≤j → ≡ᵒ-refl refl
 ... | Later = λ δ j k k≤j → ≡ᵒ-refl refl
-
-S ˢ = record { ♯ = λ δ → S ᵒ
-             ; strong = λ x → const-strong S x
-             ; congr = λ d=d′ → ≡ᵒ-refl refl
-             }
 \end{code}
 
+So we define the constant SIL formula $pˢ$ as the following record.
+
+\begin{code}
+p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → const-strong p x
+             ; congr = λ d=d′ → ≡ᵒ-refl refl }
+\end{code}
+
+The rest of the subsections define the logical connectives from
+first-order logical.
+
+\subsection{False}
+
+The false formula of Agda is lifted into SIL by using the constant
+operators.
+
+\begin{code}
+⊥ᵒ : Setᵒ
+⊥ᵒ = ⊥ ᵒ
+
+⊥ˢ : Setˢ Γ (laters Γ)
+⊥ˢ = ⊥ ˢ
+\end{code}
 
 \subsection{For all}
 
@@ -1599,6 +1588,7 @@ downward-closedness and true-at-zero are straightforward, relying on
 the proofs of these properties for $ϕ$ and $ψ$.
 
 \begin{code}
+infixr 7 _×ᵒ_
 _×ᵒ_ : Setᵒ → Setᵒ → Setᵒ
 ϕ ×ᵒ ψ = record { # = λ k → # ϕ k × # ψ k
                 ; down = λ k (ϕk , ψk) j j≤k →
@@ -1712,6 +1702,7 @@ straightforward, relying on the proofs of these properties for $ϕ$ and
 $ψ$.
 
 \begin{code}
+infixr 7 _⊎ᵒ_
 _⊎ᵒ_ : Setᵒ → Setᵒ → Setᵒ
 ϕ ⊎ᵒ ψ = record { # = λ k → # ϕ k ⊎ # ψ k
                 ; down = λ { k (inj₁ ϕk) j j≤k → inj₁ (down ϕ k ϕk j j≤k)
@@ -1835,6 +1826,7 @@ by definition. We define $ϕ$ implies $ψ$ at $k$ to mean that for all
 $j \leq k$, $ϕ$ at $j$ implies $ψ$ at $j$.
 
 \begin{code}
+infixr 6 _→ᵒ_
 _→ᵒ_ : Setᵒ → Setᵒ → Setᵒ
 ϕ →ᵒ ψ = record { # = λ k → ∀ j → j ≤ k → # ϕ j → # ψ j
                 ; down = λ k ∀j≤k→ϕj→ψj j j≤k i i≤j ϕi →

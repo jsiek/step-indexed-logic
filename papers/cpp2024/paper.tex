@@ -47,6 +47,7 @@
 %%
 \documentclass[acmsmall]{acmart}
 \usepackage{semantic}
+\usepackage{stmaryrd}
 \usepackage{agda}
 \usepackage{MnSymbol}
 
@@ -141,7 +142,11 @@
 \newunicodechar{←}{\ensuremath{\mathnormal\from}}
 \newunicodechar{→}{\ensuremath{\mathnormal\to}}
 \newunicodechar{↓}{\ensuremath{\mathnormal\downarrow}}
+\newunicodechar{⇑}{\ensuremath{\mathnormal\Uparrow}}
 \newunicodechar{⇓}{\ensuremath{\mathnormal\Downarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{⇔}{\ensuremath{\iff}}
+\newunicodechar{↠}{\ensuremath{\longrightarrow^{*}}}
 \newunicodechar{∀}{\ensuremath{\mathnormal\forall}}
 \newunicodechar{∃}{\ensuremath{\exists}}
 \newunicodechar{Π}{\ensuremath{\Pi}}
@@ -174,8 +179,6 @@
 \newunicodechar{▷}{\ensuremath{\rhd}}
 \newunicodechar{◁}{\ensuremath{\lhd}}
 \newunicodechar{∈}{\ensuremath{\in}}
-\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
-\newunicodechar{⇔}{\ensuremath{\iff}}
 \newunicodechar{⩦}{\ensuremath{\equiv}} % !!
 \newunicodechar{∋}{\ensuremath{\ni}}
 \newunicodechar{ˢ}{\ensuremath{^s}}
@@ -188,9 +191,12 @@
 \newunicodechar{β}{\ensuremath{\beta}}
 \newunicodechar{δ}{\ensuremath{\delta}}
 \newunicodechar{Δ}{\ensuremath{\Delta}}
+\newunicodechar{ξ}{\ensuremath{\xi}}
 \newunicodechar{λ}{\ensuremath{\mathnormal\lambda}}
+\newunicodechar{ƛ}{\ensuremath{\mathnormal\lambda}}
 \newunicodechar{Λ}{\ensuremath{\mathnormal\Lambda}}
 \newunicodechar{μ}{\ensuremath{\mu}}
+\newunicodechar{ν}{\ensuremath{\nu}}
 \newunicodechar{ϕ}{\ensuremath{\phi}}
 \newunicodechar{ψ}{\ensuremath{\psi}}
 \newunicodechar{þ}{\ensuremath{\th}}
@@ -204,7 +210,16 @@
 \newunicodechar{ᵃ}{\ensuremath{^a}}
 \newunicodechar{ⁱ}{\ensuremath{^i}}
 \newunicodechar{∎}{\ensuremath{\qed}}
-
+\newunicodechar{■}{\ensuremath{\qed}} % !!
+\newunicodechar{□}{\ensuremath{\qed}} % !!
+\newunicodechar{⦅}{\ensuremath{\llparenthesis}}
+\newunicodechar{⦆}{\ensuremath{\rrparenthesis}}
+\newunicodechar{⟦}{\ensuremath{\llbracket}}
+\newunicodechar{⟧}{\ensuremath{\rrbracket}}
+\newunicodechar{⦉}{\ensuremath{\llparenthesis}} % Z notation...
+\newunicodechar{⦊}{\ensuremath{\rrparenthesis}} % Z notation...
+               
+                 
 %%
 %% end of the preamble, start of the body of the document source.
 \begin{document}
@@ -554,6 +569,8 @@ TODO: ROAD MAP
 %% \end{align*}
 
 \input{latex/cpp2024/StepIndexedLogic.tex}
+
+\input{latex/cpp2024/STLC.tex}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{all}
