@@ -258,6 +258,11 @@ postulate deterministic : ∀{M N N′} → M —→ N → M —→ N′ → N �
 
 postulate frame-inv2 : ∀{L N : Term}{F} → reducible L → F ⟦ L ⟧ —→ N → ∃[ L′ ] ((L —→ L′) × (N ≡ F ⟦ L′ ⟧))
 
+β-μ-inv : ∀{V W N} → Value V → Value W → μ V · W —→ N → N ≡ V [ μ V ] · W
+β-μ-inv v w (ξ (□· x₂) r) = ⊥-elim (value-irreducible (V-μ v) r)
+β-μ-inv v w (ξξ (x₂ ·□) refl x₁ r) = ⊥-elim (value-irreducible w r)
+β-μ-inv v w (β-μ x x₁) = refl
+
 \end{code}
 
 \subsection{Type System of STLC}
@@ -639,7 +644,7 @@ compatible-sucⱽ : ∀{Γ}{V}
    → Γ ⊨ⱽ V ⦂ `ℕ
      ----------------
    → Γ ⊨ⱽ `suc V ⦂ `ℕ
-compatible-sucⱽ {Γ}{V} ⊨V γ = {!!}
+compatible-sucⱽ {Γ}{V} ⊨V γ = substᵒ (≡ᵒ-sym 𝒱-suc) (⊨V γ)
 \end{code}
 
 \begin{code}
@@ -671,6 +676,8 @@ compatible-lambda {Γ}{A}{B}{N} ⊨N γ = ⊢𝒱λN
 \end{code}
 
 \begin{code}
+
+
 compatible-app : ∀{Γ}{A}{B}{L}{M}
    → Γ ⊨ L ⦂ (A ⇒ B)
    → Γ ⊨ M ⦂ A
@@ -687,28 +694,82 @@ compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ⊢ℰLM
        let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
        let 𝒫₁⊢ℰM : 𝒫₁ V ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M)
            𝒫₁⊢ℰM = Sᵒ (Sᵒ (⊨M γ)) in
-       ℰ-bind {F = v ·□} 𝒫₁⊢ℰM (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW))
+       ℰ-bind {F = v ·□} 𝒫₁⊢ℰM (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW′))
    where
-   𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ
-                 ∷ 𝓖⟦ Γ ⟧ γ
+   𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
+   𝒫₃ = λ V W → ▷ᵒ (∀ᵒ[ V ] ∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W))) ∷ 𝒫₂ V W
+
+
+   Gen-ℰVW′ : ∀{V′}{W′} → 𝒫₃ V′ W′ ⊢ᵒ ∀ᵒ[ V ] ∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W))
+   Gen-ℰVW′ {V′}{W′} = Λᵒ[ V ] Λᵒ[ W ] →ᵒI (→ᵒI aux)
+    where
+    aux : ∀{V}{W} → 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ 𝒫₃ V′ W′ ⊢ᵒ ℰ⟦ B ⟧ (V · W)
+    aux {V}{W} =
+     let ⊢𝒱V : 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ 𝒫₃ V′ W′ ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
+         ⊢𝒱V = Sᵒ Zᵒ in
+     let ⊢𝒱W : 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ 𝒫₃ V′ W′ ⊢ᵒ 𝒱⟦ A ⟧ W
+         ⊢𝒱W = Zᵒ in
+     ⊢ᵒ-sucP ⊢𝒱V λ 𝒱Vsn →
+     ⊢ᵒ-sucP ⊢𝒱W λ 𝒱Wsn →
+     let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
+     let w = 𝒱⇒Value A W 𝒱Wsn in
+     let Case-λ = λ {N′ refl 𝒱W→ℰNW →
+                   let prog : 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ (ƛ N′) ∷ 𝒫₃ V′ W′ ⊢ᵒ progress B (ƛ N′ · W)
+                       prog = inj₂ᵒ (constᵒI (_ , (β-ƛ w))) in
+                     let pres : 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ (ƛ N′) ∷ 𝒫₃ V′ W′ ⊢ᵒ preservation B (ƛ N′ · W)
+                         pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ {r →
+                                let ⊢▷ℰN′W : 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ (ƛ N′) ∷ 𝒫₃ V′ W′ ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ (N′ [ W ]))
+                                    ⊢▷ℰN′W = appᵒ 𝒱W→ℰNW (monoᵒ ⊢𝒱W) in
+                                let eq = deterministic r (β-ƛ w) in
+                                Sᵒ (subst (λ N → 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ (ƛ N′) ∷ 𝒫₃ V′ W′
+                                                 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)) (sym eq) ⊢▷ℰN′W)}) in
+                   ℰ-intro prog pres} in
+     𝒱-fun-elim ⊢𝒱V Case-λ {!!}
+
+     
+   Gen-ℰVW : ∀{V}{W} → 𝒫₂ V W ⊢ᵒ ∀ᵒ[ V ] ∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W))
+   Gen-ℰVW = lobᵒ Gen-ℰVW′
+                 
+   ⊢ℰVW′ : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
+   ⊢ℰVW′ {V}{W} = appᵒ (appᵒ (instᵒ (instᵒ Gen-ℰVW V) W) (Sᵒ (Sᵒ Zᵒ))) Zᵒ
+
    ⊢ℰVW : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
    ⊢ℰVW {V}{W} =
      let ⊢𝒱V : 𝒫₂ V W ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
          ⊢𝒱V = Sᵒ (Sᵒ Zᵒ) in
      let ⊢𝒱W : 𝒫₂ V W ⊢ᵒ 𝒱⟦ A ⟧ W
          ⊢𝒱W = Zᵒ in
+     ⊢ᵒ-sucP ⊢𝒱V λ 𝒱Vsn →
      ⊢ᵒ-sucP ⊢𝒱W λ 𝒱Wsn →
+     let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
      let w = 𝒱⇒Value A W 𝒱Wsn in
      let Case-λ = λ {N′ refl 𝒱W→ℰNW →
                      let prog : 𝒫₂ (ƛ N′) W ⊢ᵒ progress B (ƛ N′ · W)
-                         prog = (inj₂ᵒ (constᵒI (_ , (β-ƛ w)))) in
+                         prog = inj₂ᵒ (constᵒI (_ , (β-ƛ w))) in
                      let pres : 𝒫₂ (ƛ N′) W ⊢ᵒ preservation B (ƛ N′ · W)
                          pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ {r →
                                 let ⊢▷ℰN′W = appᵒ 𝒱W→ℰNW (monoᵒ ⊢𝒱W) in
                                 let eq = deterministic r (β-ƛ w) in
                                 Sᵒ (subst (λ N → 𝒫₂ (ƛ N′) W ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ N) (sym eq) ⊢▷ℰN′W)}) in
                      ℰ-intro prog pres } in
-     𝒱-fun-elim ⊢𝒱V Case-λ {!!}
+     𝒱-fun-elim ⊢𝒱V Case-λ (Case-μ v w)
+     where
+     Case-μ : Value V → Value W → (V′ : Term) → V ≡ μ V′ → 𝒫₂ V W ⊢ᵒ (▷ᵒ 𝒱⟦ A ⇒ B ⟧ (V′ [ V ]))
+        → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
+     Case-μ (V-μ v) w V′ refl ▷𝒱V′[V] =
+       let prog : 𝒫₂ (μ V′) W ⊢ᵒ progress B (μ V′ · W)
+           prog = inj₂ᵒ (constᵒI (_ , β-μ v w)) in
+       let ▷ℰV[μV]·W : ((μ V′ · W —→ (V′ [ μ V′ ]) · W) ᵒ) ∷ 𝒫₂ (μ V′) W ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ ((V′ [ μ V′ ]) · W)
+           ▷ℰV[μV]·W = {!!} in
+           
+       let ▷ℰN : ∀ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫₂ (μ V′) W ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)
+           ▷ℰN N = ⊢ᵒ-sucP Zᵒ λ r →
+             subst (λ X → ((μ V′ · W —→ X) ᵒ) ∷ 𝒫₂ (μ V′) W ⊢ᵒ (▷ᵒ ℰ⟦ B ⟧ X)) (sym (β-μ-inv v w r)) ▷ℰV[μV]·W in
+       let pres : 𝒫₂ (μ V′) W ⊢ᵒ preservation B (μ V′ · W)
+           pres = Λᵒ[ N ] →ᵒI (▷ℰN N) in
+       ℰ-intro prog pres
+
+     
 \end{code}
 
 \begin{code}
