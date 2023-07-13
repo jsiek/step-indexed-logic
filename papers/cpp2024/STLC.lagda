@@ -727,11 +727,25 @@ value-ℰ⇒𝒱 v (inj₂ (_ , r) , pres) = ⊥-elim (value-irreducible v r)
 
 \begin{code}
 compatible-μ : ∀{Γ}{A}{B}{V}
+   → Value V
    → ((A ⇒ B) ∷ Γ) ⊨ⱽ V ⦂ (A ⇒ B)
      -------------------
    → Γ ⊨ⱽ (μ V) ⦂ (A ⇒ B)
-compatible-μ {Γ}{A}{B}{V} ⊨V γ = {!!}
+compatible-μ {Γ}{A}{B}{V} v ⊨V γ = 𝒱μ
+ where
+ μγV = μ (⟪ ext γ ⟫ V)
+ 
+ ▷𝒱μV : ▷ᵒ (𝒱⟦ A ⇒ B ⟧ μγV) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ μγV)
+ ▷𝒱μV = Zᵒ
 
+ 𝒱μV⇒𝒱V : 𝒱⟦ A ⇒ B ⟧ μγV  ∷  ▷ᵒ 𝒱⟦ A ⇒ B ⟧ μγV  ∷  𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (⟪ μγV • γ ⟫ V)
+ 𝒱μV⇒𝒱V = ⊢ᵒ-intro λ {n (𝒱μγVn , _ , 𝓖γn) → ⊢ᵒ-elim (⊨V (μγV • γ)) n (𝒱μγVn , 𝓖γn)}
+      
+ 𝒱V : ▷ᵒ (𝒱⟦ A ⇒ B ⟧ μγV) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (⟪ μγV • γ ⟫ V))
+ 𝒱V = ▷→▷ ▷𝒱μV 𝒱μV⇒𝒱V
+
+ 𝒱μ : 𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ μγV
+ 𝒱μ = lobᵒ (substᵒ (≡ᵒ-sym 𝒱-μ) (constᵒI (subst-preserves-value (ext γ) _ v) ,ᵒ 𝒱V))
 \end{code}
 
 
@@ -754,5 +768,5 @@ fundamental {Γ} {V} {A} (⊢val ⊢V) = compatible-value {V = V} (fundamental�
 fundamentalⱽ {Γ} {.`zero} {.`ℕ} ⊢ⱽzero = compatible-zero
 fundamentalⱽ {Γ} {`suc V} {.`ℕ} (⊢ⱽsuc ⊢V) = compatible-sucⱽ{V = V} (fundamentalⱽ ⊢V)
 fundamentalⱽ {Γ} {ƛ N} {.(_ ⇒ _)} (⊢ⱽƛ ⊢N) = compatible-lambda{N = N} (fundamental ⊢N)
-fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) = compatible-μ{V = V} (fundamentalⱽ ⊢V)
+fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) = compatible-μ{V = V} (⊢ⱽ⇒Value ⊢V) (fundamentalⱽ ⊢V)
 \end{code}
