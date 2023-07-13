@@ -90,6 +90,7 @@ data Value : Term → Set where
   V-ƛ : Value (ƛ N)
   V-zero : Value `zero
   V-suc : Value V → Value (`suc V)
+  V-μ : Value V → Value (μ V)
 \end{code}
 
 \begin{code}
@@ -160,8 +161,10 @@ data _—→_ : Term → Term → Set where
     → case (`suc V) M N —→ N [ V ]
 
   β-μ :
-      ----------------
-      μ N —→ N [ μ N ]
+      Value V
+    → Value W
+      ---------------------------
+    → (μ V) · W —→ V [ μ V ] · W
 \end{code}
 
 \begin{code}
@@ -261,8 +264,31 @@ postulate frame-inv2 : ∀{L N : Term}{F} → reducible L → F ⟦ L ⟧ —→
 
 \begin{code}
 infix 3 _⊢_⦂_
-
 data _⊢_⦂_ : List Type → Term → Type → Set
+
+infix 3 _⊢ⱽ_⦂_
+data _⊢ⱽ_⦂_ : List Type → Term → Type → Set
+
+data _⊢ⱽ_⦂_ where
+
+  ⊢ⱽzero : ∀ {Γ}
+      --------------
+    → Γ ⊢ⱽ `zero ⦂ `ℕ
+
+  ⊢ⱽsuc : ∀ {Γ V}
+    → Γ ⊢ⱽ V ⦂ `ℕ
+      ---------------
+    → Γ ⊢ⱽ `suc V ⦂ `ℕ
+
+  ⊢ⱽƛ : ∀ {Γ N A B}
+    → (A ∷ Γ) ⊢ N ⦂ B
+      -----------------
+    → Γ ⊢ⱽ ƛ N ⦂ (A ⇒ B)
+
+  ⊢ⱽμ : ∀ {Γ V A B}
+    → (A ⇒ B ∷ Γ) ⊢ⱽ V ⦂ A ⇒ B
+      ------------------------
+    → Γ ⊢ⱽ μ V ⦂ A ⇒ B
 
 data _⊢_⦂_ where
 
@@ -271,15 +297,11 @@ data _⊢_⦂_ where
       -----------
     → Γ ⊢ ` x ⦂ A
 
-  ⊢zero : ∀ {Γ}
-      --------------
-    → Γ ⊢ `zero ⦂ `ℕ
-
   ⊢suc : ∀ {Γ M}
     → Γ ⊢ M ⦂ `ℕ
       ---------------
     → Γ ⊢ `suc M ⦂ `ℕ
-
+    
   ⊢case : ∀{Γ L M N A}
     → Γ ⊢ L ⦂ `ℕ
     → Γ ⊢ M ⦂ A
@@ -293,15 +315,18 @@ data _⊢_⦂_ where
       -------------
     → Γ ⊢ L · M ⦂ B
 
-  ⊢ƛ : ∀ {Γ N A B}
-    → (A ∷ Γ) ⊢ N ⦂ B
-      -----------------
-    → Γ ⊢ ƛ N ⦂ (A ⇒ B)
+  ⊢val : ∀ {Γ V A}
+    → Γ ⊢ⱽ V ⦂ A
+      ----------
+    → Γ ⊢ V ⦂ A
+\end{code}
 
-  ⊢μ : ∀ {Γ N A}
-    → (A ∷ Γ) ⊢ N ⦂ A
-      -----------------
-    → Γ ⊢ μ N ⦂ A
+\begin{code}
+⊢ⱽ⇒Value : ∀{Γ V A} → Γ ⊢ⱽ V ⦂ A → Value V
+⊢ⱽ⇒Value ⊢ⱽzero = V-zero
+⊢ⱽ⇒Value (⊢ⱽsuc ⊢V) = V-suc (⊢ⱽ⇒Value ⊢V)
+⊢ⱽ⇒Value (⊢ⱽƛ ⊢N) = V-ƛ
+⊢ⱽ⇒Value (⊢ⱽμ ⊢V) = V-μ (⊢ⱽ⇒Value ⊢V)
 \end{code}
 
 \subsection{Definition of the Logical Relation}
@@ -333,6 +358,7 @@ pre-ℰ A M = (pre-𝒱 A M ⊎ˢ (reducible M)ˢ) ×ˢ (∀ˢ[ N ] (M —→ N)
 pre-𝒱 `ℕ `zero       = topᵖ ˢ
 pre-𝒱 `ℕ (`suc V)    = pre-𝒱 `ℕ V
 pre-𝒱 (A ⇒ B) (ƛ N)  = ∀ˢ[ W ] ▷ˢ (𝒱ˢ⟦ A ⟧ W) →ˢ ▷ˢ (ℰˢ⟦ B ⟧ (N [ W ]))
+pre-𝒱 (A ⇒ B) (μ V)  = (Value V)ˢ ×ˢ (▷ˢ (𝒱ˢ⟦ A ⇒ B ⟧ (V [ μ V ])))
 pre-𝒱 A M            = ⊥ ˢ
 \end{code}
 
@@ -407,25 +433,40 @@ open import EquivalenceRelation public
 \end{code}
 
 \begin{code}
+𝒱-μ : ∀{A B}{V} → 𝒱⟦ A ⇒ B ⟧ (μ V) ≡ᵒ (Value V)ᵒ ×ᵒ (▷ᵒ (𝒱⟦ A ⇒ B ⟧ (V [ μ V ])))
+𝒱-μ {A}{B}{V} =
+   let X = (inj₁ (A ⇒ B , μ V)) in
+   𝒱⟦ A ⇒ B ⟧ (μ V)                                         ⩦⟨ ≡ᵒ-refl refl ⟩
+   ℰ⊎𝒱 X                                                    ⩦⟨ fixpointᵒ pre-ℰ⊎𝒱 X ⟩
+   ♯ (pre-ℰ⊎𝒱 X) (ℰ⊎𝒱 , ttᵖ)                               ⩦⟨ ≡ᵒ-refl refl ⟩ 
+   (Value V)ᵒ ×ᵒ (▷ᵒ (𝒱⟦ A ⇒ B ⟧ (V [ μ V ])))              ∎
+\end{code}
+
+\begin{code}
 safe-body : List Setᵒ → Term → Type → Type → Set
 safe-body 𝒫 N A B = ∀{W} → 𝒫 ⊢ᵒ (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))
 
 𝒱-fun-elim : ∀{𝒫}{A}{B}{V}{R}
    → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
    → (∀ N → V ≡ ƛ N → safe-body 𝒫 N A B → 𝒫 ⊢ᵒ R)
-    ------------------------------------------------
+   → (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (V′ [ V ])) → 𝒫 ⊢ᵒ R)
+    ---------------------------------------------------------------
    → 𝒫 ⊢ᵒ R
-𝒱-fun-elim {𝒫}{A}{B}{V}{R} ⊢𝒱V cont =
-  ⊢ᵒ-sucP ⊢𝒱V λ { 𝒱Vsn → aux {V} 𝒱Vsn ⊢𝒱V cont}
+𝒱-fun-elim {𝒫}{A}{B}{V}{R} ⊢𝒱V contλ contμ =
+  ⊢ᵒ-sucP ⊢𝒱V λ { 𝒱Vsn → aux {V} 𝒱Vsn ⊢𝒱V contλ contμ}
   where
   aux : ∀{V}{n}
      → # (𝒱⟦ A ⇒ B ⟧ V) (suc n)
      → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
      → (∀ N → V ≡ ƛ N → safe-body 𝒫 N A B → 𝒫 ⊢ᵒ R)
+     → (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (V′ [ V ])) → 𝒫 ⊢ᵒ R)
      → 𝒫 ⊢ᵒ R
-  aux{ƛ N}{n} 𝒱V ⊢𝒱V cont = cont N refl λ {W} →
+  aux{ƛ N}{n} 𝒱V ⊢𝒱V contλ contμ = contλ N refl λ {W} →
       instᵒ{P = λ W → (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))}
                  (substᵒ 𝒱-fun ⊢𝒱V) W
+  aux{μ V}{n} 𝒱V ⊢𝒱V contλ contμ = contμ V refl (⊢ᵒ-intro
+     λ { zero 𝒫k → tt
+       ; (suc k) → λ 𝒫sk → let (v , 𝒱V[μV]) = ⊢ᵒ-elim ⊢𝒱V (suc k) 𝒫sk in  𝒱V[μV]})
 \end{code}
 
 \begin{code}
@@ -433,6 +474,7 @@ safe-body 𝒫 N A B = ∀{W} → 𝒫 ⊢ᵒ (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ 
 𝒱⇒Value `ℕ `zero 𝒱M = V-zero
 𝒱⇒Value `ℕ (`suc M) 𝒱M = V-suc (𝒱⇒Value `ℕ M 𝒱M)
 𝒱⇒Value (A ⇒ B) (ƛ N) 𝒱M = V-ƛ
+𝒱⇒Value (A ⇒ B) (μ V) (v , ▷𝒱V[μV]) = V-μ v
 \end{code}
 
 \begin{code}
@@ -458,8 +500,15 @@ safe-body 𝒫 N A B = ∀{W} → 𝒫 ⊢ᵒ (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ 
 \end{code}
 
 \begin{code}
+infix 3 _⊨_⦂_
 _⊨_⦂_ : List Type → Term → Type → Set
 Γ ⊨ M ⦂ A = ∀ (γ : Subst) → 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M)
+\end{code}
+
+\begin{code}
+infix 3 _⊨ⱽ_⦂_
+_⊨ⱽ_⦂_ : List Type → Term → Type → Set
+Γ ⊨ⱽ V ⦂ A = ∀ (γ : Subst) → 𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⟧ (⟪ γ ⟫ V)
 \end{code}
 
 
@@ -555,10 +604,18 @@ _⊨_⦂_ : List Type → Term → Type → Set
 
 
 \begin{code}
+compatible-value : ∀{Γ V A}
+   → Γ ⊨ⱽ V ⦂ A
+     ----------
+   → Γ ⊨ V ⦂ A
+compatible-value {Γ}{V}{A} ⊨V γ = 𝒱⇒ℰ (⊨V γ) 
+\end{code}
+
+\begin{code}
 compatible-zero : ∀{Γ}
      -----------------
-   → Γ ⊨ `zero ⦂ `ℕ
-compatible-zero {Γ} γ = 𝒱⇒ℰ (⊢ᵒ-intro λ {zero x → tt; (suc i) x → ttᵖ})
+   → Γ ⊨ⱽ `zero ⦂ `ℕ
+compatible-zero {Γ} γ = ⊢ᵒ-intro λ {zero x → tt; (suc i) x → ttᵖ}
 \end{code}
 
 
@@ -578,25 +635,33 @@ compatible-suc {Γ}{M} ⊨M γ = ⊢ℰsM
 \end{code}
 
 \begin{code}
+compatible-sucⱽ : ∀{Γ}{V}
+   → Γ ⊨ⱽ V ⦂ `ℕ
+     ----------------
+   → Γ ⊨ⱽ `suc V ⦂ `ℕ
+compatible-sucⱽ {Γ}{V} ⊨V γ = {!!}
+\end{code}
+
+\begin{code}
 lookup-𝓖 : (Γ : List Type) → (γ : Subst)  →  ∀ {A}{y} → (Γ ∋ y ⦂ A)  →  𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⟧ (γ y)
 lookup-𝓖 (B ∷ Γ) γ {A} {zero} refl = Zᵒ
 lookup-𝓖 (B ∷ Γ) γ {A} {suc y} ∋y = Sᵒ (lookup-𝓖 Γ (λ x → γ (suc x)) ∋y) 
 \end{code}
 
 \begin{code}
-compatibility-var : ∀ {Γ A x}
+compatible-var : ∀ {Γ A x}
   → Γ ∋ x ⦂ A
     -----------
   → Γ ⊨ ` x ⦂ A
-compatibility-var {Γ}{A}{x} ∋x γ rewrite sub-var γ x = 𝒱⇒ℰ (lookup-𝓖 Γ γ ∋x)
+compatible-var {Γ}{A}{x} ∋x γ rewrite sub-var γ x = 𝒱⇒ℰ (lookup-𝓖 Γ γ ∋x)
 \end{code}
 
 \begin{code}
 compatible-lambda : ∀{Γ}{A}{B}{N}
    → (A ∷ Γ) ⊨ N ⦂ B
      -------------------
-   → Γ ⊨ (ƛ N) ⦂ (A ⇒ B)
-compatible-lambda {Γ}{A}{B}{N} ⊨N γ = 𝒱⇒ℰ ⊢𝒱λN
+   → Γ ⊨ⱽ (ƛ N) ⦂ (A ⇒ B)
+compatible-lambda {Γ}{A}{B}{N} ⊨N γ = ⊢𝒱λN
  where
  ⊢𝒱λN : 𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (ƛ (⟪ ext γ ⟫ N))
  ⊢𝒱λN = (substᵒ (≡ᵒ-sym 𝒱-fun) (Λᵒ[ W ] →ᵒI ▷𝓔N[W]))
@@ -634,61 +699,60 @@ compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ⊢ℰLM
          ⊢𝒱W = Zᵒ in
      ⊢ᵒ-sucP ⊢𝒱W λ 𝒱Wsn →
      let w = 𝒱⇒Value A W 𝒱Wsn in
-     𝒱-fun-elim ⊢𝒱V λ {N′ refl 𝒱W→ℰNW →
-     let prog : 𝒫₂ (ƛ N′) W ⊢ᵒ progress B (ƛ N′ · W)
-         prog = (inj₂ᵒ (constᵒI (_ , (β-ƛ w)))) in
-     let pres : 𝒫₂ (ƛ N′) W ⊢ᵒ preservation B (ƛ N′ · W)
-         pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ {r →
-                let ⊢▷ℰN′W = appᵒ 𝒱W→ℰNW (monoᵒ ⊢𝒱W) in
-                let eq = deterministic r (β-ƛ w) in
-                Sᵒ (subst (λ N → 𝒫₂ (ƛ N′) W ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ N) (sym eq) ⊢▷ℰN′W)}) in
-     ℰ-intro prog pres }
+     let Case-λ = λ {N′ refl 𝒱W→ℰNW →
+                     let prog : 𝒫₂ (ƛ N′) W ⊢ᵒ progress B (ƛ N′ · W)
+                         prog = (inj₂ᵒ (constᵒI (_ , (β-ƛ w)))) in
+                     let pres : 𝒫₂ (ƛ N′) W ⊢ᵒ preservation B (ƛ N′ · W)
+                         pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ {r →
+                                let ⊢▷ℰN′W = appᵒ 𝒱W→ℰNW (monoᵒ ⊢𝒱W) in
+                                let eq = deterministic r (β-ƛ w) in
+                                Sᵒ (subst (λ N → 𝒫₂ (ƛ N′) W ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ N) (sym eq) ⊢▷ℰN′W)}) in
+                     ℰ-intro prog pres } in
+     𝒱-fun-elim ⊢𝒱V Case-λ {!!}
 \end{code}
 
 \begin{code}
-β-μ-inv : μ M —→ N → N ≡ M [ μ M ]
-β-μ-inv (ξξ (□· x₂) () x₁ r)
-β-μ-inv (ξξ (x₂ ·□) () x₁ r)
-β-μ-inv (ξξ suc□ () x₁ r)
-β-μ-inv β-μ = refl
-
+subst-preserves-value : ∀ σ V → Value V → Value (⟪ σ ⟫ V)
+subst-preserves-value σ .(ƛ _) V-ƛ = V-ƛ
+subst-preserves-value σ .`zero V-zero = V-zero
+subst-preserves-value σ (`suc V) (V-suc v) = V-suc (subst-preserves-value σ V v)
+subst-preserves-value σ (μ V) (V-μ v) = V-μ (subst-preserves-value (ext σ) V v)
 \end{code}
 
 \begin{code}
-compatible-rec : ∀{Γ}{A}{M}
-   → (A ∷ Γ) ⊨ M ⦂ A
+value-ℰ⇒𝒱 : ∀{V}{A}{n} → Value V → # (ℰ⟦ A ⟧ V) (suc n) → # (𝒱⟦ A ⟧ V) (suc n)
+value-ℰ⇒𝒱 v (inj₁ 𝒱V , pres) = 𝒱V
+value-ℰ⇒𝒱 v (inj₂ (_ , r) , pres) = ⊥-elim (value-irreducible v r)
+\end{code}
+
+\begin{code}
+compatible-μ : ∀{Γ}{A}{B}{V}
+   → ((A ⇒ B) ∷ Γ) ⊨ⱽ V ⦂ (A ⇒ B)
      -------------------
-   → Γ ⊨ (μ M) ⦂ A
-compatible-rec {Γ}{A}{M} ⊨M γ = ⊢ℰμM
- where
+   → Γ ⊨ⱽ (μ V) ⦂ (A ⇒ B)
+compatible-μ {Γ}{A}{B}{V} ⊨V γ = {!!}
 
- prog : 𝓖⟦ Γ ⟧ γ ⊢ᵒ progress A (⟪ γ ⟫ (μ M))
- prog = inj₂ᵒ (constᵒI (_ , β-μ))
+\end{code}
 
- pres : 𝓖⟦ Γ ⟧ γ ⊢ᵒ preservation A (⟪ γ ⟫ (μ M))
- pres = Λᵒ[ N ] (→ᵒI (constᵒE Zᵒ aux))
-   where
-   𝒫₁ : Term → List Setᵒ
-   𝒫₁ N = ((⟪ γ ⟫ (μ M) —→ N)ᵒ) ∷ 𝓖⟦ Γ ⟧ γ
-   aux : ∀{N} → ⟪ γ ⟫ (μ M) —→ N → 𝒫₁ N ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)
-   aux {N} r =
-     let eq : N ≡ ⟪ ext γ ⟫ M [ ⟪ γ ⟫ (μ M) ]
-         eq = β-μ-inv r in
-     let ℰM = ⊨M ((⟪ γ ⟫ (μ M)) • γ) in
-     subst (λ X → ((⟪ γ ⟫ (μ M) —→ X)ᵒ) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ X)) (sym eq)
-     ?
-{-   
-   aux r rewrite β-μ-inv r = ℰMμM
-     where
-     -- (⟪ ext γ ⟫ M) [ ⟪ γ ⟫ (μ M) ] ≡ ⟪ (⟪ γ ⟫ μ M) • γ ⟫ M by exts-sub-cons
-     ℰMμM : 𝒫₁ N ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (⟪ ⟪ γ ⟫ (μ M) • γ ⟫ M))
-     ℰMμM =
-       let xx = ⊨M (⟪ γ ⟫ (μ M) • γ) in
-       {!!}
--}
 
- ⊢ℰμM : 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ (μ M))
- ⊢ℰμM = ℰ-intro prog pres
- 
- 
+\subsection{Fundamental Lemma}
+
+\begin{code}
+fundamental : ∀ {Γ M A}
+  → (Γ ⊢ M ⦂ A)
+  → (Γ ⊨ M ⦂ A)
+fundamentalⱽ : ∀ {Γ W A}
+  → (Γ ⊢ⱽ W ⦂ A)
+  → (Γ ⊨ⱽ W ⦂ A)
+
+fundamental {Γ} {.(` _)} {A} (⊢` x) = compatible-var x
+fundamental {Γ} {`suc M} {.`ℕ} (⊢suc ⊢M) = compatible-suc{M = M} (fundamental ⊢M)
+fundamental {Γ} {case L M N} {A} (⊢case ⊢L ⊢M ⊢N) = {!!}
+fundamental {Γ} {L · M} {A} (⊢· ⊢L ⊢M) = compatible-app{L = L}{M} (fundamental ⊢L) (fundamental ⊢M)
+fundamental {Γ} {V} {A} (⊢val ⊢V) = compatible-value {V = V} (fundamentalⱽ ⊢V)
+
+fundamentalⱽ {Γ} {.`zero} {.`ℕ} ⊢ⱽzero = compatible-zero
+fundamentalⱽ {Γ} {`suc V} {.`ℕ} (⊢ⱽsuc ⊢V) = compatible-sucⱽ{V = V} (fundamentalⱽ ⊢V)
+fundamentalⱽ {Γ} {ƛ N} {.(_ ⇒ _)} (⊢ⱽƛ ⊢N) = compatible-lambda{N = N} (fundamental ⊢N)
+fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) = compatible-μ{V = V} (fundamentalⱽ ⊢V)
 \end{code}
