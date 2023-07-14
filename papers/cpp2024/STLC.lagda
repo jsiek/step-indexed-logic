@@ -33,7 +33,10 @@ open import cpp2024.StepIndexedLogic
 \end{code}
 \end{comment}
 
-\section{Semantic Type Safety of the STLC with Recursive Functions}
+\section{Case Study: Semantic Type Safety of the STLC with Recursive Functions}
+
+
+\subsection{Syntax of STLC with Recursive Functions}
 
 \begin{code}
 data Type : Set where
@@ -106,92 +109,43 @@ infix  6 □·_
 infix  6 _·□
 
 data Frame : Set where
-
-  □·_ : 
-      Term
-      -----
-    → Frame
-
-  _·□ : 
-      Value V
-      -------
-    → Frame
-
+  □·_ : Term → Frame
+  _·□ : Value V → Frame
   suc□ : Frame
-
-  case□ :
-        Term
-      → Term
-        -----
-      → Frame
-
-{- Plug an expression into a frame. -}
+  case□ : Term → Term → Frame
 
 _⟦_⟧ : Frame → Term → Term
 (□· M) ⟦ L ⟧        =  L · M
 (v ·□) ⟦ M ⟧        =  value v · M
 suc□ ⟦ M ⟧          = `suc M
 (case□ M N) ⟦ L ⟧   = case L M N
+\end{code}
 
-{- Possibly-empty Frame -}
 
-data PEFrame : Set where
-  `_ : Frame → PEFrame
-  □ : PEFrame
-
-_⦉_⦊ : PEFrame → Term → Term
-(` F) ⦉ M ⦊ = F ⟦ M ⟧
-□ ⦉ M ⦊ = M
-
-{- Reduction -}
-
+\begin{code}
 infix 2 _—→_
 data _—→_ : Term → Term → Set where
 
   ξξ : ∀ {M N : Term} {M′ N′ : Term}
-    → (F : Frame)
-    → M′ ≡ F ⟦ M ⟧
-    → N′ ≡ F ⟦ N ⟧
-    → M —→ N
-      --------
+    → (F : Frame) → M′ ≡ F ⟦ M ⟧ → N′ ≡ F ⟦ N ⟧ → M —→ N
     → M′ —→ N′
 
-  β-ƛ : 
-      Value W
-      --------------------
-    → (ƛ N) · W —→ N [ W ]
+  β-ƛ : Value W → (ƛ N) · W —→ N [ W ]
 
-  β-zero : 
-      -------------------
-      case `zero M N —→ M
+  β-zero : case `zero M N —→ M
 
-  β-suc : 
-      Value V
-      ----------------------------
-    → case (`suc V) M N —→ N [ V ]
+  β-suc : Value V → case (`suc V) M N —→ N [ V ]
 
-  β-μ :
-      Value V
-    → Value W
-      ---------------------------
-    → (μ V) · W —→ V [ μ V ] · W
+  β-μ : Value V → Value W → (μ V) · W —→ V [ μ V ] · W
 \end{code}
 
 \begin{code}
 pattern ξ F M—→N = ξξ F refl refl M—→N
+\end{code}
 
-ξ′ : ∀ {M N : Term} {M′ N′ : Term}
-    → (F : PEFrame)
-    → M′ ≡ F ⦉ M ⦊
-    → N′ ≡ F ⦉ N ⦊
-    → M —→ N
-      --------
-    → M′ —→ N′
-ξ′ (` F) refl refl M→N = ξ F M→N
-ξ′ □ refl refl M→N = M→N
+Reflexive and transitive closure of reduction
 
-{- Reflexive and transitive closure of reduction -}
-
+\begin{code}
 infixr 1 _++_
 infix  2 _—↠_
 infixr 2 _—→⟨_⟩_
@@ -219,10 +173,6 @@ unit {M = M} {N = N} M—→N  =  M —→⟨ M—→N ⟩ (N END)
 ξ* : ∀ {M N : Term} → (F : Frame) → M —↠ N → F ⟦ M ⟧ —↠ F ⟦ N ⟧
 ξ* F (M END) = F ⟦ M ⟧ END
 ξ* F (L —→⟨ L—→M ⟩ M—↠N) = (F ⟦ L ⟧ —→⟨ ξ F L—→M ⟩ ξ* F M—↠N)
-
-ξ′* : ∀{M N} → (F : PEFrame) → M —↠ N → F ⦉ M ⦊ —↠ F ⦉ N ⦊
-ξ′* {M} {N} (` F) M→N = ξ* F M→N
-ξ′* {M} {N} □ M→N = M→N
 
 {- Concatenate two sequences. -}
 
@@ -271,12 +221,13 @@ value-irreducible (V-suc v) (ξ suc□ V—→M) = value-irreducible v V—→M
 value-irreducible (V-μ v) (ξξ (□· x₂) () x₁ V—→M)
 value-irreducible (V-μ v) (ξξ (x₂ ·□) () x₁ V—→M)
 value-irreducible (V-μ v) (ξξ suc□ () x₁ V—→M)
+\end{code}
 
+\begin{code}
 β-μ-inv : ∀{V W N} → Value V → Value W → μ V · W —→ N → N ≡ V [ μ V ] · W
 β-μ-inv v w (ξ (□· x₂) r) = ⊥-elim (value-irreducible (V-μ v) r)
 β-μ-inv v w (ξξ (x₂ ·□) refl x₁ r) = ⊥-elim (value-irreducible w r)
 β-μ-inv v w (β-μ x x₁) = refl
-
 \end{code}
 
 \subsection{Type System of STLC}
@@ -509,7 +460,7 @@ safe-body 𝒫 N A B = ∀{W} → 𝒫 ⊢ᵒ (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ 
                 ⊥-elim (value-irreducible (𝒱⇒Value A V 𝒱V ) V—→N))
 \end{code}
 
-\subsection{Semantic Type Safety for Open Terms}
+\subsection{Definition of Semantic Type Safety for Open Terms}
 
 
 \begin{code}
