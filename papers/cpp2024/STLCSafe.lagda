@@ -242,31 +242,36 @@ compatible-case {Γ}{L}{M}{N}{A} ⊨L ⊨M ⊨N γ = ⊢ℰcaseLMN
            prog = inj₂ᵒ (constᵒI (_ , β-zero)) in
         let pres : 𝒫₁ `zero ⊢ᵒ preservation A (case `zero (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
             pres = Λᵒ[ N ] (→ᵒI (constᵒE Zᵒ λ {r →
-                 let ▷ℰM : 𝒫₁ `zero ⊢ᵒ (▷ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M))
-                     ▷ℰM = monoᵒ (Sᵒ (Sᵒ (⊨M γ))) in
-                 let N≡⟪γ⟫M = deterministic r β-zero in
-                 Sᵒ (subst (λ N → 𝒫₁ `zero ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)) (sym N≡⟪γ⟫M) ▷ℰM)})) in
+             let ▷ℰM : 𝒫₁ `zero ⊢ᵒ (▷ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M))
+                 ▷ℰM = monoᵒ (Sᵒ (Sᵒ (⊨M γ))) in
+             let N≡⟪γ⟫M = deterministic r β-zero in
+             Sᵒ (subst (λ N → 𝒫₁ `zero ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)) (sym N≡⟪γ⟫M) ▷ℰM)})) in
        ℰ-intro prog pres})
-     (λ { V′ refl → {!!}})
+     (λ { V′ refl →
+       let v = 𝒱⇒Value `ℕ V′ 𝒱Vsn in
+       let prog : 𝒫₁ (`suc V′) ⊢ᵒ progress A (case (`suc V′) (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
+           prog = inj₂ᵒ (constᵒI (_ , (β-suc v))) in
+       let pres : 𝒫₁ (`suc V′) ⊢ᵒ preservation A (case (`suc V′) (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
+           pres = Λᵒ[ L ] (→ᵒI (constᵒE Zᵒ λ {r →
+             let L≡⟪γ⟫N[V] = deterministic r (β-suc v) in
+             let ▷ℰN[V′] : 𝒫₁ (`suc V′) ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ (⟪ V′ • γ ⟫ N)
+                 ▷ℰN[V′] = monoᵒ (⊢ᵒ-intro λ {k (a , b , c) → ⊢ᵒ-elim (⊨N (V′ • γ)) k (a , c)}) in
+             Sᵒ (subst (λ L → 𝒫₁ (`suc V′) ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ L)) (sym L≡⟪γ⟫N[V]) ▷ℰN[V′])})) in
+       ℰ-intro prog pres})
 \end{code}
 
 
 \subsection{Fundamental Lemma}
 
 \begin{code}
-fundamental : ∀ {Γ M A}
-  → (Γ ⊢ M ⦂ A)
-  → (Γ ⊨ M ⦂ A)
-fundamentalⱽ : ∀ {Γ W A}
-  → (Γ ⊢ⱽ W ⦂ A)
-  → (Γ ⊨ⱽ W ⦂ A)
-
+fundamental : ∀ {Γ M A} → (Γ ⊢ M ⦂ A) → (Γ ⊨ M ⦂ A)
+fundamentalⱽ : ∀ {Γ W A} → (Γ ⊢ⱽ W ⦂ A) → (Γ ⊨ⱽ W ⦂ A)
 fundamental {Γ} {.(` _)} {A} (⊢` x) = compatible-var x
 fundamental {Γ} {`suc M} {.`ℕ} (⊢suc ⊢M) = compatible-suc{M = M} (fundamental ⊢M)
-fundamental {Γ} {case L M N} {A} (⊢case ⊢L ⊢M ⊢N) = {!!}
+fundamental {Γ} {case L M N} {A} (⊢case ⊢L ⊢M ⊢N) =
+   compatible-case{L = L}{M}{N} (fundamental ⊢L) (fundamental ⊢M) (fundamental ⊢N)
 fundamental {Γ} {L · M} {A} (⊢· ⊢L ⊢M) = compatible-app{L = L}{M} (fundamental ⊢L) (fundamental ⊢M)
 fundamental {Γ} {V} {A} (⊢val ⊢V) = compatible-value {V = V} (fundamentalⱽ ⊢V)
-
 fundamentalⱽ {Γ} {.`zero} {.`ℕ} ⊢ⱽzero = compatible-zero
 fundamentalⱽ {Γ} {`suc V} {.`ℕ} (⊢ⱽsuc ⊢V) = compatible-sucⱽ{V = V} (fundamentalⱽ ⊢V)
 fundamentalⱽ {Γ} {ƛ N} {.(_ ⇒ _)} (⊢ⱽƛ ⊢N) = compatible-lambda{N = N} (fundamental ⊢N)
