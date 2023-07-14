@@ -1514,7 +1514,7 @@ infix 1 ∀ˢ-syntax
 syntax ∀ˢ-syntax (λ x → P) = ∀ˢ[ x ] P
 \end{code}
 
-\subsection{Exist}
+\subsection{Exists}
 
 
 \noindent We define the formula $∃ᵒ P$ at $k$ to mean that there

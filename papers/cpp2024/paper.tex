@@ -158,6 +158,7 @@
 \newunicodechar{⊥}{\ensuremath{\mathnormal\bot}}
 \newunicodechar{⊤}{\ensuremath{\mathnormal\top}}
 \newunicodechar{∷}{\ensuremath{\mathnormal::}}
+\newunicodechar{⦂}{\ensuremath{:}}  % !!
 \newunicodechar{ℕ}{\ensuremath{\mathbb N}}
 \newunicodechar{ℤ}{\ensuremath{\mathbb Z}}
 \newunicodechar{𝒫}{\ensuremath{\mathcal P}}
@@ -168,6 +169,8 @@
 \newunicodechar{₁}{\ensuremath{_1}}
 \newunicodechar{₂}{\ensuremath{_2}}
 \newunicodechar{₃}{\ensuremath{_3}}
+\newunicodechar{₄}{\ensuremath{_4}}
+\newunicodechar{₅}{\ensuremath{_5}}
 \newunicodechar{ⱼ}{\ensuremath{_j}}
 \newunicodechar{⊎}{\ensuremath{\cupdot}}
 \newunicodechar{∪}{\ensuremath{\cup}}
@@ -187,8 +190,12 @@
 \newunicodechar{∅}{\ensuremath{\emptyset}}
 \newunicodechar{⟨}{\ensuremath{\langle}}
 \newunicodechar{⟩}{\ensuremath{\rangle}}
+\newunicodechar{⟪}{\ensuremath{\langle}}
+\newunicodechar{⟫}{\ensuremath{\langle}}
+               
 \newunicodechar{α}{\ensuremath{\alpha}}
 \newunicodechar{β}{\ensuremath{\beta}}
+\newunicodechar{γ}{\ensuremath{\gamma}}
 \newunicodechar{δ}{\ensuremath{\delta}}
 \newunicodechar{Δ}{\ensuremath{\Delta}}
 \newunicodechar{ξ}{\ensuremath{\xi}}
@@ -209,6 +216,7 @@
 \newunicodechar{ₒ}{\ensuremath{_o}}
 \newunicodechar{ᵃ}{\ensuremath{^a}}
 \newunicodechar{ⁱ}{\ensuremath{^i}}
+\newunicodechar{ⱽ}{\ensuremath{^V}}
 \newunicodechar{∎}{\ensuremath{\qed}}
 \newunicodechar{■}{\ensuremath{\qed}} % !!
 \newunicodechar{□}{\ensuremath{\qed}} % !!
@@ -218,7 +226,11 @@
 \newunicodechar{⟧}{\ensuremath{\rrbracket}}
 \newunicodechar{⦉}{\ensuremath{\llparenthesis}} % Z notation...
 \newunicodechar{⦊}{\ensuremath{\rrparenthesis}} % Z notation...
-               
+\newunicodechar{ℰ}{\ensuremath{\mathcal{E}}}
+\newunicodechar{𝒱}{\ensuremath{\mathcal{V}}}
+\newunicodechar{𝓖}{\ensuremath{\mathcal{G}}}
+\newunicodechar{𝓔}{\ensuremath{\mathcal{E}}}
+                 
                  
 %%
 %% end of the preamble, start of the body of the document source.
@@ -571,6 +583,8 @@ TODO: ROAD MAP
 \input{latex/cpp2024/StepIndexedLogic.tex}
 
 \input{latex/cpp2024/STLC.tex}
+\input{latex/cpp2024/STLCBind.tex}
+\input{latex/cpp2024/STLCSafe.tex}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{all}

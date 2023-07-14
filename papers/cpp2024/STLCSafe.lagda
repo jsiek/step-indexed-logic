@@ -30,6 +30,8 @@ open import Sig
 open import Var
 open import cpp2024.StepIndexedLogic
 open import cpp2024.STLC
+open import cpp2024.STLCDeterministic
+open import cpp2024.STLCBind
 
 \end{code}
 \end{comment}
@@ -276,4 +278,21 @@ fundamentalⱽ {Γ} {.`zero} {.`ℕ} ⊢ⱽzero = compatible-zero
 fundamentalⱽ {Γ} {`suc V} {.`ℕ} (⊢ⱽsuc ⊢V) = compatible-sucⱽ{V = V} (fundamentalⱽ ⊢V)
 fundamentalⱽ {Γ} {ƛ N} {.(_ ⇒ _)} (⊢ⱽƛ ⊢N) = compatible-lambda{N = N} (fundamental ⊢N)
 fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) = compatible-μ{V = V} (⊢ⱽ⇒Value ⊢V) (fundamentalⱽ ⊢V)
+\end{code}
+
+\subsection{Semantic Type Safety}
+
+
+\begin{code}
+type-safety : ∀ {A} → (M N : Term)
+  → [] ⊢ M ⦂ A
+  → M —↠ N
+  → Value N  ⊎ (∃[ N′ ] (N —→ N′))
+type-safety {A} M .M ⊢M (.M END)
+    with ⊢ᵒ-elim (fundamental ⊢M id) (suc zero) tt
+... | inj₁ 𝒱M , _ = inj₁ (𝒱⇒Value A _ 𝒱M)
+... | inj₂ red , _ = inj₂ red
+type-safety {A} M N ⊢M (.M —→⟨ r ⟩ M—↠N)
+    with ⊢ᵒ-elim (fundamental ⊢M id) (suc (len M—↠N)) tt
+... | prog , pres = {!!}    
 \end{code}
