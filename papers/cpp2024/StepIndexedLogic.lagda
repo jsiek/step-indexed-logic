@@ -1129,7 +1129,7 @@ muᵒ Sᵃ δ a = record { # = μᵖ (⟅ Sᵃ ⟆ δ) a ; down = down-μᵖ {S�
 \subsubsection{\textsf{mu}ᵒ is a strong environment functional}
 
 Next we need to prove that \textsf{mu}ᵒ is a strong environment
-functional.  The proof involves three technical lemmas that we adapt from
+functional. The proof involves three technical lemmas that we adapt from
 \citet{Appel:2001aa}.
 
 The first, \textsf{lemma18a} (Figure~\ref{fig:lemma18a}), shows that
@@ -1355,7 +1355,7 @@ cong-iter{A}{a} (suc i) f g f=g I =
   f=g (iter i f I) (iter i g I) a IH
 \end{code}
 
-The result follows immediately from the lemma.
+\noindent The result \textsf{mu}ᵒ is congruent follows immediately from the lemma.
 
 \begin{code}
 congruent-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
@@ -1391,10 +1391,9 @@ equiv-downᵒ : (∀ k → ↓ᵒ k ϕ ≡ᵒ ↓ᵒ k ψ) → ϕ ≡ᵒ ψ
 equiv-downᵒ {ϕ}{ψ} ↓ϕ=↓ψ = ≡ᵒ-intro aux
   where aux : ∀ i → # ϕ i ⇔ # ψ i
         aux zero = (λ _ → tz ψ) , (λ _ → tz ϕ)
-        aux (suc i) =
-           let ↓ϕ⇔↓ψ = (≡ᵒ-elim{k = suc i} (↓ϕ=↓ψ (suc (suc i)))) in
-             (λ ϕsi → proj₂ (⇔-to ↓ϕ⇔↓ψ  (≤-refl , ϕsi)))
-           , (λ ψsi → proj₂ (⇔-fro ↓ϕ⇔↓ψ (≤-refl , ψsi)))
+        aux (suc i) = let ↓ϕ⇔↓ψ = (≡ᵒ-elim{k = suc i} (↓ϕ=↓ψ (suc (suc i)))) in
+                      (λ ϕsi → proj₂ (⇔-to ↓ϕ⇔↓ψ  (≤-refl , ϕsi)))
+                      , (λ ψsi → proj₂ (⇔-fro ↓ϕ⇔↓ψ (≤-refl , ψsi)))
 \end{code}
 
 \noindent We lift this lemma from $\mathsf{Set}ᵒ$ to $\mathsf{Set}ˢ$
@@ -1406,8 +1405,8 @@ abstract
   equiv-downˢ {S = S}{T} ↓S=↓T δ = equiv-downᵒ{♯ S δ}{♯ T δ} λ k → (↓S=↓T k) δ
 \end{code}
 
-The fixpoint theorem is proved by applying \textsf{lemma19a} and then
-\textsf{equiv-down}ˢ.
+\noindent We prove the fixpoint theorem by applying \textsf{lemma19a}
+and then \textsf{equiv-down}ˢ.
 
 \begin{code}
 fixpointˢ : ∀ (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
@@ -1415,11 +1414,10 @@ fixpointˢ : ∀ (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
 fixpointˢ F a = equiv-downˢ λ k → ≡ˢ-intro (lemma19a F a k)
 \end{code}
 
-It is often the case that the creation of a recursive predicate will
-appear at the top of a logical formula, in which case it does not need
-to be an open formula. To streamline this use case, we define the
-following μᵒ formula, which specializes μˢ to the situation where $Γ =
-[]$.
+A recursive predicate will often appear at the top of a logical
+formula, in which case it does not need to be an open formula. To
+streamline this situation, we define the following μᵒ connective,
+which specializes μˢ to the situation where $Γ = []$.
 
 \begin{code}
 μᵒ : (A → Setˢ (A ∷ []) (cons Later ∅)) → (A → Setᵒ)
@@ -1435,18 +1433,15 @@ fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A)
 fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
 \end{code}
 
-IS THE FOLLOWING NEEDED?
-\begin{code}
-fixpoint-step : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A) (k : ℕ)
-   → (#(μᵒ P a) k) ⇔ #(♯ (P a) (μᵒ P , ttᵖ)) k
-fixpoint-step P a k = ≡ᵒ-elim{k = k} (fixpointᵒ P a)
-\end{code}
+\noindent That concludes our treatment of the recursive predicate in
+SIL. We now move onto to the simpler connectives, including the
+logical connectives from first-order logical.
 
 \subsection{Constant}
 
 A step-indexed logic such as LSLR is typically specialized to include
 atomic formulas to express properties of programs in a particular
-language. Here we simply allow arbitrary Agda propositions to be
+language. Here we instead allow arbitrary Agda propositions to be
 included in a step-indexed proposition by way of the following
 constant operator. Given a proposition $p$, the formula $p\,ᵒ$ is true
 at zero and everywhere else it is equivalent to $p$.
@@ -1459,7 +1454,7 @@ p ᵒ = record { # = λ { zero → ⊤ ; (suc k) → p }
              ; tz = tt }
 \end{code}
 
-The constant operator is a strong environment functiuonal.
+\noindent The constant operator is a strong environment functiuonal.
 
 \begin{code}
 const-strong : ∀ (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ᵒ)
@@ -1469,15 +1464,11 @@ const-strong {Γ}{A}{Δ} p x
 ... | Later = λ δ j k k≤j → ≡ᵒ-refl refl
 \end{code}
 
-So we define the constant SIL formula $pˢ$ as the following record.
+\noindent So we define the constant SIL formula $pˢ$ as the following record.
 
 \begin{code}
-p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → const-strong p x
-             ; congr = λ d=d′ → ≡ᵒ-refl refl }
+p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → const-strong p x ; congr = λ d=d′ → ≡ᵒ-refl refl }
 \end{code}
-
-The rest of the subsections define the logical connectives from
-first-order logical.
 
 \subsection{False}
 
@@ -1494,7 +1485,8 @@ operators.
 
 \subsection{For all}
 
-The forall quantifier maps a step-indexed predicate to $Setᵒ$.
+The forall quantifier maps a step-indexed predicate $P$ to $\mathsf{Set}ᵒ$.
+That is, $∀ᵒ P$ is true at $k$ if, for any $a ∈ A$, $P\,a$ is true at $k$.
 
 \begin{code}
 ∀ᵒ : Predᵒ A → Setᵒ
@@ -1525,51 +1517,57 @@ syntax ∀ᵒ-syntax (λ x → P) = ∀ᵒ[ x ] P
 _ = ∀ᵒ[ x ] (x + 0 ≡ x)ᵒ
 \end{code}
 
+\noindent The forall quantifier is congruent in the following sense.
 
 \begin{code}
 abstract
-  down-∀ : ∀{A}{P : Predᵒ A}{k}
-    → ↓ᵒ k (∀ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (P a))
-  down-∀ {A} {P} {k} zero = (λ x → tt) , (λ x → tt)
-  down-∀ {A} {P} {k} (suc i) =
-    (λ {(a , b) → a , (λ c → a , b c)})
-    , λ {(a , b) → a , (λ a → proj₂ (b a))}
+  cong-∀ : (∀ a → P a ≡ᵒ Q a) → (∀ᵒ P) ≡ᵒ (∀ᵒ Q)
+  cong-∀ {P = P}{k} P=Q zero = (λ z a → proj₁ (P=Q a zero) (z a)) , (λ _ a → tz (P a))
+  cong-∀ {k} P=Q (suc i) = (λ z a → proj₁ (P=Q a (suc i)) (z a))
+                           , (λ z a → proj₂ (P=Q a (suc i)) (z a))
+\end{code}
 
-  cong-∀ : ∀{A}{P Q : Predᵒ A}
-    → (∀ a → P a ≡ᵒ Q a)
-    → (∀ᵒ P) ≡ᵒ (∀ᵒ Q)
-  cong-∀ {A} {P} {k} P=Q zero =
-      (λ z a → proj₁ (P=Q a zero) (z a)) , (λ _ a → tz (P a))
-  cong-∀ {A} {P} {k} P=Q (suc i) =
-        (λ z a → proj₁ (P=Q a (suc i)) (z a))
-      , (λ z a → proj₂ (P=Q a (suc i)) (z a))
-  
-strong-all : ∀{Γ}{Δ : Times Γ}{A : Set}
-   (P : A → Setˢ Γ Δ)
-  → strong-fun Δ (λ δ → ∀ᵒ[ a ] ♯ (P a) δ)
-strong-all {Γ}{Δ}{A} P x
+\noindent The forall quantifier is also nonexpansive.
+
+\begin{code}
+abstract
+  nonexpansive-∀ : ∀{k} → ↓ᵒ k (∀ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (P a))
+  nonexpansive-∀ zero = (λ x → tt) , (λ x → tt)
+  nonexpansive-∀ (suc i) = (λ {(a , b) → a , (λ c → a , b c)}) , λ {(a , b) → a , (λ a → proj₂ (b a))}
+\end{code}
+
+\noindent In Figure~\ref{fig:strong-all} we show that the forall
+quantifier is a strong environment functional.
+
+\begin{figure}[tbp]
+\small
+\begin{code}
+strong-all : (P : A → Setˢ Γ Δ) → strong-fun Δ (λ δ → ∀ᵒ[ a ] ♯ (P a) δ)
+strong-all {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
-      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ down-∀ ⟩
+      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ nonexpansive-∀ ⟩
       ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
           ⩦⟨ cong-↓ᵒ k (cong-∀(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym down-∀ ⟩
-      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
-
+      ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))                  ⩦⟨ ≡ᵒ-sym nonexpansive-∀ ⟩
+      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))                            ∎
 ... | Later = λ δ j k k≤j → 
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ down-∀ ⟩
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ nonexpansive-∀ ⟩
       ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
-                      ⩦⟨ cong-↓ᵒ (suc k) (cong-∀
-                          (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∀ ⟩
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
+                      ⩦⟨ cong-↓ᵒ (suc k) (cong-∀ (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-∀ ⟩
+      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))                 ∎
+\end{code}
+\caption{The forall quantifier is a strong environment functional.}
+\label{fig:strong-all}
+\end{figure}
 
-∀ˢ{Γ}{Δ}{A} P =
-  record { ♯ = λ δ → ∀ᵒ[ a ] ♯ (P a) δ
-         ; strong = strong-all P
-         ; congr = λ d=d′ → cong-∀ λ a → congr (P a) d=d′
-         }
+Finally, we define the open version of the forall quantifier, ∀ˢ, by
+constructing the following record from the above ingredients.
 
+\begin{code}
+∀ˢ P = record { ♯ = λ δ → ∀ᵒ[ a ] ♯ (P a) δ ; strong = strong-all P
+              ; congr = λ d=d′ → cong-∀ λ a → congr (P a) d=d′ }
 ∀ˢ-syntax = ∀ˢ
 infix 1 ∀ˢ-syntax
 syntax ∀ˢ-syntax (λ x → P) = ∀ˢ[ x ] P
@@ -1577,11 +1575,10 @@ syntax ∀ˢ-syntax (λ x → P) = ∀ˢ[ x ] P
 
 \subsection{Exists}
 
-
-\noindent We define the formula $∃ᵒ P$ at $k$ to mean that there
-exists a value $a ∈ A$ such that $P \app a$ is true at $k$.  For the
-true-at-zero property, we use the \textsf{elt} field of
-\textsf{Inhabited} to obtain a witness.
+We define the formula $∃ᵒ P$ at $k$ to mean that there exists a value
+$a ∈ A$ such that $P \app a$ is true at $k$.  For the true-at-zero
+property, we use the \textsf{elt} field of \textsf{Inhabited} to
+obtain a witness.
 
 \begin{code}
 ∃ᵒ : ∀{{_ : Inhabited A}} → Predᵒ A → Setᵒ
@@ -1594,45 +1591,57 @@ infix 2 ∃ᵒ-syntax
 syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
 \end{code}
 
+\noindent The existential quantifier is congruent.
+
 \begin{code}
 abstract
-  down-∃ : ∀{A}{P : Predᵒ A}{k}{{_ : Inhabited A}}
+  cong-∃ : ∀{P Q : Predᵒ A}{{_ : Inhabited A}} → (∀ a → P a ≡ᵒ Q a) → (∃ᵒ P) ≡ᵒ (∃ᵒ Q)
+  cong-∃ {A} {P} {Q} P=Q i = (λ {(a , b) → a , proj₁ (P=Q a i) b}) , λ {(a , b) → a , (proj₂ (P=Q a i) b)}
+\end{code}
+
+\noindent The existential quantifier is also nonexpansive.
+
+\begin{code}
+abstract
+  nonexpansive-∃ : ∀{A}{P : Predᵒ A}{k}{{_ : Inhabited A}}
     → ↓ᵒ k (∃ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (P a))
-  down-∃ {A} {P} {k} zero = (λ x → tt) , (λ x → tt)
-  down-∃ {A} {P} {k} (suc i) =
-    (λ {(a , (b , c)) → a , (b , (a , c))})
-    , λ { (a , b , c) → a , b , proj₂ c}
+  nonexpansive-∃ {A} {P} {k} zero = (λ x → tt) , (λ x → tt)
+  nonexpansive-∃ {A} {P} {k} (suc i) = (λ {(a , (b , c)) → a , (b , (a , c))}) , λ { (a , b , c) → a , b , proj₂ c}
+\end{code}
 
-  cong-∃ : ∀{A}{P Q : Predᵒ A}{{_ : Inhabited A}}
-    → (∀ a → P a ≡ᵒ Q a)
-    → (∃ᵒ P) ≡ᵒ (∃ᵒ Q)
-  cong-∃ {A} {P} {Q} P=Q i =
-      (λ {(a , b) → a , proj₁ (P=Q a i) b})
-      , λ {(a , b) → a , (proj₂ (P=Q a i) b)}
+\noindent Figure~\ref{fig:strong-exists} shows that the existential
+quantifier is a strong environment functional.
 
-strong-exists : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
-   (P : A → Setˢ Γ Δ)
+\begin{figure}[tbp]
+\begin{code}
+strong-exists : {{_ : Inhabited A}} (P : A → Setˢ Γ Δ)
   → strong-fun Δ (λ δ → ∃ᵒ[ a ] ♯ (P a) δ)
-strong-exists {Γ}{Δ}{A} P x
+strong-exists {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
-      ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ down-∃ ⟩
+      ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ nonexpansive-∃ ⟩
       ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
           ⩦⟨ cong-↓ᵒ k (cong-∃(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym down-∃ ⟩
+      ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym nonexpansive-∃ ⟩
       ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
 ... | Later = λ δ j k k≤j →
-      ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ down-∃ ⟩
+      ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ nonexpansive-∃ ⟩
       ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
                       ⩦⟨ cong-↓ᵒ (suc k) (cong-∃
                           (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-∃ ⟩
+      ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-∃ ⟩
       ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
+\end{code}
+\caption{The existential quantifier is a strong environment functional.}
+\label{fig:strong-exists}
+\end{figure}
 
-∃ˢ{Γ}{Δ}{A} P =
-  record { ♯ = λ δ → ∃ᵒ[ a ] ♯ (P a) δ
-         ; strong = strong-exists P
-         ; congr = λ d=d′ → cong-∃ λ a → congr (P a) d=d′ }
+Finally, we define the open version of the existential quantifier, ∃ˢ,
+by constructing the following record from the above ingredients.
+
+\begin{code}
+∃ˢ P = record { ♯ = λ δ → ∃ᵒ[ a ] ♯ (P a) δ ; strong = strong-exists P
+              ; congr = λ d=d′ → cong-∃ λ a → congr (P a) d=d′ }
 
 ∃ˢ-syntax = ∃ˢ
 infix 1 ∃ˢ-syntax
@@ -1652,8 +1661,7 @@ the proofs of these properties for $ϕ$ and $ψ$.
 infixr 7 _×ᵒ_
 _×ᵒ_ : Setᵒ → Setᵒ → Setᵒ
 ϕ ×ᵒ ψ = record { # = λ k → # ϕ k × # ψ k
-                ; down = λ k (ϕk , ψk) j j≤k →
-                          (down ϕ k ϕk j j≤k) , (down ψ k ψk j j≤k)
+                ; down = λ k (ϕk , ψk) j j≤k → (down ϕ k ϕk j j≤k) , (down ψ k ψk j j≤k)
                 ; tz = (tz ϕ) , (tz ψ) }
 
 \end{code}
