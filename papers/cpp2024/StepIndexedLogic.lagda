@@ -206,13 +206,17 @@ propositions as follows.
 ↓ᵒ k ϕ = record { # = ↓ k (# ϕ) ; down = ↓-down {ϕ} k ; tz = tt }
 \end{code}
 
-The $k$-approximation of any two step-indexed propositions is
-equivalent when $k=0$.
+The $k$-approximations of any two step-indexed propositions are
+equivalent when $k=0$ and $k=1$.
 
 \begin{code}
 ↓ᵒ-zero : ↓ᵒ zero ϕ ≡ᵒ ↓ᵒ zero ψ
 ↓ᵒ-zero = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
                      ; (suc i) → (λ {()}) , (λ {()})}
+
+↓ᵒ-one : ↓ᵒ 1 ϕ ≡ᵒ ↓ᵒ 1 ψ
+↓ᵒ-one = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
+                     ; (suc i) → (λ { (s≤s () , _)}) , (λ { (s≤s () , _)})}
 \end{code}
 
 Given two equivalent propositions $ϕ$ and $ψ$, their $k$-approximations are also
@@ -1044,8 +1048,8 @@ Recall that the body $Sᵃ$ of a $μˢ Sᵃ$ has type
 So we define the following function to convert from the former to the later.
 
 \begin{code}
-env-fun⇒fun : RecEnv Γ → (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (Predᵒ A → Predᵒ A)
-env-fun⇒fun δ Sᵃ μS = λ a → ♯ (Sᵃ a) (μS , δ)
+⟅_⟆ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → (Predᵒ A → Predᵒ A)
+⟅ Sᵃ ⟆  δ μS = λ a → ♯ (Sᵃ a) (μS , δ)
 \end{code}
 
 \subsubsection{μᵖ is downward closed}
@@ -1054,26 +1058,25 @@ Our first goal is to prove that μᵖ is downward closed in the following sense.
 
 \begin{code}
 down-μᵖ : ∀{Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)} {a : A}{δ : RecEnv Γ}
-  → downClosed (μᵖ (env-fun⇒fun δ Sᵃ) a)
+  → downClosed (μᵖ (⟅ Sᵃ ⟆ δ) a)
 \end{code}
 
 \noindent The proof relies on \textsf{lemma15b}, but applies it to a
 functional obtained by \textsf{env}-\textsf{fun}⇒\textsf{fun}.  So we
 need to prove that such a functional is wellfounded and congruent.
-The fact that $\eff\, δ\, Sᵃ$ is wellfounded is a direct consequence of
+The fact that $\eff{Sᵃ} δ$ is wellfounded is a direct consequence of
 $Sᵃ\app a$ being strong.
 
 \begin{code}
-wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
-   → wellfoundedᵖ (env-fun⇒fun δ Sᵃ)
+wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) → wellfoundedᵖ (⟅ Sᵃ ⟆ δ)
 wf-env-fun δ Sᵃ = λ a P k → strong (Sᵃ a) zeroˢ (P , δ) k k ≤-refl
 \end{code}
 
-\noindent Similarly, $\eff\,δ\,Sᵃ$ is congruent because $Sᵃ\app a$ is congruent.
+\noindent Similarly, $\eff{Sᵃ}\,δ$ is congruent because $Sᵃ\app a$ is congruent.
 
 \begin{code}
 cong-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
-   → congruentᵖ (env-fun⇒fun δ Sᵃ)
+   → congruentᵖ (⟅ Sᵃ ⟆ δ)
 cong-env-fun δ Sᵃ = λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 \end{code}
 
@@ -1081,9 +1084,9 @@ cong-env-fun δ Sᵃ = λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 
 \begin{code}
 lemma15b-env-fun : ∀(k j : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → j ≤ k
-  → ↓ᵒ j (iter j (env-fun⇒fun δ Sᵃ) P a) ≡ᵒ ↓ᵒ j (iter k (env-fun⇒fun δ Sᵃ) P a)
+  → ↓ᵒ j (iter j (⟅ Sᵃ ⟆ δ) P a) ≡ᵒ ↓ᵒ j (iter k (⟅ Sᵃ ⟆ δ) P a)
 lemma15b-env-fun{δ = δ} k j Sᵃ a j≤k =
-  lemma15b k j (env-fun⇒fun δ Sᵃ) a j≤k (wf-env-fun δ Sᵃ) (cong-env-fun δ Sᵃ)
+  lemma15b k j (⟅ Sᵃ ⟆ δ) a j≤k (wf-env-fun δ Sᵃ) (cong-env-fun δ Sᵃ)
 \end{code}
 
 The one other fact we need to prove that $μᵖ$ is downward closed is
@@ -1096,20 +1099,19 @@ dc-iter (suc i) F = λ a → down (F (iter i F ⊤ᵖ) a)
 \end{code}
 
 \noindent We now prove that the $μᵖ$ function is downward closed when
-applied to the result of $\eff$.
+applied to the result of $\eff{Sᵃ}$.
 
 \begin{code}
-down-μᵖ {Sᵃ = Sᵃ}{a}{δ} k iterskSᵃk zero j≤k = tz (env-fun⇒fun δ Sᵃ (id ⊤ᵖ) a)
+down-μᵖ {Sᵃ = Sᵃ}{a}{δ} k iterskSᵃk zero j≤k = tz (⟅ Sᵃ ⟆ δ (id ⊤ᵖ) a)
 down-μᵖ {Sᵃ = Sᵃ}{a}{δ} (suc k′) μSᵃa (suc j′) (s≤s j′≤k′) =
-  let f = env-fun⇒fun δ Sᵃ in
-  let dc-iter-ssk : downClosed (# ((iter (2 + k′) f ⊤ᵖ) a))
-      dc-iter-ssk = dc-iter (2 + k′) (env-fun⇒fun δ Sᵃ) a in
-  let ↓-iter-ssk : #(↓ᵒ (2 + j′) ((iter (2 + k′) f ⊤ᵖ) a))(suc j′)
+  let dc-iter-ssk : downClosed (# ((iter (2 + k′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a))
+      dc-iter-ssk = dc-iter (2 + k′) (⟅ Sᵃ ⟆ δ) a in
+  let ↓-iter-ssk : #(↓ᵒ (2 + j′) ((iter (2 + k′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a))(suc j′)
       ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μSᵃa (suc j′) (s≤s j′≤k′)) in
-  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (env-fun⇒fun δ Sᵃ) ⊤ᵖ) a)
-        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (env-fun⇒fun δ Sᵃ) ⊤ᵖ) a)
+  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a)
+        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a)
       eq = lemma15b-env-fun {δ = δ} (2 + k′) (2 + j′) Sᵃ a (s≤s (s≤s j′≤k′)) in
-  let ↓-iter-ssj : #(↓ᵒ (2 + j′) ((iter (2 + j′) f ⊤ᵖ) a)) (suc j′)
+  let ↓-iter-ssj : #(↓ᵒ (2 + j′) ((iter (2 + j′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a)) (suc j′)
       ↓-iter-ssj = ⇔-to (≡ᵒ-elim (≡ᵒ-sym eq)) ↓-iter-ssk in
   proj₂ ↓-iter-ssj
 \end{code}
@@ -1120,163 +1122,222 @@ predicate into \textsf{Set}ˢ, an environment, and an element of $A$.
 
 \begin{code}
 muᵒ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → A → Setᵒ
-muᵒ Sᵃ δ a = record { # = μᵖ (env-fun⇒fun δ Sᵃ) a ; down = down-μᵖ {Sᵃ = Sᵃ}
-                    ; tz = tz (env-fun⇒fun δ Sᵃ ⊤ᵖ a) }
+muᵒ Sᵃ δ a = record { # = μᵖ (⟅ Sᵃ ⟆ δ) a ; down = down-μᵖ {Sᵃ = Sᵃ}
+                    ; tz = tz (⟅ Sᵃ ⟆ δ ⊤ᵖ a) }
 \end{code}
 
 \subsubsection{\textsf{mu}ᵒ is a strong environment functional}
 
 Next we need to prove that \textsf{mu}ᵒ is a strong environment
-functional.  The proof involves three lemmas that we adapt from
+functional.  The proof involves three technical lemmas that we adapt from
 \citet{Appel:2001aa}.
 
-The first, \textsf{lemma18a}, shows that $\mathsf{mu}ᵒ\, F\, δ\, a$
-is equivalent to the $k$ iteration of $\eff\, δ\, F$ under
-$k$-approximation.
+The first, \textsf{lemma18a} (Figure~\ref{fig:lemma18a}), shows that
+$\mathsf{mu}ᵒ\, Sᵃ\, δ\, a$ is equivalent to the $k$ iteration of
+$\eff{Sᵃ}\, δ$ under $k$-approximation. 
+%
+The second, \textsf{lemma18b} (Figure~\ref{fig:lemma18b}), shows that one unrolling of the
+recursion is equivalent to $k \plus 1$ iterations of $\eff{Sᵃ}\, δ$,
+under $k\plus 1$-approximation.
+%
+The third, \textsf{lemma19a} (Figure~\ref{fig:lemma19a}), shows that
+one unrolling of the recursive predicate is equivalent to the
+recursive predicate under $k$-approximation.
 
+\begin{figure}[tbp]
+\small
 \begin{code}
 abstract
-  lemma18a : ∀ (k : ℕ) (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
-     → ↓ᵒ k (muᵒ F δ a) ≡ᵒ ↓ᵒ k (iter k (env-fun⇒fun δ F) ⊤ᵖ a)
-  lemma18a zero F a δ zero = (λ x → tt) , (λ {x → tt})
-  lemma18a zero F a δ (suc j) = (λ {()}) , λ {()}
-  lemma18a (suc k) F a δ zero = (λ {x → tt}) , λ {x → tt}
-  lemma18a (suc k′) F a δ (suc j′) =
-    ↓ k (λ j₁ → # (env-fun⇒fun δ F (iter j₁ (env-fun⇒fun δ F) ⊤ᵖ) a) j₁) j
-         ⩦⟨ ⩦-refl refl ⟩    
-    j < k  ×  # (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a) j
+  lemma18a : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
+     → ↓ᵒ k (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)
+  lemma18a zero Sᵃ a δ zero = (λ x → tt) , (λ {x → tt})
+  lemma18a zero Sᵃ a δ (suc j) = (λ {()}) , λ {()}
+  lemma18a (suc k) Sᵃ a δ zero = (λ {x → tt}) , λ {x → tt}
+  lemma18a (suc k′) Sᵃ a δ (suc j′) =
+    ↓ k (λ j₁ → # ((⟅ Sᵃ ⟆ δ) (iter j₁ (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a) j₁) j                          ⩦⟨ ⩦-refl refl ⟩    
+    j < k  ×  # (iter (suc j) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a) j
          ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y}) , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
-    j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)) j
-         ⩦⟨ EQ  ⟩    
-    j < k  ×  # (↓ᵒ (suc j) (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j
+    j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j                          ⩦⟨ EQ  ⟩    
+    j < k  ×  # (↓ᵒ (suc j) (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j
          ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z}) , (λ {(x , y) → x , (≤-refl , y)})  ⟩
-    j < k  ×  # (iter k (env-fun⇒fun δ F) ⊤ᵖ a) j
-       ⩦⟨ ⩦-refl refl  ⟩    
-    ↓ k (# (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j   ∎
+    j < k  ×  # (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a) j                                            ⩦⟨ ⩦-refl refl  ⟩    
+    ↓ k (# (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j                                                ∎
     where
     k : ℕ
     k = suc k′
     j : ℕ
     j = suc j′
-    EQ : (j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (env-fun⇒fun δ F) ⊤ᵖ a)) j)
-         ⇔ (j < k  ×  # (↓ᵒ (suc j) (iter k (env-fun⇒fun δ F) ⊤ᵖ a)) j)
+    EQ : (j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j)
+         ⇔ (j < k  ×  # (↓ᵒ (suc j) (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j)
     EQ = (λ {(s≤s x , y) →
-           let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc j) F a (s≤s x)) j) y in
+           let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc j) Sᵃ a (s≤s x)) j) y in
            (s≤s x) , (≤-refl , proj₂ xx)})
        , (λ {(s≤s x , (s≤s y , z)) →
-           let xx = proj₂ ((lemma15b-env-fun(suc k′)(suc j) F a (s≤s x)) j) (≤-refl , z) in
+           let xx = proj₂ ((lemma15b-env-fun(suc k′)(suc j) Sᵃ a (s≤s x)) j) (≤-refl , z) in
            s≤s x , (≤-refl , (proj₂ xx))})
 \end{code}
+\caption{$\mathsf{mu}ᵒ\, Sᵃ\, δ\, a$ is equivalent to the $k$ iteration of
+ $\eff{Sᵃ}\, δ$ under $k$-approximation.}
+\label{fig:lemma18a}
+\end{figure}
 
-The second, \textsf{lemma18b}, shows that one unrolling of the
-recursion is equivalent to $k \plus 1$ iterations of $\eff\, δ\,Sᵃ$,
-under $k\plus 1$-approximation.
 
+\begin{figure}[tbp]
+\small 
 \begin{code}
 lemma18b : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
-     → ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)) ≡ᵒ ↓ᵒ (1 + k) (iter (1 + k) (env-fun⇒fun δ Sᵃ) ⊤ᵖ a)
+     → ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)) ≡ᵒ ↓ᵒ (1 + k) (iter (1 + k) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)
 lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
    ↓ᵒ (suc k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))           ⩦⟨ strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , δ) k k ≤-refl ⟩
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , δ))    ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (↓ᵖ k (iter k (env-fun⇒fun δ Sᵃ) ⊤ᵖ) , δ))
-                                  ⩦⟨ ≡ᵖ-sym{A} (strong (Sᵃ a) zeroˢ ((iter k (env-fun⇒fun δ Sᵃ) ⊤ᵖ) , δ) k k ≤-refl) {a} ⟩
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (iter k (env-fun⇒fun δ Sᵃ) ⊤ᵖ , δ))   ⩦⟨ ≡ᵒ-refl refl ⟩
-   ↓ᵒ (suc k) (iter (suc k) (env-fun⇒fun δ Sᵃ) ⊤ᵖ a)          ∎
+   ↓ᵒ (suc k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , δ))
+        ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
+   ↓ᵒ (suc k) (♯ (Sᵃ a) (↓ᵖ k (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ) , δ))
+        ⩦⟨ ≡ᵖ-sym{A} (strong (Sᵃ a) zeroˢ ((iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ) , δ) k k ≤-refl) {a} ⟩
+   ↓ᵒ (suc k) (♯ (Sᵃ a) (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ , δ))        ⩦⟨ ≡ᵒ-refl refl ⟩
+   ↓ᵒ (suc k) (iter (suc k) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)            ∎
 \end{code}
+\caption{One unrolling of $muᵒ\, Sᵃ\, δ$ is equivalent to $k \plus 1$ iterations of
+$\eff{Sᵃ}\, δ$, under $k\plus 1$-approximation.}
+\label{fig:lemma18b}
+\end{figure}
 
-The third, \textsf{lemma19a}, shows that one unrolling of the
-recursive predicate is equivalent to the recursive predicate under
-$k$-approximation.
 
+\begin{figure}[tbp]
+\small
 \begin{code}
 lemma19a : ∀ (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (k : ℕ) (δ : RecEnv Γ)
    → ↓ᵒ k (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))
-lemma19a {A}{Γ}{Δ} Sᵃ a k δ = 
-    ↓ᵒ k (muᵒ Sᵃ δ a)                                         ⩦⟨ lemma18a k Sᵃ a δ  ⟩
-    ↓ᵒ k (iter k (env-fun⇒fun δ Sᵃ) ⊤ᵖ a)                     ⩦⟨ lemma15b-env-fun (suc k) k Sᵃ a (n≤1+n k) ⟩
-    ↓ᵒ k (iter (suc k) (env-fun⇒fun δ Sᵃ) ⊤ᵖ a)
-              ⩦⟨ ≡ᵖ-sym (lemma17ᵒ{(iter (suc k) (env-fun⇒fun δ Sᵃ) ⊤ᵖ) a} k) {a} ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (iter (suc k) (env-fun⇒fun δ Sᵃ) ⊤ᵖ a))  ⩦⟨ cong-↓ (λ a → ≡ᵒ-sym (lemma18b k Sᵃ a δ))  a  ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)))                ⩦⟨ lemma17ᵒ{(♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))} k ⟩
-    ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                              ∎
+lemma19a {A}{Γ}{Δ} Sᵃ a k δ =
+    let f = (⟅ Sᵃ ⟆ δ) in
+    ↓ᵒ k (muᵒ Sᵃ δ a)                        ⩦⟨ lemma18a k Sᵃ a δ  ⟩
+    ↓ᵒ k (iter k f ⊤ᵖ a)                     ⩦⟨ lemma15b-env-fun (suc k) k Sᵃ a (n≤1+n k) ⟩
+    ↓ᵒ k (iter (suc k) f ⊤ᵖ a)               ⩦⟨ ≡ᵖ-sym (lemma17ᵒ{(iter (suc k) f ⊤ᵖ) a} k) {a} ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (iter (suc k) f ⊤ᵖ a))  ⩦⟨ cong-↓ (λ a → ≡ᵒ-sym (lemma18b k Sᵃ a δ))  a  ⟩
+    ↓ᵒ k (↓ᵒ (suc k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)))    ⩦⟨ lemma17ᵒ{(♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))} k ⟩
+    ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                 ∎
 \end{code}
+\caption{$muᵒ\, Sᵃ\, δ$ is equivalent to one unrolling of itself under $k$-approximation.}
+\label{fig:lemma19a}
+\end{figure}
 
-We now prove that \textsf{mu}ᵒ is a strong environment functional in
-two cases. If the variable in question is assigned to \textsf{Now} in
-Δ, then we need to show that \textsf{mu}ᵒ is strongly nonexpansive
-with respect to that variable. On the other hand, if the variable is
-assigned to \textsf{Now} in Δ, then we need to show that \textsf{mu}ᵒ
-is strongly wellfounded. Here is the first case.
+The proof that \textsf{mu}ᵒ is a strong environment functional
+proceeds by cases on whether the variable in question is assigned to
+\textsf{Now} in Δ, in which case we need to show that \textsf{mu}ᵒ is
+strongly nonexpansive with respect to that variable, or the variable
+is assigned to \textsf{Later} in Δ, in which case we need to show that
+\textsf{mu}ᵒ is strongly wellfounded.
 
+The proof that \textsf{mu}ᵒ is strongly nonexpansive
+(Figure~\ref{fig:mu-nonexpansive}) demonstrates why we need to
+generalize from nonexpansive to strongly nonexpansive. Suppose we were
+trying to prove that \textsf{mu}ᵒ is merely nonexpansive in $x$.
+\[
+   ↓ᵒ\, k\, (muᵒ\, Sᵃ\, δ\, a) ≡ᵒ ↓ᵒ\, k\, (muᵒ\, Sᵃ\, (↓ᵈ\, k\, x\, δ)\, a)
+\]
+We proceed by induction on $k$ and consider the case for $k = 1 \plus k′$.
+The equational reasoning takes the same first three steps
+as in Figure~\ref{fig:mu-nonexpansive}, except with $k$ replacing $j$.
+The fourth step requires the induction hypothesis, but we need
+to prove that
+\[
+   ↓ᵒ\, k′\, (muᵒ\, Sᵃ\, δ\, a) ≡ᵒ ↓ᵒ\, k′\, (muᵒ\, Sᵃ\, (↓ᵈ\, (1 \plus k′)\, x\, δ)\, a)
+\]
+The $1 \plus k′$ on the right-hand side does not match the induction
+hypothesis, it would need to be $k′$. Our insight is that taking a
+larger-than necessary approximation on the input is harmless,
+so we can replace nonexpansive with strongly nonexpansive.
+Thus we instead must prove that
+\[
+   ↓ᵒ\, k\, (muᵒ\, Sᵃ\, δ\, a) ≡ᵒ ↓ᵒ\, k\, (muᵒ\, Sᵃ\, (↓ᵈ\, j\, x\, δ)\, a)
+\]
+for any $j$ greater or equal to $k$. Then in the fourth step of the
+proof, we need to prove
+\[
+   ↓ᵒ\, k′\, (muᵒ\, Sᵃ\, δ\, a) ≡ᵒ ↓ᵒ\, k′\, (muᵒ\, Sᵃ\, (↓ᵈ\, j\, x\, δ)\, a)
+\]
+so we are required to show $k′ ≤ j$, but that follows immediately from $1 \plus k′ = k ≤ j$.
+
+
+\begin{figure}[tbp]
+\small
 \begin{code}
-mu-nonexpansive : ∀{Γ}{Δ : Times Γ}{A}{B} (S : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
+mu-nonexpansive : ∀{Γ}{Δ : Times Γ}{A}{B} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Now → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
-   → ↓ᵒ k (muᵒ S δ a) ≡ᵒ ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)
-mu-nonexpansive {Γ} {Δ} {A} S a x time-x δ zero j k≤j = ↓ᵒ-zero
-mu-nonexpansive {Γ} {Δ} {A}{B} S a x time-x δ (suc k′) j k≤j =
-  let k = suc k′ in
-  let strongSa = strong-now{A = B}{sucˢ x}{Δ = cons Later Δ}
-              (strong (S a) (sucˢ x)) time-x (muᵒ S δ , δ) j k k≤j in
-  let strongSaz = strong (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) k′ k′ ≤-refl in
-  let strongSaz2 = strong (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ ≤-refl in
-  let IH = cong-↓ (λ a → congr (S a)
-           ((λ a → mu-nonexpansive S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)) , ≡ᵈ-refl)) a in
-  ↓ᵒ k (muᵒ S δ a)                                         ⩦⟨ lemma19a S a k δ ⟩
-  ↓ᵒ k (♯ (S a) (muᵒ S δ , δ))                             ⩦⟨ strongSa ⟩
-  ↓ᵒ k (♯ (S a) (muᵒ S δ , ↓ᵈ j x δ))                      ⩦⟨ strongSaz ⟩
-  ↓ᵒ k (♯ (S a) (↓ᵖ k′ (muᵒ S δ) , ↓ᵈ j x δ))              ⩦⟨ IH ⟩
-  ↓ᵒ k (♯ (S a) (↓ᵖ k′ (muᵒ S (↓ᵈ j x δ)) , ↓ᵈ j x δ))     ⩦⟨ ≡ᵒ-sym strongSaz2 ⟩
-  ↓ᵒ k (♯ (S a) (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ))             ⩦⟨ ≡ᵒ-sym (lemma19a S a k (↓ᵈ j x δ)) ⟩
-  ↓ᵒ k (muᵒ S (↓ᵈ j x δ) a)                                ∎
+   → ↓ᵒ k (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k (muᵒ Sᵃ (↓ᵈ j x δ) a)
+mu-nonexpansive {Γ} {Δ} {A} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-zero
+mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
+  ↓ᵒ k (muᵒ Sᵃ δ a)                                          ⩦⟨ lemma19a Sᵃ a k δ ⟩
+  ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                             ⩦⟨ nonexp-Sᵃ-sx ⟩
+  ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ))                      ⩦⟨ wf-Sᵃ-z1 ⟩
+  ↓ᵒ k (♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ δ) , ↓ᵈ j x δ))              ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
+  ↓ᵒ k (♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ))     ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
+  ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ))             ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a k (↓ᵈ j x δ)) ⟩
+  ↓ᵒ k (muᵒ Sᵃ (↓ᵈ j x δ) a)                                                        ∎
+  where
+  IH : ∀ a → ↓ᵒ k′ (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k′ (muᵒ Sᵃ (↓ᵈ j x δ) a)
+  IH a = mu-nonexpansive Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
+  k : ℕ
+  k = 1 + k′
+  nonexp-Sᵃ-sx = strong-now{x = sucˢ x}{Δ = cons Later Δ}
+                    (strong (Sᵃ a) (sucˢ x)) time-x (muᵒ Sᵃ δ , δ) j k k≤j
+  wf-Sᵃ-z1 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , ↓ᵈ j x δ) k′ k′ ≤-refl
+  wf-Sᵃ-z2 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ ≤-refl
 \end{code}
+\caption{\textsf{mu}ᵒ is strongly nonexpansive.}
+\label{fig:mu-nonexpansive}
+\end{figure}
 
-For the second case, that \textsf{mu}ᵒ is strongly wellfounded, we
-make use of the following lemma, which proves that under a $1$-approximation,
-$\mathsf{mu}ᵒ\, S\, δ\, a$ is equivalent to $\mathsf{mu}ᵒ\, S\, δ′\, a$
-where $δ′$ is any $j$-approximation of $δ$.
+Figure~\ref{fig:mu-wellfounded} gives the proof for the second case,
+that \textsf{mu}ᵒ is strongly wellfounded. The proof is similar to the
+previous one.
 
+\begin{figure}[tbp]
+\small
 \begin{code}
-abstract
-  down-1-mu : ∀ (S : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B) (δ : RecEnv Γ) (j : ℕ)
-   → ↓ᵒ 1 (muᵒ S δ a) ≡ᵒ ↓ᵒ 1 (muᵒ S (↓ᵈ j x δ) a)
-  down-1-mu S a x δ j zero = (λ _ → tt) , (λ _ → tt)
-  down-1-mu S a x δ j (suc i) = (λ { (s≤s () , _)}) , λ { (s≤s () , _)}
-\end{code}
-
-\begin{code}
-mu-wellfounded : ∀{Γ}{Δ : Times Γ}{A}{B} (S : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
+mu-wellfounded : (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Later → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
-   → ↓ᵒ (suc k) (muᵒ S δ a) ≡ᵒ ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)
-mu-wellfounded {Γ} {Δ} {A} S a x time-x δ zero j k≤j = down-1-mu S a x δ j
-mu-wellfounded {Γ} {Δ} {A} {B} S a x time-x δ (suc k′) j k≤j =
-  let k = suc k′ in
-  let strongSa = strong-later{A = B}{sucˢ x}{Δ = cons Later Δ}
-              (strong (S a) (sucˢ x)) time-x (muᵒ S δ , δ)
-              j k k≤j in
-  let strongSaz = strong (S a) zeroˢ (muᵒ S δ , ↓ᵈ j x δ) (suc k′) k ≤-refl in
-  let strongSaz2 = strong (S a) zeroˢ (muᵒ S (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl in
-  let IH = cong-↓ (λ a → congr (S a) ((λ a → mu-wellfounded S a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j))
-                                       , ≡ᵈ-refl)) a in
-  ↓ᵒ (suc k) (muᵒ S δ a)                                      ⩦⟨ lemma19a S a (suc k) δ ⟩
-  ↓ᵒ (suc k) (♯ (S a) (muᵒ S δ , δ))                          ⩦⟨ strongSa ⟩
-  ↓ᵒ (suc k) (♯ (S a) (muᵒ S δ , ↓ᵈ j x δ))                   ⩦⟨ strongSaz ⟩
-  ↓ᵒ (suc k) (♯ (S a) (↓ᵖ k (muᵒ S δ) , ↓ᵈ j x δ))            ⩦⟨ IH ⟩
-  ↓ᵒ (suc k) (♯ (S a) (↓ᵖ k (muᵒ S (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ⩦⟨ ≡ᵒ-sym strongSaz2 ⟩
-  ↓ᵒ (suc k) (♯ (S a) (muᵒ S (↓ᵈ j x δ) , (↓ᵈ j x δ)))        ⩦⟨ ≡ᵒ-sym (lemma19a S a (suc k) (↓ᵈ j x δ)) ⟩
-  ↓ᵒ (suc k) (muᵒ S (↓ᵈ j x δ) a)                             ∎
+   → ↓ᵒ (1 + k) (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ (1 + k) (muᵒ Sᵃ (↓ᵈ j x δ) a)
+mu-wellfounded {A} {Γ} {Δ} {B} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-one
+mu-wellfounded {A} {Γ} {Δ} {B} Sᵃ a x time-x δ (suc k′) j k≤j =
+  ↓ᵒ (1 + k) (muᵒ Sᵃ δ a)                                       ⩦⟨ lemma19a Sᵃ a (1 + k) δ ⟩
+  ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                          ⩦⟨ wf-Sᵃ-sx ⟩
+  ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ))                   ⩦⟨ wf-Sᵃ-z1 ⟩
+  ↓ᵒ (1 + k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , ↓ᵈ j x δ))            ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
+  ↓ᵒ (1 + k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
+  ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , (↓ᵈ j x δ)))        ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a (1 + k) _) ⟩
+  ↓ᵒ (1 + k) (muᵒ Sᵃ (↓ᵈ j x δ) a)                                              ∎
+  where
+  IH : ∀ a → ↓ᵒ (1 + k′) (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ (1 + k′) (muᵒ Sᵃ (↓ᵈ j x δ) a)
+  IH a = mu-wellfounded Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
+  k : ℕ
+  k = 1 + k′
+  wf-Sᵃ-sx = strong-later{A = B}{sucˢ x}{Δ = cons Later Δ}
+              (strong (Sᵃ a) (sucˢ x)) time-x (muᵒ Sᵃ δ , δ) j k k≤j 
+  wf-Sᵃ-z1 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , ↓ᵈ j x δ) k k ≤-refl 
+  wf-Sᵃ-z2 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl 
 \end{code}
+\caption{\textsf{mu}ᵒ is strongly wellfounded.}
+\label{fig:mu-wellfounded}
+\end{figure}
 
-Now we put the two cases together to show that \textsf{mu}ᵒ is a
- strong environment functional.
+Finally, we put the two cases together to show that \textsf{mu}ᵒ is a strong
+environment functional (Figure~\ref{fig:mu-strong-env-fun}).
 
+\begin{figure}[tbp]
+\small
 \begin{code}
-strong-fun-mu : ∀{Γ}{Δ : Times Γ}{A} (S : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
-   → strong-fun Δ (λ δ → muᵒ S δ a)
-strong-fun-mu {Γ} {Δ} {A} S a x
+strong-fun-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+   → strong-fun Δ (λ δ → muᵒ Sᵃ δ a)
+strong-fun-mu {Γ} {Δ} {A} Sᵃ a x
     with timeof x Δ in time-x
-... | Now = λ δ j k k≤j → mu-nonexpansive S a x time-x δ k j k≤j
-... | Later = λ δ j k k≤j → mu-wellfounded S a x time-x δ k j k≤j
+... | Now = λ δ j k k≤j → mu-nonexpansive Sᵃ a x time-x δ k j k≤j
+... | Later = λ δ j k k≤j → mu-wellfounded Sᵃ a x time-x δ k j k≤j
 \end{code}
+\caption{\textsf{mu}ᵒ is a strong environment functional.}
+\label{fig:mu-strong-env-fun}
+\end{figure}
+
+\clearpage
 
 \subsubsection{\textsf{mu}ᵒ is congruent}
 
@@ -1301,8 +1362,8 @@ congruent-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (cons La
    → congruent (λ δ → muᵒ Sᵃ δ a)
 congruent-mu{Γ}{Δ}{A} Sᵃ a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
   where
-  Goal : (k : ℕ) → μᵖ (env-fun⇒fun δ Sᵃ) a k ⇔ μᵖ (env-fun⇒fun δ′ Sᵃ) a k
-  Goal k = ≡ᵒ-elim (cong-iter{A}{a} (suc k) (env-fun⇒fun δ Sᵃ) (env-fun⇒fun δ′ Sᵃ)
+  Goal : (k : ℕ) → μᵖ (⟅ Sᵃ ⟆ δ) a k ⇔ μᵖ (⟅ Sᵃ ⟆ δ′) a k
+  Goal k = ≡ᵒ-elim (cong-iter{A}{a} (suc k) (⟅ Sᵃ ⟆ δ) (⟅ Sᵃ ⟆ δ′)
                        (λ P Q a P=Q → congr (Sᵃ a) (P=Q , δ=δ′)) ⊤ᵖ)
 \end{code}
 
