@@ -12,14 +12,14 @@ clean:
 latex/cpp2024/StepIndexedLogic.tex: StepIndexedLogic.lagda
 	agda --latex StepIndexedLogic.lagda
 
-latex/cpp2024/STLC.tex: STLC.lagda
+latex/cpp2024/STLC.tex: STLC.lagda StepIndexedLogic.lagda
 	agda --latex STLC.lagda
 
-latex/cpp2024/STLCDeterministic.tex: STLCDeterministic.lagda
+latex/cpp2024/STLCDeterministic.tex: STLCDeterministic.lagda STLC.lagda StepIndexedLogic.lagda
 	agda --latex STLCDeterministic.lagda
 
-latex/cpp2024/STLCBind.tex: STLCBind.lagda
+latex/cpp2024/STLCBind.tex: STLCBind.lagda STLCDeterministic.lagda STLC.lagda StepIndexedLogic.lagda
 	agda --latex STLCBind.lagda
 
-latex/cpp2024/STLCSafe.tex: STLCSafe.lagda
+latex/cpp2024/STLCSafe.tex: STLCSafe.lagda  STLCBind.lagda STLC.lagda StepIndexedLogic.lagda
 	agda --latex STLCSafe.lagda

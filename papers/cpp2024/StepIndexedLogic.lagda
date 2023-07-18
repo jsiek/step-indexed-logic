@@ -2028,6 +2028,15 @@ propositions as the conjunction of its elements.
 variable 𝒫 : List Setᵒ
 \end{code}
 
+\noindent The meaning of a list of step-indexed propositions is
+downward closed because each proposition is downward closed.
+
+\begin{code}
+downClosed-Πᵒ : (𝒫 : List Setᵒ) → downClosed (# (Πᵒ 𝒫))
+downClosed-Πᵒ [] = λ n _ k _ → tt
+downClosed-Πᵒ (ϕ ∷ 𝒫) n (ϕn , ⊨𝒫n) k k≤n = (down ϕ n ϕn k k≤n) , (downClosed-Πᵒ 𝒫 n ⊨𝒫n k k≤n)
+\end{code}
+
 \noindent We can now define entailment relation as described above.
 We choose to make the relation \textsf{abstract} because that improves
 Agda's inference of implicit parameters in the proof rules.
@@ -2052,11 +2061,8 @@ abstract
   ⊢ᵒ-elim 𝒫⊢ϕ = 𝒫⊢ϕ
 \end{code}
 
-\begin{code}
-downClosed-Πᵒ : (𝒫 : List Setᵒ) → downClosed (# (Πᵒ 𝒫))
-downClosed-Πᵒ [] = λ n _ k _ → tt
-downClosed-Πᵒ (ϕ ∷ 𝒫) n (ϕn , ⊨𝒫n) k k≤n = (down ϕ n ϕn k k≤n) , (downClosed-Πᵒ 𝒫 n ⊨𝒫n k k≤n)
-\end{code}
+Now we proceed to define the proof rules of SIL. The first, \textsf{mono}ᵒ
+says that if ϕ is true now, it is also true later.
 
 \begin{code}
 abstract
@@ -2064,6 +2070,13 @@ abstract
   monoᵒ {𝒫}{ϕ} ⊢ϕ zero ⊨𝒫n = tt
   monoᵒ {𝒫}{ϕ} ⊢ϕ (suc n) ⊨𝒫n = ⊢ϕ n (downClosed-Πᵒ 𝒫 (suc n) ⊨𝒫n n (n≤1+n n))
 \end{code}
+
+The analog of mathematical induction in SIL is called \textsf{lob}ᵒ
+induction.  It says that in a proof of ϕ, it is permissible to assume
+$▷ᵒ\,ϕ$.  The definition of \textsf{lob}ᵒ induction is by recursion on
+the step index. In the base case, we use the fact that ϕ is true at zero.
+For the induction step, we feed the induction hypothesis into the
+premise named \textsf{step}.
 
 \begin{code}
 abstract
@@ -2075,77 +2088,63 @@ abstract
     step (suc n) (ϕn , ⊨𝒫sn)
 \end{code}
 
+The next few proof rules say that the later operator distributes through
+the other logical connectives. The following says that ▷ᵒ distributes
+through ×ᵒ.
+
 \begin{code}
 abstract
-  ▷× : ∀{𝒫} {ϕ ψ : Setᵒ}
-     → 𝒫 ⊢ᵒ (▷ᵒ (ϕ ×ᵒ ψ))
-       ----------------------
-     → 𝒫 ⊢ᵒ (▷ᵒ ϕ) ×ᵒ (▷ᵒ ψ)
+  ▷× : 𝒫 ⊢ᵒ (▷ᵒ (ϕ ×ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ×ᵒ (▷ᵒ ψ)
   ▷× ▷ϕ×ψ zero = λ _ → tt , tt
   ▷× ▷ϕ×ψ (suc n) = ▷ϕ×ψ (suc n)
 \end{code}
 
+\noindent Next, we have that ▷ᵒ distributes through ⊎ᵒ.
+
 \begin{code}
-  ▷⊎ : ∀{𝒫}{ϕ ψ : Setᵒ}
-     → 𝒫 ⊢ᵒ (▷ᵒ (ϕ ⊎ᵒ ψ))
-       ----------------------
-     → 𝒫 ⊢ᵒ (▷ᵒ ϕ) ⊎ᵒ (▷ᵒ ψ)
+abstract
+  ▷⊎ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ ⊎ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ⊎ᵒ (▷ᵒ ψ)
   ▷⊎ ▷ϕ⊎ψ zero = λ _ → inj₁ tt
   ▷⊎ ▷ϕ⊎ψ (suc n) = ▷ϕ⊎ψ (suc n) 
+\end{code}
 
-  ▷→ : ∀{𝒫}{ϕ ψ : Setᵒ}
-     → 𝒫 ⊢ᵒ (▷ᵒ (ϕ →ᵒ ψ))
-       ----------------------
-     → 𝒫 ⊢ᵒ (▷ᵒ ϕ) →ᵒ (▷ᵒ ψ)
+\noindent Also, ▷ᵒ distributes through implication.
+
+\begin{code}
+abstract
+  ▷→ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ →ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) →ᵒ (▷ᵒ ψ)
   ▷→ ▷ϕ→ψ zero ⊨𝒫n .zero z≤n tt = tt
   ▷→ ▷ϕ→ψ (suc n) ⊨𝒫n .zero z≤n ▷ϕj = tt
   ▷→ ▷ϕ→ψ (suc n) ⊨𝒫n (suc j) (s≤s j≤n) ϕj = ▷ϕ→ψ (suc n) ⊨𝒫n j j≤n ϕj
+\end{code}
 
-  ▷∀ : ∀{𝒫}{A}{ϕ : A → Setᵒ}
-     → 𝒫 ⊢ᵒ ▷ᵒ (∀ᵒ[ a ] ϕ a)
-       ------------------------
-     → 𝒫 ⊢ᵒ (∀ᵒ[ a ] ▷ᵒ (ϕ a))
-  ▷∀ 𝒫⊢▷∀ϕ zero ⊨𝒫n a = tt
-  ▷∀ 𝒫⊢▷∀ϕ (suc n) ⊨𝒫sn a = 𝒫⊢▷∀ϕ (suc n) ⊨𝒫sn a
+\noindent Finally, ▷ᵒ distributes through the forall quantifier.
 
+\begin{code}
 abstract
-  substᵒ : ∀{𝒫}{ϕ ψ : Setᵒ}
-    → ϕ ≡ᵒ ψ
-      -------------------
-    → 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
+  ▷∀ : ∀{ϕᵃ : A → Setᵒ} → 𝒫 ⊢ᵒ ▷ᵒ (∀ᵒ[ a ] ϕᵃ a)  →  𝒫 ⊢ᵒ (∀ᵒ[ a ] ▷ᵒ (ϕᵃ a))
+  ▷∀ 𝒫⊢▷∀ϕᵃ zero ⊨𝒫n a = tt
+  ▷∀ 𝒫⊢▷∀ϕᵃ (suc n) ⊨𝒫sn a = 𝒫⊢▷∀ϕᵃ (suc n) ⊨𝒫sn a
+\end{code}
+
+The \textsf{subst}ᵒ rule is the analog of Agda's \textsf{subst}, which says that
+if ϕ and ψ are equivalent, then proving ϕ suffices to prove ψ.
+
+\begin{code}
+abstract
+  substᵒ : ϕ ≡ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
   substᵒ ϕ=ψ 𝒫⊢ϕ n ⊨𝒫n = ⇔-to (ϕ=ψ n) (𝒫⊢ϕ n ⊨𝒫n)
+\end{code}
 
-  ≡ᵖ⇒⊢ᵒ : ∀ 𝒫 {A} (ϕ ψ : Predᵒ A) {a : A}
-    → 𝒫 ⊢ᵒ ϕ a
-    → (∀ a → ϕ a ≡ᵒ ψ a)
-      ------------------
-    → 𝒫 ⊢ᵒ ψ a
-  ≡ᵖ⇒⊢ᵒ 𝒫 {A} ϕ ψ {a} 𝒫⊢ϕ ϕ=ψ n ⊨𝒫n =
-      let ϕan = 𝒫⊢ϕ n ⊨𝒫n in
-      let ψan = ⇔-to (ϕ=ψ a n) ϕan in
-      ψan
+The true formula is trivially provable.
 
-{-
-⊢ᵒ-unfold : ∀ {A}{𝒫}{F : Fun A A Later}{a : A}
-  → 𝒫 ⊢ᵒ (muᵒ F) a
-    ------------------------------
-  → 𝒫 ⊢ᵒ ((fun F) (muᵒ F)) a
-⊢ᵒ-unfold {A}{𝒫}{F}{a} ⊢μa =
-    ≡ᵖ⇒⊢ᵒ 𝒫 (muᵒ F) ((fun F) (muᵒ F)) ⊢μa (fixpoint F)
-
-⊢ᵒ-fold : ∀ {A}{𝒫}{F : Fun A A Later}{a : A}
-  → 𝒫 ⊢ᵒ ((fun F) (muᵒ F)) a
-    ------------------------------
-  → 𝒫 ⊢ᵒ (muᵒ F) a
-⊢ᵒ-fold {A}{𝒫}{F}{a} ⊢μa =
-    ≡ᵖ⇒⊢ᵒ 𝒫 ((fun F) (muᵒ F)) (muᵒ F) ⊢μa (≡ᵖ-sym (fixpoint F))
--}
-
+\begin{code}
 abstract
-  ttᵒ : ∀{𝒫 : List Setᵒ}
-    → 𝒫 ⊢ᵒ ⊤ᵒ
+  ttᵒ : 𝒫 ⊢ᵒ ⊤ᵒ
   ttᵒ n _ = tt  
+\end{code}
 
+\begin{code}
   ⊥-elimᵒ : ∀{𝒫 : List Setᵒ}
     → 𝒫 ⊢ᵒ ⊥ᵒ
     → (ϕ : Setᵒ)
