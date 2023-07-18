@@ -77,7 +77,7 @@ open import cpp2024.STLCDeterministic
    Mval : 𝒱⟦ B ⟧ M ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mval =
      let 𝒱V→ℰF[V][M] = λ V → (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧) in
-     appᵒ (appᵒ (instᵒ{P = 𝒱V→ℰF[V][M]} (Sᵒ Zᵒ) M) (constᵒI (M END))) Zᵒ
+     appᵒ (appᵒ (instᵒ{ϕ = 𝒱V→ℰF[V][M]} (Sᵒ Zᵒ) M) (constᵒI (M END))) Zᵒ
 
    Mred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mred = ℰ-intro progressMred preservationMred
@@ -97,7 +97,7 @@ open import cpp2024.STLCDeterministic
       let M→M′ = proj₁ (proj₂ finv) in
       let N≡ = proj₂ (proj₂ finv) in
       let ▷ℰM′ : 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M′
-          ▷ℰM′ = appᵒ (instᵒ{P = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
+          ▷ℰM′ = appᵒ (instᵒ{ϕ = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
                         (ℰ-preservation (Sᵒ Zᵒ)) M′)
                       (constᵒI M→M′) in
       let ▷M′→V→𝒱V→ℰFV : 𝒫′ ⊢ᵒ ▷ᵒ (𝒱V→ℰF[V] A B F M′)
@@ -112,7 +112,7 @@ open import cpp2024.STLCDeterministic
          → 𝒫 ⊢ᵒ ▷ᵒ ℰ-bind-prop A B F  →  𝒫 ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M
          → 𝒫 ⊢ᵒ ▷ᵒ 𝒱V→ℰF[V] A B F M   →  𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (F ⟦ M ⟧))
       frame-prop-lemma{𝒫}{A}{B}{M}{F} IH ℰM V→FV =
-       appᵒ(▷→ (appᵒ(▷→ (instᵒ(▷∀{P = λ M → ℰ-bind-M A B F M} IH) M)) ℰM)) V→FV
+       appᵒ(▷→ (appᵒ(▷→ (instᵒ(▷∀{ϕ = λ M → ℰ-bind-M A B F M} IH) M)) ℰM)) V→FV
 
 ℰ-bind : ∀{𝒫}{A}{B}{F}{M}
    → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ M
@@ -120,6 +120,6 @@ open import cpp2024.STLCDeterministic
      ----------------------------------------------------------
    → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
 ℰ-bind {𝒫}{A}{B}{F}{M} ⊢ℰM ⊢𝒱V→ℰFV =
-  appᵒ (appᵒ (instᵒ{𝒫}{P = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
+  appᵒ (appᵒ (instᵒ{𝒫}{ϕ = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
 \end{code}
 
