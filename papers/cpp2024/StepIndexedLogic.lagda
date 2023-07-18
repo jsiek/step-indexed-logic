@@ -53,7 +53,7 @@ open Setᵒ public
 \end{code}
 Let $ϕ, ψ, þ$ range over step-indexed propositions.
 \begin{code}
-variable ϕ ψ þ : Setᵒ
+variable ϕ ϕ′ ψ ψ′ þ : Setᵒ
 \end{code}
 Let $p, q, r$ range over (regular) propositions.
 \begin{code}
@@ -1651,10 +1651,10 @@ syntax ∃ˢ-syntax (λ x → P) = ∃ˢ[ x ] P
 
 \subsection{Conjunction}
 
-Next we define conjunction in SIL. Given two step-indexed propositions
+Next we define conjunction in SIL. Given step-indexed propositions
 $ϕ$ and $ψ$, their conjunction is the function that takes the
 conjunction of applying them to the step index. The proofs of
-downward-closedness and true-at-zero are straightforward, relying on
+downward-closedness and true-at-zero are straightforward, using
 the proofs of these properties for $ϕ$ and $ψ$.
 
 \begin{code}
@@ -1663,8 +1663,34 @@ _×ᵒ_ : Setᵒ → Setᵒ → Setᵒ
 ϕ ×ᵒ ψ = record { # = λ k → # ϕ k × # ψ k
                 ; down = λ k (ϕk , ψk) j j≤k → (down ϕ k ϕk j j≤k) , (down ψ k ψk j j≤k)
                 ; tz = (tz ϕ) , (tz ψ) }
-
 \end{code}
+
+\noindent The conjunction connective is congruent.
+
+\begin{code}
+cong-×ᵒ : ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ ×ᵒ ψ ≡ᵒ ϕ′ ×ᵒ ψ′
+cong-×ᵒ {ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ k → ⇔-intro to fro)
+  where
+  to : ∀{k} → # (ϕ ×ᵒ ψ) k → # (ϕ′ ×ᵒ ψ′) k
+  to {k} (ϕk , ψk) = (⇔-to (≡ᵒ-elim ϕ=ϕ′) ϕk) , (⇔-to (≡ᵒ-elim ψ=ψ′) ψk)
+  fro  : ∀{k} → #(ϕ′ ×ᵒ ψ′) k → #(ϕ ×ᵒ ψ) k
+  fro {k} (ϕ′k , ψ′k) = (⇔-fro (≡ᵒ-elim ϕ=ϕ′) ϕ′k) , (⇔-fro (≡ᵒ-elim ψ=ψ′) ψ′k)
+\end{code}
+
+\noindent The conjunction connective is also nonexpansive.
+
+\begin{code}
+nonexpansive-× : ∀{k} → ↓ᵒ k (ϕ ×ᵒ ψ) ≡ᵒ ↓ᵒ k ((↓ᵒ k ϕ) ×ᵒ (↓ᵒ k ψ))
+nonexpansive-× {ϕ}{ψ} = ≡ᵒ-intro (λ i → aux i)
+  where
+  aux : ∀{k} i → #(↓ᵒ k (ϕ ×ᵒ ψ)) i ⇔ #(↓ᵒ k ((↓ᵒ k ϕ) ×ᵒ (↓ᵒ k ψ))) i
+  aux zero = ⇔-intro (λ x → tt) (λ x → tt)
+  aux (suc i) = ⇔-intro (λ { (si<k , ϕsi , Δi) → si<k , ((si<k , ϕsi) , (si<k , Δi))})
+                         (λ { (si<k , (_ , ϕsi) , _ , Δi) → si<k , ϕsi , Δi})
+\end{code}
+
+\noindent The time of a variable in a list of combined times is equal
+to choosing between the times in each list.
 
 \begin{code}
 timeof-combine : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{A}{x : Γ ∋ A}
@@ -1672,95 +1698,76 @@ timeof-combine : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{A}{x : Γ ∋ A}
 timeof-combine {B ∷ Γ} {cons s Δ₁} {cons t Δ₂} {.B} {zeroˢ} = refl
 timeof-combine {B ∷ Γ} {cons s Δ₁} {cons t Δ₂} {A} {sucˢ x} =
   timeof-combine {Γ} {Δ₁} {Δ₂} {A} {x}
+\end{code}
 
-abstract
-  down-× : ∀{S T : Setᵒ}{k}
-     → ↓ᵒ k (S ×ᵒ T) ≡ᵒ ↓ᵒ k ((↓ᵒ k S) ×ᵒ (↓ᵒ k T))
-  down-× zero = ⇔-intro (λ x → tt) (λ x → tt)
-  down-× (suc i) =
-      ⇔-intro
-      (λ { (si<k , Ssi , Δi) → si<k , ((si<k , Ssi) , (si<k , Δi))})
-      (λ { (si<k , (_ , Ssi) , _ , Δi) → si<k , Ssi , Δi})
+Figure~\ref{fig:strong-pair} shows the proof that conjunction is a strong
+environment functional. There are four cases to consider, the cross product
+of whether the time of $x$ in $Δ₁$ and $Δ₂$ are \textsf{Now} or \textsf{Later}.
 
-  cong-×ᵒ : ∀{S S′ T T′ : Setᵒ}
-     → S ≡ᵒ S′
-     → T ≡ᵒ T′
-     → S ×ᵒ T ≡ᵒ S′ ×ᵒ T′
-  cong-×ᵒ {S}{S′}{T}{T′} SS′ TT′ k = ⇔-intro to fro
-    where
-    to : # (S ×ᵒ T) k → # (S′ ×ᵒ T′) k
-    to (Sk , Tk) = (⇔-to (SS′ k) Sk) , (⇔-to (TT′ k) Tk)
-    fro  : #(S′ ×ᵒ T′) k → #(S ×ᵒ T) k
-    fro (S′k , T′k) = (⇔-fro (SS′ k) S′k) , (⇔-fro (TT′ k) T′k)
-
-strong-pair : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
-   (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
-   → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ×ᵒ ♯ T δ)
+\begin{figure}[tbp]
+\footnotesize
+\begin{code}
+strong-pair : (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂) → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ×ᵒ ♯ T δ)
 strong-pair {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
     with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                                         ⩦⟨ down-× ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T δ))
-                                     ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ))
-                                     ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-× ⟩
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))  ∎
+    ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                                         ⩦⟨ nonexpansive-× ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T δ))            ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ))          ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))         ∎
 ... | Now | Later = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-× ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (suc k) (cong-×ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ))))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k down-×) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ)))
-               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ))
-               ⩦⟨ down-× ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ ≡ᵒ-sym down-× ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))    ∎
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ))                 ⩦⟨ cong-↓ᵒ k nonexpansive-× ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-×ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))))
+                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-×) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ)))               ⩦⟨ lemma17ᵒ k ⟩ 
+    ↓ᵒ k (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ))                            ⩦⟨ nonexpansive-× ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))      ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))      ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))                    ∎
 ... | Later | Now = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-× ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (suc k) (cong-×ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k down-×) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ))
-               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ)
-               ⩦⟨ down-× ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ))
-               ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ ≡ᵒ-sym down-× ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))    ∎
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k nonexpansive-× ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-×ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-×) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ))               ⩦⟨ lemma17ᵒ k ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ)                            ⩦⟨ nonexpansive-× ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ))             ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))    ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))                   ∎
 ... | Later | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ (suc k) (♯ S δ ×ᵒ ♯ T δ)                ⩦⟨ down-× ⟩ 
-    ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ×ᵒ ↓ᵒ (suc k) (♯ T δ))
-                   ⩦⟨ cong-↓ᵒ (suc k) (cong-×ᵒ strongS strongT) ⟩ 
-    ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ))
-                                  ×ᵒ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ)))
-                                                ⩦⟨ ≡ᵒ-sym down-× ⟩ 
-    ↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))   ∎
-
-S ×ˢ T = record { ♯ = λ δ → ♯ S δ ×ᵒ ♯ T δ
-                ; strong = strong-pair S T
-                ; congr = λ d=d′ → cong-×ᵒ (congr S d=d′) (congr T d=d′)
-                }
+    ↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ)                            ⩦⟨ nonexpansive-× ⟩ 
+    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ))  ⩦⟨ cong-↓ᵒ (1 + k) (cong-×ᵒ strongS strongT) ⟩ 
+    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
+    ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))               ∎
 \end{code}
+\caption{Conjunction is a strong environment functional.}
+\label{fig:strong-pair}
+\end{figure}
+
+We define the open version of conjunction by constructing the
+following record from the above ingredients.
+
+\begin{code}
+S ×ˢ T = record { ♯ = λ δ → ♯ S δ ×ᵒ ♯ T δ ; strong = strong-pair S T
+                ; congr = λ d=d′ → cong-×ᵒ (congr S d=d′) (congr T d=d′) }
+\end{code}
+
+\clearpage
 
 \subsection{Disjunction}
 
@@ -1779,34 +1786,43 @@ _⊎ᵒ_ : Setᵒ → Setᵒ → Setᵒ
                 ; tz = inj₁ (tz ϕ) }
 \end{code}
 
+\noindent The disjunction connective is congruent.
 
 \begin{code}
-abstract
-  down-⊎ : ∀{S T : Setᵒ}{k}
-     → ↓ᵒ k (S ⊎ᵒ T) ≡ᵒ ↓ᵒ k ((↓ᵒ k S) ⊎ᵒ (↓ᵒ k T))
-  down-⊎ zero = ⇔-intro (λ x → tt) (λ x → tt)
-  down-⊎ (suc i) =
-      (λ { (x , inj₁ x₁) → x , inj₁ (x , x₁)
-         ; (x , inj₂ y) → x , inj₂ (x , y)})
-      ,
-      λ { (x , inj₁ x₁) → x , inj₁ (proj₂ x₁)
-        ; (x , inj₂ y) → x , inj₂ (proj₂ y)}
+cong-⊎ᵒ : ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ ⊎ᵒ ψ ≡ᵒ ϕ′ ⊎ᵒ ψ′
+cong-⊎ᵒ {ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ k → ⇔-intro to fro)
+  where
+  to : ∀{k} → # (ϕ ⊎ᵒ ψ) k → # (ϕ′ ⊎ᵒ ψ′) k
+  to (inj₁ x) = inj₁ (proj₁ (≡ᵒ-elim ϕ=ϕ′) x)
+  to (inj₂ y) = inj₂ (proj₁ (≡ᵒ-elim ψ=ψ′) y)
+  fro  : ∀{k} → #(ϕ′ ⊎ᵒ ψ′) k → #(ϕ ⊎ᵒ ψ) k
+  fro (inj₁ x) = inj₁ (proj₂ (≡ᵒ-elim ϕ=ϕ′) x)
+  fro (inj₂ y) = inj₂ (proj₂ (≡ᵒ-elim ψ=ψ′) y)
+\end{code}
 
-  cong-⊎ᵒ : ∀{S S′ T T′ : Setᵒ}
-     → S ≡ᵒ S′
-     → T ≡ᵒ T′
-     → S ⊎ᵒ T ≡ᵒ S′ ⊎ᵒ T′
-  cong-⊎ᵒ {S}{S′}{T}{T′} SS′ TT′ k = ⇔-intro to fro
-    where
-    to : # (S ⊎ᵒ T) k → # (S′ ⊎ᵒ T′) k
-    to (inj₁ x) = inj₁ (proj₁ (SS′ k) x)
-    to (inj₂ y) = inj₂ (proj₁ (TT′ k) y)
-    fro  : #(S′ ⊎ᵒ T′) k → #(S ⊎ᵒ T) k
-    fro (inj₁ x) = inj₁ (proj₂ (SS′ k) x)
-    fro (inj₂ y) = inj₂ (proj₂ (TT′ k) y)
+\noindent The disjunction connective is also nonexpansive.
 
-strong-sum : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
-   (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
+\begin{code}
+nonexpansive-⊎ : ∀{k} → ↓ᵒ k (ϕ ⊎ᵒ ψ) ≡ᵒ ↓ᵒ k ((↓ᵒ k ϕ) ⊎ᵒ (↓ᵒ k ψ))
+nonexpansive-⊎ {ϕ}{ψ}{k} = ≡ᵒ-intro (λ i → aux i)
+  where
+  aux : ∀ i → #(↓ᵒ k (ϕ ⊎ᵒ ψ)) i ⇔ #(↓ᵒ k ((↓ᵒ k ϕ) ⊎ᵒ (↓ᵒ k ψ))) i
+  aux zero = ⇔-intro (λ x → tt) (λ x → tt)
+  aux (suc i) = (λ { (x , inj₁ x₁) → x , inj₁ (x , x₁)
+                   ; (x , inj₂ y) → x , inj₂ (x , y)})
+               , λ { (x , inj₁ x₁) → x , inj₁ (proj₂ x₁)
+                   ; (x , inj₂ y) → x , inj₂ (proj₂ y)}
+\end{code}
+
+Figure~\ref{fig:strong-sum} proves that disjunction is a strong
+environment functional. Similar to the proof for conjunction,
+there are four cases to consider, depending on whether $x$
+has time \textsf{Now} or \textsf{Later} in Δ₁ and Δ₂.
+
+\begin{figure}[tbp]
+\footnotesize
+\begin{code}
+strong-sum : (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
    → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ ⊎ᵒ ♯ T δ)
 strong-sum {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
@@ -1814,65 +1830,57 @@ strong-sum {Γ}{Δ₁}{Δ₂} S T {A} x
 ... | Now | Now = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                                         ⩦⟨ down-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T δ))
-                                     ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ))
-                                     ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym down-⊎ ⟩
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))  ∎
+    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                                         ⩦⟨ nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T δ))        ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ))   ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))           ∎
 ... | Now | Later = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (suc k) (cong-⊎ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ))))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k down-⊎) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ)))
-               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ))
-               ⩦⟨ down-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ ≡ᵒ-sym down-⊎ ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))    ∎
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-⊎ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))))
+                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-⊎) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ)))             ⩦⟨ lemma17ᵒ k ⟩ 
+    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ))              ⩦⟨ nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))         ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))      ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))         ∎
 ... | Later | Now = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k down-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (suc k) (cong-⊎ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k down-⊎) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ))
-               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ)
-               ⩦⟨ down-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ))
-               ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ ≡ᵒ-sym down-⊎ ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))    ∎
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-⊎ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-⊎) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ))         ⩦⟨ lemma17ᵒ k ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ)                 ⩦⟨ nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ))     ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))        ∎
 ... | Later | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ (suc k) (♯ S δ ⊎ᵒ ♯ T δ)                ⩦⟨ down-⊎ ⟩ 
-    ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) ⊎ᵒ ↓ᵒ (suc k) (♯ T δ))
-                   ⩦⟨ cong-↓ᵒ (suc k) (cong-⊎ᵒ strongS strongT) ⟩ 
-    ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ))
-                                  ⊎ᵒ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ)))
-                                                ⩦⟨ ≡ᵒ-sym down-⊎ ⟩ 
-    ↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))   ∎
-
-S ⊎ˢ T = record { ♯ = λ δ → ♯ S δ ⊎ᵒ ♯ T δ
-                ; strong = strong-sum S T
-                ; congr = λ d=d′ → cong-⊎ᵒ (congr S d=d′) (congr T d=d′)
-                }
+    ↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ)                ⩦⟨ nonexpansive-⊎ ⟩ 
+    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ))    ⩦⟨ cong-↓ᵒ (1 + k) (cong-⊎ᵒ strongS strongT) ⟩ 
+    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ))  ⊎ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))) ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
+    ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))   ∎
 \end{code}
+\caption{Disjunction is a strong environment functional.}
+\label{fig:strong-sum}
+\end{figure}
+
+\begin{code}
+S ⊎ˢ T = record { ♯ = λ δ → ♯ S δ ⊎ᵒ ♯ T δ ; strong = strong-sum S T
+                ; congr = λ d=d′ → cong-⊎ᵒ (congr S d=d′) (congr T d=d′) }
+\end{code}
+
+\clearpage
 
 \subsection{Implication}
 
@@ -1890,42 +1898,48 @@ _→n_ : Setᵒ → Setᵒ → Setᵒ
                 ; tz = λ ϕz → tz ψ }
 \end{code}
 
-The standard workaround is to force implication to be downward closed
-by definition. We define $ϕ$ implies $ψ$ at $k$ to mean that for all
-$j \leq k$, $ϕ$ at $j$ implies $ψ$ at $j$.
+\noindent The standard workaround is to force implication to be
+downward closed by definition. We define $ϕ$ implies $ψ$ at $k$ to
+mean that for all $j \leq k$, $ϕ$ at $j$ implies $ψ$ at $j$.
 
 \begin{code}
 infixr 6 _→ᵒ_
 _→ᵒ_ : Setᵒ → Setᵒ → Setᵒ
 ϕ →ᵒ ψ = record { # = λ k → ∀ j → j ≤ k → # ϕ j → # ψ j
-                ; down = λ k ∀j≤k→ϕj→ψj j j≤k i i≤j ϕi →
-                     ∀j≤k→ϕj→ψj i (≤-trans i≤j j≤k) ϕi
+                ; down = λ k ∀j≤k→ϕj→ψj j j≤k i i≤j ϕi → ∀j≤k→ϕj→ψj i (≤-trans i≤j j≤k) ϕi
                 ; tz = λ { .zero z≤n _ → tz ψ} }
 \end{code}
 
+\noindent The implication connective is congruent.
+
 \begin{code}
-abstract
-  down-→ : ∀{S T : Setᵒ}{k}
-     → ↓ᵒ k (S →ᵒ T) ≡ᵒ ↓ᵒ k ((↓ᵒ k S) →ᵒ (↓ᵒ k T))
-  down-→ zero = (λ x → tt) , (λ x → tt)
-  down-→{S}{T} (suc i) =
-      (λ {(x , y) → x , (λ { zero x₁ x₂ → tt
-                           ; (suc j) x₁ (x₂ , x₃) → x₂ , y (suc j) x₁ x₃})})
-      , λ {(x , y) → x , (λ { zero x₁ x₂ → tz T
-                            ; (suc j) x₁ x₂ →
-                              let z = y (suc j) x₁ ((≤-trans (s≤s x₁) x) , x₂)
-                              in proj₂ z})}
+cong-→ : ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ →ᵒ ψ ≡ᵒ ϕ′ →ᵒ ψ′
+cong-→ {ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ k →
+  (λ x j x₁ x₂ → ⇔-to (≡ᵒ-elim ψ=ψ′) (x j x₁ (⇔-fro (≡ᵒ-elim ϕ=ϕ′) x₂)))
+  , (λ z j z₁ z₂ → ⇔-fro (≡ᵒ-elim ψ=ψ′) (z j z₁ (⇔-to (≡ᵒ-elim ϕ=ϕ′) z₂))))
+\end{code}
 
-  cong-→ : ∀{S S′ T T′ : Setᵒ}
-     → S ≡ᵒ S′
-     → T ≡ᵒ T′
-     → S →ᵒ T ≡ᵒ S′ →ᵒ T′
-  cong-→ {S}{S′}{T}{T′} SS′ TT′ k =
-    (λ x j x₁ x₂ → proj₁ (TT′ j) (x j x₁ (proj₂ (SS′ j) x₂)))
-    , (λ z j z₁ z₂ → proj₂ (TT′ j) (z j z₁ (proj₁ (SS′ j) z₂)))
+\noindent The implication connective is also nonexpansive.
 
-strong-imp : ∀{Γ}{Δ₁ Δ₂ : Times Γ}
-   (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
+\begin{code}
+nonexpansive-→ : ∀{k} → ↓ᵒ k (ϕ →ᵒ ψ) ≡ᵒ ↓ᵒ k ((↓ᵒ k ϕ) →ᵒ (↓ᵒ k ψ))
+nonexpansive-→ {ϕ}{ψ}{k} = ≡ᵒ-intro (λ i → aux i)
+  where
+  aux : ∀ i → #(↓ᵒ k (ϕ →ᵒ ψ)) i ⇔ #(↓ᵒ k ((↓ᵒ k ϕ) →ᵒ (↓ᵒ k ψ))) i
+  aux zero = (λ x → tt) , (λ x → tt)
+  aux (suc i) = (λ {(x , y) → x , (λ { zero x₁ x₂ → tt
+                                     ; (suc j) x₁ (x₂ , x₃) → x₂ , y (suc j) x₁ x₃})})
+               , λ {(x , y) → x , (λ { zero x₁ x₂ → tz ψ
+                                     ; (suc j) x₁ x₂ → proj₂ (y (suc j) x₁ ((≤-trans (s≤s x₁) x) , x₂))})}
+\end{code}
+
+Figure~\ref{fig:strong-imp} shows the proof that implication is a
+strong environment functional.
+
+\begin{figure}[tbp]
+\footnotesize
+\begin{code}
+strong-imp : ∀{Γ}{Δ₁ Δ₂ : Times Γ} (S : Setˢ Γ Δ₁) (T : Setˢ Γ Δ₂)
    → strong-fun (Δ₁ ∪ Δ₂) (λ δ → ♯ S δ →ᵒ ♯ T δ)
 strong-imp {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
@@ -1933,78 +1947,63 @@ strong-imp {Γ}{Δ₁}{Δ₂} S T {A} x
 ... | Now | Now = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                         ⩦⟨ down-→{♯ S δ}{♯ T δ} ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T δ))
-                                     ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ))
-                       ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}
-                                           {↓ᵒ k (♯ S (↓ᵈ j x δ))}
-                                           {↓ᵒ k (♯ T δ)}
-                                           {↓ᵒ k (♯ T (↓ᵈ j x δ))}
-                                    (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-                          ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩
+    ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                         ⩦⟨ nonexpansive-→{♯ S δ}{♯ T δ} ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T δ))        ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ))  ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}{↓ᵒ k (♯ S (↓ᵈ j x δ))}
+                                           {↓ᵒ k (♯ T δ)}{↓ᵒ k (♯ T (↓ᵈ j x δ))} (≡ᵒ-refl refl) strongT) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))) ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩
     ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))  ∎
 ... | Now | Later = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (down-→{♯ S δ}{♯ T δ}) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T δ)))
-         ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (suc k)
-             (cong-→{↓ᵒ (suc k) (♯ S δ)}{↓ᵒ (suc k) (♯ S δ)}
-                     {↓ᵒ (suc k) (♯ T δ)}{ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ))}
-                     (≡ᵒ-refl refl) strongT)) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ))))
-                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (down-→{♯ S δ}{♯ T (↓ᵈ j x δ)})) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ)))
-               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ))
-               ⩦⟨ down-→{♯ S δ}{♯ T (↓ᵈ j x δ)} ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))    ∎
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T δ}) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)))  ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k)
+              (cong-→{↓ᵒ (1 + k) (♯ S δ)}{↓ᵒ (1 + k) (♯ S δ)} (≡ᵒ-refl refl) strongT)) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))))
+                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T (↓ᵈ j x δ)})) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ)))           ⩦⟨ lemma17ᵒ k ⟩ 
+    ↓ᵒ k (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ))              ⩦⟨ nonexpansive-→{♯ S δ}{♯ T (↓ᵈ j x δ)} ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))             ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))  ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))           ∎
 ... | Later | Now = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
     ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (down-→{♯ S δ}{♯ T δ}) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (suc k) (cong-→ strongS (≡ᵒ-refl refl))) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (suc k) (♯ T δ)))
-                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (down-→{♯ S (↓ᵈ j x δ)}{♯ T δ})) ⟩ 
-    ↓ᵒ k (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ))
-               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ)
-               ⩦⟨ down-→{♯ S (↓ᵈ j x δ)}{♯ T δ} ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ))
-               ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}
-                     {↓ᵒ k (♯ S (↓ᵈ j x δ))}
-                     {↓ᵒ k (♯ T δ)}{↓ᵒ k (♯ T (↓ᵈ j x δ))} (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))
-               ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T δ}) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-→ strongS (≡ᵒ-refl refl))) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (1 + k) (♯ T δ)))
+                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T δ})) ⟩ 
+    ↓ᵒ k (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ))            ⩦⟨ lemma17ᵒ k ⟩ 
+    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ)               ⩦⟨ nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T δ} ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ))  ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}
+                     {↓ᵒ k (♯ S (↓ᵈ j x δ))}{↓ᵒ k (♯ T δ)}{↓ᵒ k (♯ T (↓ᵈ j x δ))} (≡ᵒ-refl refl) strongT) ⟩ 
+    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))  ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S _}{♯ T _}) ⟩ 
     ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))    ∎
 ... | Later | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ (suc k) (♯ S δ →ᵒ ♯ T δ)                ⩦⟨ down-→{♯ S δ}{♯ T δ} ⟩ 
-    ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S δ) →ᵒ ↓ᵒ (suc k) (♯ T δ))
-                   ⩦⟨ cong-↓ᵒ (suc k) (cong-→ strongS strongT) ⟩ 
-    ↓ᵒ (suc k) (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ))
-                                  →ᵒ ↓ᵒ (suc k) (♯ T (↓ᵈ j x δ)))
-                         ⩦⟨ ≡ᵒ-sym (down-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
-    ↓ᵒ (suc k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))   ∎
+    ↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ)                ⩦⟨ nonexpansive-→{♯ S δ}{♯ T δ} ⟩ 
+    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)) ⩦⟨ cong-↓ᵒ (1 + k) (cong-→ strongS strongT) ⟩ 
+    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))) ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S _}{♯ T _}) ⟩ 
+    ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))   ∎
+\end{code}
+\caption{Implication is a strong environment functional.}
+\label{fig:strong-imp}
+\end{figure}
 
-S →ˢ T = record { ♯ = λ δ → ♯ S δ →ᵒ ♯ T δ
-                ; strong = strong-imp S T
-                ; congr = λ d=d′ → cong-→ (congr S d=d′) (congr T d=d′)
-                }
+We define the open variant of implication in SIL by constructing the
+following record, using the proofs from this subsection.
+
+\begin{code}
+S →ˢ T = record { ♯ = λ δ → ♯ S δ →ᵒ ♯ T δ ; strong = strong-imp S T
+                ; congr = λ d=d′ → cong-→ (congr S d=d′) (congr T d=d′) }
 \end{code}
 
 
-
+\clearpage
 
 
 \section{Proof Rules for Step-Indexed Logic}

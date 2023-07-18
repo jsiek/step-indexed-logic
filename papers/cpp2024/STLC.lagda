@@ -33,7 +33,7 @@ open import cpp2024.StepIndexedLogic
 \end{code}
 \end{comment}
 
-\section{Case Study: Semantic Type Safety of the STLC with Recursive Functions}
+\section{Case Study: Type Safety of the STLC with Recursive Functions}
 
 
 \subsection{Syntax of STLC with Recursive Functions}
