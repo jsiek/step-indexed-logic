@@ -2202,7 +2202,7 @@ abstract
 \end{code}
 
 Next we define a derived rule that caters to a common reasoning
-pattern in which you know that ϕ implies ψ, but you have ▷ᵒ ϕ and need
+pattern in which we know that ϕ implies ψ, but you have ▷ᵒ ϕ and need
 to prove ▷ᵒ ψ.
 
 \begin{code}
@@ -2212,13 +2212,16 @@ to prove ▷ᵒ ψ.
     ▷ψ n ⊨𝒫n
 \end{code}
 
+The introduction rule for the forall quantifier uses an Agda function
+for the quantification, a function from an element of type \textsf{A}
+to a proof of $ϕᵃ \, a$. We introduce the syntax $Λᵒ[ a ] ϕ$ for
+this introduction rule. The elimination rule, \textsf{inst}ᵒ,
+instantiates the universal statement to a particular choice
+of $a$ in $A$.
 
 \begin{code}
 abstract
-  ⊢ᵒ-∀-intro : ∀{𝒫 : List Setᵒ }{A}{ϕᵃ : A → Setᵒ}
-    → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)
-      ----------------------
-    → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
+  ⊢ᵒ-∀-intro : {ϕᵃ : A → Setᵒ} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
   ⊢ᵒ-∀-intro ∀ϕᵃa n ⊨𝒫n a = ∀ϕᵃa a n ⊨𝒫n
 
 Λᵒ-syntax = ⊢ᵒ-∀-intro
@@ -2226,99 +2229,72 @@ infix 1 Λᵒ-syntax
 syntax Λᵒ-syntax (λ a → ⊢ϕᵃa) = Λᵒ[ a ] ⊢ϕᵃa
 
 abstract
-  instᵒ : ∀{𝒫 : List Setᵒ }{A}{ϕᵃ : A → Setᵒ}
-    → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
-    → (a : A)
-      ---------
-    → 𝒫 ⊢ᵒ ϕᵃ a
+  instᵒ : ∀{ϕᵃ : A → Setᵒ} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
   instᵒ ⊢∀ϕᵃ a n ⊨𝒫n = ⊢∀ϕᵃ n ⊨𝒫n a
 \end{code}
 
+The introduction rule for the existential quantifier requires witness $a ∈ A$ and
+a proof of $ϕᵃ \, a$ to show that $∃ᵒ ϕᵃ$. The elimination rule says that
+if you have a proof of $∃ᵒ ϕᵃ$, then to prove some proposition $þ$ it
+suffies to prove that $ϕᵃ \, a$ entails $þ$ for an arbitrary $a ∈ A$.
 
 \begin{code}
 abstract
-  ⊢ᵒ-∃-intro : ∀{𝒫 : List Setᵒ }{A}{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}}
-    → (a : A)
-    → 𝒫 ⊢ᵒ ϕᵃ a
-      ----------
-    → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
+  ⊢ᵒ-∃-intro : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} → (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
   ⊢ᵒ-∃-intro a ⊢ϕᵃa n ⊨𝒫n = a , (⊢ϕᵃa n ⊨𝒫n)
 
-  ⊢ᵒ-∃-intro-new : ∀{𝒫 : List Setᵒ }{A}{{_ : Inhabited A}}
-    → (ϕᵃ : A → Setᵒ)
-    → (a : A)
-    → 𝒫 ⊢ᵒ ϕᵃ a
-      ----------
-    → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
-  ⊢ᵒ-∃-intro-new ϕᵃ a ⊢ϕᵃa n ⊨𝒫n = a , (⊢ϕᵃa n ⊨𝒫n)
-
-  ⊢ᵒ-∃-elim : ∀{𝒫 : List Setᵒ }{A}{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
-    → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
-    → (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)
-      ---------------------
-    → 𝒫 ⊢ᵒ þ
+  ⊢ᵒ-∃-elim : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
+     → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
   ⊢ᵒ-∃-elim{þ = þ} ⊢∃ϕᵃ cont zero ⊨𝒫n = tz þ
   ⊢ᵒ-∃-elim ⊢∃ϕᵃ cont (suc n) ⊨𝒫n
       with ⊢∃ϕᵃ (suc n) ⊨𝒫n
   ... | (a , ϕᵃasn) = cont a (suc n) (ϕᵃasn , ⊨𝒫n)
+\end{code}
 
-  {- making ϕᵃ explicit, inference not working -}
-  ⊢ᵒ-∃-elim-new : ∀{𝒫 : List Setᵒ }{A}{þ : Setᵒ}{{_ : Inhabited A}}
-    → (ϕᵃ : A → Setᵒ)
-    → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
-    → (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)
-      ---------------------
-    → 𝒫 ⊢ᵒ þ
-  ⊢ᵒ-∃-elim-new{þ = þ} ϕᵃ ⊢∃ϕᵃ cont zero ⊨𝒫n = tz þ
-  ⊢ᵒ-∃-elim-new ϕᵃ ⊢∃ϕᵃ cont (suc n) ⊨𝒫n
-      with ⊢∃ϕᵃ (suc n) ⊨𝒫n
-  ... | (a , ϕᵃasn) = cont a (suc n) (ϕᵃasn , ⊨𝒫n)
+The introduction rule for the constant formula says that a proof of
+$p$ is required to prove $p ᵒ$. The elimination rule says that
+if you have $p ᵒ$, then to prove an arbitrary proposition þ,
+one can provide an Agda function that quantifies over $p$.
 
-  ⊢ᵒ-∃-elim-L : ∀{𝒫 : List Setᵒ }{A}{þ : Setᵒ}{{_ : Inhabited A}}
-    → (ϕᵃ : A → Setᵒ)
-    → (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)
-      ---------------------
-    → (∃ᵒ ϕᵃ) ∷ 𝒫 ⊢ᵒ þ
-  ⊢ᵒ-∃-elim-L {þ = þ} ϕᵃ ϕᵃa⊢þ n ((a , ϕᵃan) , ⊨𝒫n) = ϕᵃa⊢þ a n (ϕᵃan , ⊨𝒫n)
-
+\begin{code}
 abstract
-  Zᵒ : ∀{𝒫 : List Setᵒ}{S : Setᵒ}
-     → S ∷ 𝒫 ⊢ᵒ S
-  Zᵒ n (Sn , ⊨𝒫n) = Sn
-
-  Sᵒ : ∀{𝒫 : List Setᵒ}{T : Setᵒ}{S : Setᵒ}
-     → 𝒫 ⊢ᵒ T
-     → S ∷ 𝒫 ⊢ᵒ T
-  Sᵒ 𝒫⊢T n (Sn , ⊨𝒫n) = 𝒫⊢T n ⊨𝒫n
-
-  ⊢ᵒ-swap : ∀{𝒫 : List Setᵒ}{T : Setᵒ}{S S′ : Setᵒ}
-     → S ∷ S′ ∷ 𝒫 ⊢ᵒ T
-     → S′ ∷ S ∷ 𝒫 ⊢ᵒ T
-  ⊢ᵒ-swap {𝒫}{T}{S}{S′} SS′𝒫⊢T n (S′n , Sn , ⊨𝒫n) =
-      SS′𝒫⊢T n (Sn , S′n , ⊨𝒫n)
-
-abstract
-  constᵒI : ∀{𝒫}{S : Set}
-     → S
-     → 𝒫 ⊢ᵒ S ᵒ
+  constᵒI : ∀{p : Set} → p → 𝒫 ⊢ᵒ p ᵒ
   constᵒI s zero ⊨𝒫n = tt
   constᵒI s (suc n) ⊨𝒫n = s
 
-  constᵒE : ∀ {𝒫}{S : Set}{R : Setᵒ}
-     → 𝒫 ⊢ᵒ S ᵒ
-     → (S → 𝒫 ⊢ᵒ R)
-     → 𝒫 ⊢ᵒ R
-  constᵒE {𝒫} {S} {R} ⊢S S→⊢R zero 𝒫n = tz R
-  constᵒE {𝒫} {S} {R} ⊢S S→⊢R (suc n) 𝒫n = S→⊢R (⊢S (suc n) 𝒫n) (suc n) 𝒫n
+  constᵒE : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+  constᵒE {𝒫} {p} {R} ⊢p p→⊢R zero 𝒫n = tz R
+  constᵒE {𝒫} {p} {R} ⊢p p→⊢R (suc n) 𝒫n = p→⊢R (⊢p (suc n) 𝒫n) (suc n) 𝒫n
+\end{code}
 
-⊢ᵒ-sucP : ∀{𝒫}{ϕ ψ : Setᵒ}
-   → 𝒫 ⊢ᵒ ϕ
-   → (∀{n} → # ϕ (suc n) → 𝒫 ⊢ᵒ ψ)
-   → 𝒫 ⊢ᵒ ψ
+The next two rules provide ways to make use of premises to the left of
+the turnstile.  The first rule references the premise at position
+zero.
+
+\begin{code}
+abstract
+  Zᵒ : ϕ ∷ 𝒫 ⊢ᵒ ϕ
+  Zᵒ n (ϕn , ⊨𝒫n) = ϕn
+\end{code}
+
+\noindent The second rule removes the premise at position zero, so it
+is a ``weakening'' rule.
+
+\begin{code}
+abstract
+  Sᵒ : 𝒫 ⊢ᵒ ψ  →  ϕ ∷ 𝒫 ⊢ᵒ ψ
+  Sᵒ 𝒫⊢ψ n (ϕn , ⊨𝒫n) = 𝒫⊢ψ n ⊨𝒫n
+\end{code}
+
+Finally, we provide a rule that lets one export a proof of $ϕ$
+from SIL into Agda. That is, given a proof of ϕ in SIL, to prove
+some other arbitrary proposition ψ, it suffices to provide
+a function that is parameterized over $ϕ$ at a non-zero index
+and that produces a proof of ψ.
+
+\begin{code}
+⊢ᵒ-sucP : 𝒫 ⊢ᵒ ϕ  →  (∀{n} → # ϕ (suc n) → 𝒫 ⊢ᵒ ψ)  →  𝒫 ⊢ᵒ ψ
 ⊢ᵒ-sucP {𝒫}{ϕ}{ψ} ⊢ϕ ϕsn⊢ψ =
     ⊢ᵒ-intro λ { zero x → tz ψ
-               ; (suc n) 𝒫sn →
-                 let ⊢ψ = ϕsn⊢ψ (⊢ᵒ-elim ⊢ϕ (suc n) 𝒫sn) in
-                 let ψsn = ⊢ᵒ-elim ⊢ψ (suc n) 𝒫sn in
-                 ψsn}
+               ; (suc n) 𝒫sn → let ⊢ψ = ϕsn⊢ψ (⊢ᵒ-elim ⊢ϕ (suc n) 𝒫sn) in ⊢ᵒ-elim ⊢ψ (suc n) 𝒫sn }
 \end{code}
