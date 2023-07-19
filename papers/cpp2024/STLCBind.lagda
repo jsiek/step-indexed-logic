@@ -36,6 +36,7 @@ open import cpp2024.STLCDeterministic
 \end{comment}
 
 \subsection{Bind Lemma}
+\label{sec:bind-lemma}
 
 \begin{code}
 𝒱V→ℰF[V] : Type → Type → Frame → Term → Setᵒ

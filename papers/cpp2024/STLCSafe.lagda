@@ -37,7 +37,7 @@ open import cpp2024.STLCBind
 \end{comment}
 
 \subsection{Compatibility Lemmas}
-
+\label{sec:compatibility-lemmas}
 
 \begin{code}
 compatible-value : ∀{Γ V A}
@@ -264,6 +264,7 @@ compatible-case {Γ}{L}{M}{N}{A} ⊨L ⊨M ⊨N γ = ⊢ℰcaseLMN
 
 
 \subsection{Fundamental Lemma}
+\label{sec:fundamental}
 
 \begin{code}
 fundamental : ∀ {Γ M A} → (Γ ⊢ M ⦂ A) → (Γ ⊨ M ⦂ A)
@@ -283,6 +284,7 @@ fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) =
 \end{code}
 
 \subsection{Proof of Semantic Type Safety}
+\label{sec:proof-sem-safety}
 
 
 \begin{code}

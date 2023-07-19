@@ -35,15 +35,46 @@ open import cpp2024.StepIndexedLogic
 
 \section{Case Study: Type Safety of the STLC with Recursive Functions}
 
+We provide an example application of our Step-Indexed Logic with a
+case study in proving semantic type safety for the STLC with recursive
+functions. We choose to extend STLC with recursive functions because
+otherwise, one does not need step-indexed logical relations; logical
+relations that are only indexed by types are sufficient.  The next few
+subsections give the definition of this variant of the STLC (syntax in
+§\ref{sec:STLC-syntax}, reduction semantics in
+§\ref{sec:STLC-reduction}, type system in
+§\ref{sec:STLC-type-system}). We then define the step-indexed logical
+relation in Section~\ref{sec:log-rel} and use it to define semantic
+type safety in Section~\ref{sec:sem-type-safety}. The rest of the
+subsections give the proof of semantic type safety, starting
+with the Bind Lemma (§\ref{sec:bind-lemma}), then the many
+Compatibility Lemmas (§\ref{sec:compatibility-lemmas}) that
+lead up to the Fundamental Lemma (§\ref{sec:fundamental}).
+We conclude with the proof of semantic type safety
+in Section~\ref{sec:proof-sem-safety}.
 
 \subsection{Syntax of STLC with Recursive Functions}
+\label{sec:STLC-syntax}
+
+This variant of the STLC includes the type of natural numbers and
+function types.
 
 \begin{code}
 data Type : Set where
-  _⇒_ : Type → Type → Type
   `ℕ  : Type
+  _⇒_ : Type → Type → Type
 \end{code}
 
+The proof of semantic type safety relies on a lemma regarding
+substitution whose proof is quite involved but quite standard.  We can
+obtain the substitution lemma for free if we use the Abstract Binding
+Tree (ABT) library~\citep{Siek:2021to} to define the syntax of terms.  The
+library is parameterized by a type \textsf{Op} that specifies the
+constructors and a function \textsf{sig} that describes the arity and
+binding structure of each term constructor. For this variant of the
+STLC, the terms include lambda abstraction, application, the zero
+numeral, the successor operation, case analysis on natural numbers,
+and a recursive fixpoint operator.
 
 \begin{code}
 data Op : Set where
@@ -55,6 +86,14 @@ data Op : Set where
   op-rec : Op
 \end{code}
 
+Next we define the \textsf{sig} function for this variant of the STLC.
+For each \textsf{Op}, it returns a list of \textsf{Sig}, which
+specifies the number of variable bindings that are introduced for each
+subterm. The ■ means zero bindings and ν means add one binding.  So we
+see below that lambda abstraction has one subterm with one variable
+binding. The \textsf{case} operator has three subterms with one
+variable binding for the third subterm.
+
 \begin{code}
 sig : Op → List Sig
 sig op-lam = (ν ■) ∷ []
@@ -65,11 +104,25 @@ sig op-case = ■ ∷ ■ ∷ (ν ■) ∷ []
 sig op-rec = (ν ■) ∷ []
 \end{code}
 
+\noindent We import the ABT library to obtain the definition of terms,
+whose type we name \textsf{Term}, and we obtain all of the
+substitution lemmas provided by the library.
+
 \begin{code}
 open import rewriting.AbstractBindingTree Op sig renaming (ABT to Term) public
+\end{code}
 
+\noindent The following metavariables range over \textsf{Term}.
+
+\begin{code}
 variable L L′ M M′ N N′ V V′ W W′ : Term
+\end{code}
 
+The notation for constructing terms from the ABT library is rather
+verbose, so we define the following shorthand notations use Agda's
+\textsf{pattern} facility.
+
+\begin{code}
 pattern ƛ N  = op-lam ⦅ cons (bind (ast N)) nil ⦆
 
 infixl 7  _·_
@@ -85,6 +138,24 @@ pattern μ N = op-rec ⦅ cons (bind (ast N)) nil ⦆
 
 
 \subsection{Dynamic Semantics of STLC}
+\label{sec:STLC-reduction}
+
+The standard reduction semantics for the STLC with recursive functions~\citep{Pierce:2002hj}
+includes the following reduction rule for the fixpoint operator.
+\[
+  μx.M \longrightarrow M[x ↦ μx.M]
+\]
+This rule involves the substitution of an arbitrary term (not a
+value). Unfortunately, the usual formulation of logical relations for
+call-by-value languages requires that substitutions map variables to
+values. We therefore use an alternative reduction semantics in which
+$μx.V$ is categorized as a value and replace the above reduction
+rule with the following one.
+\[
+(μx.V) \app W \longrightarrow V[x ↦ μx.V] \app W
+\]
+To that end, we begin with the following definition of the
+\textsf{Value} predicate.
 
 \begin{code}
 data Value : Term → Set where
@@ -94,15 +165,24 @@ data Value : Term → Set where
   V-μ : Value V → Value (μ V)
 \end{code}
 
+\noindent The \textsf{value} function extracts the term from
+a proof that the term is a value.
+
 \begin{code}
-value : ∀{V} → Value V → Term
+value : Value V → Term
 value {V} v = V
 \end{code}
+
+\noindent The following lemma is the inversion principle for a
+fixpoint value.
 
 \begin{code}
 Value-μ-inv : Value (μ V) → Value V
 Value-μ-inv (V-μ v) = v
 \end{code}
+
+Our reduction semantics will employ frames, a kind of shallow evaluation context,
+which we define as follows.
 
 \begin{code}
 infix  6 □·_
@@ -113,7 +193,12 @@ data Frame : Set where
   _·□ : Value V → Frame
   suc□ : Frame
   case□ : Term → Term → Frame
+\end{code}
 
+\noindent The notation $F ⟦ N ⟧$ is for plugging the term $N$ into
+the frame $F$.
+
+\begin{code}
 _⟦_⟧ : Frame → Term → Term
 (□· M) ⟦ L ⟧        =  L · M
 (v ·□) ⟦ M ⟧        =  value v · M
@@ -121,95 +206,37 @@ suc□ ⟦ M ⟧          = `suc M
 (case□ M N) ⟦ L ⟧   = case L M N
 \end{code}
 
+The reduction relation for this STLC are defined as follows.  
 
 \begin{code}
 infix 2 _—→_
 data _—→_ : Term → Term → Set where
-
-  ξξ : ∀ {M N : Term} {M′ N′ : Term}
-    → (F : Frame) → M′ ≡ F ⟦ M ⟧ → N′ ≡ F ⟦ N ⟧ → M —→ N
-    → M′ —→ N′
-
   β-ƛ : Value W → (ƛ N) · W —→ N [ W ]
-
   β-zero : case `zero M N —→ M
-
   β-suc : Value V → case (`suc V) M N —→ N [ V ]
-
   β-μ : Value V → Value W → (μ V) · W —→ V [ μ V ] · W
+  ξξ : ∀ {M N : Term} {M′ N′ : Term}
+    → (F : Frame) →  M′ ≡ F ⟦ M ⟧  →  N′ ≡ F ⟦ N ⟧  →  M —→ N  →  M′ —→ N′
 \end{code}
+
+\noindent The ξξ rule will most often be used with \textsf{refl} as
+arguments for the second and third premise, so we define the following
+shorthand.
 
 \begin{code}
 pattern ξ F M—→N = ξξ F refl refl M—→N
 \end{code}
 
-Reflexive and transitive closure of reduction
+We define \textsf{reducible} in the standard way.
 
 \begin{code}
-infixr 1 _++_
-infix  2 _—↠_
-infixr 2 _—→⟨_⟩_
-infixr 2 _—↠⟨_⟩_
-infix  3 _END
-
-data _—↠_ : Term → Term → Set where
-  _END : (M : Term)
-      ---------
-    → M —↠ M
-
-  _—→⟨_⟩_ : (L : Term) {M N : Term}
-    → L —→ M
-    → M —↠ N
-      ---------
-    → L —↠ N
-
-{- Convenience function to build a sequence of length one. -}
-
-unit : ∀ {M N : Term} → (M —→ N) → (M —↠ N)
-unit {M = M} {N = N} M—→N  =  M —→⟨ M—→N ⟩ (N END)
-
-{- Apply ξ to each element of a sequence -}
-
-ξ* : ∀ {M N : Term} → (F : Frame) → M —↠ N → F ⟦ M ⟧ —↠ F ⟦ N ⟧
-ξ* F (M END) = F ⟦ M ⟧ END
-ξ* F (L —→⟨ L—→M ⟩ M—↠N) = (F ⟦ L ⟧ —→⟨ ξ F L—→M ⟩ ξ* F M—↠N)
-
-{- Concatenate two sequences. -}
-
-_++_ : ∀ {L M N : Term} → L —↠ M → M —↠ N → L —↠ N
-(M END) ++ M—↠N                =  M—↠N
-(L —→⟨ L—→M ⟩ M—↠N) ++ N—↠P  =  L —→⟨ L—→M ⟩ (M—↠N ++ N—↠P)
-
-{- Alternative notation for sequence concatenation. -}
-
-_—↠⟨_⟩_ : (L : Term) {M N : Term}
-  → L —↠ M
-  → M —↠ N
-    ---------
-  → L —↠ N
-L —↠⟨ L—↠M ⟩ M—↠N  =  L—↠M ++ M—↠N
-
 reducible : (M : Term) → Set
 reducible M = ∃[ N ] (M —→ N)
+\end{code}
 
-irred : (M : Term) → Set
-irred M = ¬ reducible M
+\noindent Values are not reducible.
 
-len : ∀{M N : Term} → (M→N : M —↠ N) → ℕ
-len (_ END) = 0
-len (_ —→⟨ x ⟩ red) = suc (len red)
-
-len-concat : ∀ {L}{M}{N} (s : L —↠ M) (r : M —↠ N)
-  → len (s ++ r) ≡ len s + len r
-len-concat (_ END) r = refl
-len-concat (_ —→⟨ x ⟩ s) r rewrite len-concat s r = refl
-
-_⇓ : Term → Set
-M ⇓ = ∃[ V ] (M —↠ V) × Value V
-
-_⇑ : Term → Set
-M ⇑ = ∀ k → ∃[ N ] Σ[ r ∈ M —↠ N ] k ≡ len r
-
+\begin{code}
 value-irreducible : ∀ {V M : Term} → Value V → ¬ (V —→ M)
 value-irreducible V-ƛ (ξξ (□· x₂) () x₁ V—→M)
 value-irreducible V-ƛ (ξξ (x₂ ·□) () x₁ V—→M)
@@ -223,14 +250,39 @@ value-irreducible (V-μ v) (ξξ (x₂ ·□) () x₁ V—→M)
 value-irreducible (V-μ v) (ξξ suc□ () x₁ V—→M)
 \end{code}
 
+We need the following inversion principle for the reduction of a
+fixpoint applied to an argument.
+
 \begin{code}
-β-μ-inv : ∀{V W N} → Value V → Value W → μ V · W —→ N → N ≡ V [ μ V ] · W
+β-μ-inv : ∀{V W N} → Value V → Value W → μ V · W —→ N  →  N ≡ V [ μ V ] · W
 β-μ-inv v w (ξ (□· x₂) r) = ⊥-elim (value-irreducible (V-μ v) r)
 β-μ-inv v w (ξξ (x₂ ·□) refl x₁ r) = ⊥-elim (value-irreducible w r)
 β-μ-inv v w (β-μ x x₁) = refl
 \end{code}
 
+We define the reflexive and transitive closure of reduction as follows.
+
+\begin{code}
+infix  2 _—↠_
+infixr 2 _—→⟨_⟩_
+infix  3 _END
+
+data _—↠_ : Term → Term → Set where
+  _END : (M : Term) → M —↠ M
+  _—→⟨_⟩_ : (L : Term) {M N : Term} → L —→ M  →  M —↠ N  →  L —↠ N
+\end{code}
+
+\noindent The length of a reduction sequence is computed by the \textsf{len} function.
+
+\begin{code}
+len : ∀{M N : Term} → (M→N : M —↠ N) → ℕ
+len (_ END) = 0
+len (_ —→⟨ _ ⟩ red) = suc (len red)
+\end{code}
+
+
 \subsection{Type System of STLC}
+\label{sec:STLC-type-system}
 
 \begin{code}
 infix 3 _⊢_⦂_
@@ -238,28 +290,18 @@ data _⊢_⦂_ : List Type → Term → Type → Set
 
 infix 3 _⊢ⱽ_⦂_
 data _⊢ⱽ_⦂_ : List Type → Term → Type → Set
+\end{code}
 
+
+\begin{code}
 data _⊢ⱽ_⦂_ where
+  ⊢ⱽzero : ∀ {Γ} → Γ ⊢ⱽ `zero ⦂ `ℕ
+  ⊢ⱽsuc : ∀ {Γ V} → Γ ⊢ⱽ V ⦂ `ℕ  →  Γ ⊢ⱽ `suc V ⦂ `ℕ
+  ⊢ⱽƛ : ∀ {Γ N A B} → (A ∷ Γ) ⊢ N ⦂ B  →  Γ ⊢ⱽ ƛ N ⦂ (A ⇒ B)
+  ⊢ⱽμ : ∀ {Γ V A B} → (A ⇒ B ∷ Γ) ⊢ⱽ V ⦂ A ⇒ B  →  Γ ⊢ⱽ μ V ⦂ A ⇒ B
+\end{code}
 
-  ⊢ⱽzero : ∀ {Γ}
-      --------------
-    → Γ ⊢ⱽ `zero ⦂ `ℕ
-
-  ⊢ⱽsuc : ∀ {Γ V}
-    → Γ ⊢ⱽ V ⦂ `ℕ
-      ---------------
-    → Γ ⊢ⱽ `suc V ⦂ `ℕ
-
-  ⊢ⱽƛ : ∀ {Γ N A B}
-    → (A ∷ Γ) ⊢ N ⦂ B
-      -----------------
-    → Γ ⊢ⱽ ƛ N ⦂ (A ⇒ B)
-
-  ⊢ⱽμ : ∀ {Γ V A B}
-    → (A ⇒ B ∷ Γ) ⊢ⱽ V ⦂ A ⇒ B
-      ------------------------
-    → Γ ⊢ⱽ μ V ⦂ A ⇒ B
-
+\begin{code}
 data _⊢_⦂_ where
 
   ⊢` : ∀ {Γ x A}
@@ -300,6 +342,7 @@ data _⊢_⦂_ where
 \end{code}
 
 \subsection{Definition of the Logical Relation}
+\label{sec:log-rel}
 
 \begin{code}
 ℰ⊎𝒱-type : Set
@@ -461,6 +504,7 @@ safe-body 𝒫 N A B = ∀{W} → 𝒫 ⊢ᵒ (▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ 
 \end{code}
 
 \subsection{Definition of Semantic Type Safety for Open Terms}
+\label{sec:sem-type-safety}
 
 
 \begin{code}
