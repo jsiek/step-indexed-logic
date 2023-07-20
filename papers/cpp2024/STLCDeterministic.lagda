@@ -71,23 +71,23 @@ deterministic (β-μ x x₁) (β-μ x₂ x₃) = refl
 
 
 \begin{code}
-frame-inv2 : ∀{L N : Term}{F} → reducible L → F ⟦ L ⟧ —→ N → ∃[ L′ ] ((L —→ L′) × (N ≡ F ⟦ L′ ⟧))
-frame-inv2 {F = □· M} (L′ , L→L′) (ξ (□· x₃) L→N) = _ , (L→N , refl)
-frame-inv2 {F = □· M} (L′ , L→L′) (ξ (v ·□) FL→N) = ⊥-elim (value-irreducible v L→L′)
-frame-inv2 {F = □· M} (L′ , L→L′) (β-ƛ x₁) = ⊥-elim (value-irreducible V-ƛ L→L′)
-frame-inv2 {F = □· M} (L′ , L→L′) (β-μ x₁ x₂) = ⊥-elim (value-irreducible (V-μ x₁) L→L′)
-frame-inv2 {F = v ·□} (L′ , L→L′) (ξ (□· x₂) FL→N) = ⊥-elim (value-irreducible v FL→N)
-frame-inv2 {F = v ·□} (L′ , L→L′) (ξ (w ·□) FL→N)
+frame-inv : ∀{L N : Term}{F} → reducible L → F ⟦ L ⟧ —→ N → ∃[ L′ ] ((L —→ L′) × (N ≡ F ⟦ L′ ⟧))
+frame-inv {F = □· M} (L′ , L→L′) (ξ (□· x₃) L→N) = _ , (L→N , refl)
+frame-inv {F = □· M} (L′ , L→L′) (ξ (v ·□) FL→N) = ⊥-elim (value-irreducible v L→L′)
+frame-inv {F = □· M} (L′ , L→L′) (β-ƛ x₁) = ⊥-elim (value-irreducible V-ƛ L→L′)
+frame-inv {F = □· M} (L′ , L→L′) (β-μ x₁ x₂) = ⊥-elim (value-irreducible (V-μ x₁) L→L′)
+frame-inv {F = v ·□} (L′ , L→L′) (ξ (□· x₂) FL→N) = ⊥-elim (value-irreducible v FL→N)
+frame-inv {F = v ·□} (L′ , L→L′) (ξ (w ·□) FL→N)
     with deterministic FL→N L→L′
 ... | refl = _ , (L→L′ , refl)
-frame-inv2 {F = v ·□} (L′ , L→L′) (β-ƛ x) = ⊥-elim (value-irreducible x L→L′)
-frame-inv2 {F = v ·□} (L′ , L→L′) (β-μ x w) = ⊥-elim (value-irreducible w L→L′)
-frame-inv2 {F = suc□} (L′ , L→L′) (ξ suc□ FL→N)
+frame-inv {F = v ·□} (L′ , L→L′) (β-ƛ x) = ⊥-elim (value-irreducible x L→L′)
+frame-inv {F = v ·□} (L′ , L→L′) (β-μ x w) = ⊥-elim (value-irreducible w L→L′)
+frame-inv {F = suc□} (L′ , L→L′) (ξ suc□ FL→N)
     with deterministic FL→N L→L′
 ... | refl = _ , (L→L′ , refl)
-frame-inv2 {F = case□ x x₁} (L′ , L→L′) (ξ (case□ x₄ x₅) FL→N)
+frame-inv {F = case□ x x₁} (L′ , L→L′) (ξ (case□ x₄ x₅) FL→N)
     with deterministic FL→N L→L′
 ... | refl = _ , (L→L′ , refl)
-frame-inv2 {F = case□ x x₁} (L′ , L→L′) β-zero = ⊥-elim (value-irreducible V-zero L→L′)
-frame-inv2 {F = case□ x x₁} (L′ , L→L′) (β-suc x₂) = ⊥-elim (value-irreducible (V-suc x₂) L→L′)
+frame-inv {F = case□ x x₁} (L′ , L→L′) β-zero = ⊥-elim (value-irreducible V-zero L→L′)
+frame-inv {F = case□ x x₁} (L′ , L→L′) (β-suc x₂) = ⊥-elim (value-irreducible (V-suc x₂) L→L′)
 \end{code}

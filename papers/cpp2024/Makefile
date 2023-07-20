@@ -1,4 +1,4 @@
-paper.pdf: latex/cpp2024/StepIndexedLogic.tex latex/cpp2024/STLC.tex latex/cpp2024/STLCDeterministic.tex latex/cpp2024/STLCBind.tex latex/cpp2024/STLCSafe.tex 
+paper.pdf: paper.tex latex/cpp2024/StepIndexedLogic.tex latex/cpp2024/STLC.tex latex/cpp2024/STLCDeterministic.tex latex/cpp2024/STLCBind.tex latex/cpp2024/STLCSafe.tex latex/cpp2024/STLCDeterministic.tex
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper

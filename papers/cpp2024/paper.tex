@@ -182,7 +182,7 @@
 \newunicodechar{▷}{\ensuremath{\rhd}}
 \newunicodechar{◁}{\ensuremath{\lhd}}
 \newunicodechar{∈}{\ensuremath{\in}}
-\newunicodechar{⩦}{\ensuremath{\equiv}} % !!
+\newunicodechar{⩦}{\ensuremath{\doteq}} % !!
 \newunicodechar{∋}{\ensuremath{\ni}}
 \newunicodechar{ˢ}{\ensuremath{^s}}
 \newunicodechar{ᵈ}{\ensuremath{^d}}
@@ -190,8 +190,8 @@
 \newunicodechar{∅}{\ensuremath{\emptyset}}
 \newunicodechar{⟨}{\ensuremath{\langle}}
 \newunicodechar{⟩}{\ensuremath{\rangle}}
-\newunicodechar{⟪}{\ensuremath{\langle}}
-\newunicodechar{⟫}{\ensuremath{\langle}}
+\newunicodechar{⟪}{\ensuremath{\langle\!\!\langle}}
+\newunicodechar{⟫}{\ensuremath{\rangle\!\!\rangle}}
 \newunicodechar{⟅}{\ensuremath{\Lbag}}
 \newunicodechar{⟆}{\ensuremath{\Rbag}}
                
@@ -222,6 +222,7 @@
 \newunicodechar{∎}{\ensuremath{\blacksquare}} % !!
 \newunicodechar{■}{\ensuremath{\blacksquare}}
 \newunicodechar{□}{\ensuremath{\Box}}
+\newunicodechar{•}{\ensuremath{\bullet}}
 \newunicodechar{⦅}{\ensuremath{\llparenthesis}}
 \newunicodechar{⦆}{\ensuremath{\rrparenthesis}}
 \newunicodechar{⟦}{\ensuremath{\llbracket}}
@@ -487,6 +488,10 @@ TODO: ROAD MAP
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{all}
+
+\section*{Appendix}
+
+\input{latex/cpp2024/STLCDeterministic.tex}
 
 \end{document}
 \endinput

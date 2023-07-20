@@ -38,47 +38,97 @@ open import cpp2024.STLCDeterministic
 \subsection{Bind Lemma}
 \label{sec:bind-lemma}
 
-\begin{code}
-𝒱V→ℰF[V] : Type → Type → Frame → Term → Setᵒ
-𝒱V→ℰF[V] A B F M = ∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
+In the next subsection we prove a compatibility lemma for every term
+constructor in the STLC. Many of those term constructors
+(\textsf{suc}, application, and \textsf{case}) have subexpressions
+that must reduce to a value prior to the reduction of the term.  The
+reasoning about those subexpressions is repetative, so we take the
+standard approach of proving the following ``bind'' lemma.
+It says that if one wants to prove that some term $F ⟦ M ⟧$ is
+well behaved, and if the subexpression $M$ is well-behaved,
+then it suffices to show that $F ⟦ V ⟧$ is well-behaved
+assuming that $M$ reduces to $V$ and $V$ is a well-behaved value.
 
+\begin{code}
+ℰ-bind : ∀{𝒫}{A}{B}{F}{M}
+   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ M
+   → 𝒫 ⊢ᵒ (∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧))
+   → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+\end{code}
+
+We shall need to refer to the second premise of the \textsf{ℰ-bind}
+lemma many times, so we define the following shorthand for it.
+
+\begin{code}
+Prem2 : Type → Type → Frame → Term → Setᵒ
+Prem2 A B F M = ∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
+\end{code}
+
+\noindent This property is preserved by reduction. 
+
+\begin{code}
+Prem2-reduction : ∀{𝒫}{A}{B}{F}{M}{M′} →  M —→ M′  →  𝒫 ⊢ᵒ Prem2 A B F M
+   → 𝒫 ⊢ᵒ Prem2 A B F M′
+Prem2-reduction {𝒫}{A}{B}{F}{M}{M′} M→M′ Prem2[M] =
+   Λᵒ[ V ] →ᵒI (→ᵒI M′→V→ℰFV) where
+   M′→V→ℰFV : ∀{V} → 𝒱⟦ B ⟧ V ∷ (M′ —↠ V)ᵒ ∷ 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
+   M′→V→ℰFV {V} = ⊢ᵒ-sucP (Sᵒ Zᵒ) λ M′→V → 
+                  let M—↠V = constᵒI (M —→⟨ M→M′ ⟩ M′→V) in
+                  let M→V→ℰFV = Sᵒ (Sᵒ (instᵒ Prem2[M] V)) in
+                  appᵒ (appᵒ M→V→ℰFV M—↠V) Zᵒ
+\end{code}
+
+The \textsf{ℰ-bind} lemma is proved by \textsf{lobᵒ} induction which
+requires us to reformulate the statement of the lemma entirely within
+SIL. So we define the following \textsf{ℰ-bind-prop} and auxilliary
+\textsf{ℰ-bind-M} shorthands for the statement of \textsf{ℰ-bind} in
+SIL.
+
+\begin{code}
 ℰ-bind-M : Type → Type → Frame → Term → Setᵒ
-ℰ-bind-M A B F M = ℰ⟦ B ⟧ M →ᵒ 𝒱V→ℰF[V] A B F M →ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+ℰ-bind-M A B F M = ℰ⟦ B ⟧ M →ᵒ Prem2 A B F M →ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
 
 ℰ-bind-prop : Type → Type → Frame → Setᵒ
 ℰ-bind-prop A B F = ∀ᵒ[ M ] ℰ-bind-M A B F M
-
-𝒱V→ℰF[V]-expansion : ∀{𝒫}{A}{B}{F}{M}{M′}
-   → M —→ M′
-   → 𝒫 ⊢ᵒ 𝒱V→ℰF[V] A B F M
-     -----------------------
-   → 𝒫 ⊢ᵒ 𝒱V→ℰF[V] A B F M′
-𝒱V→ℰF[V]-expansion {𝒫}{A}{B}{F}{M}{M′} M→M′ 𝒱V→ℰF[V][M] =
-   Λᵒ[ V ]
-    let M′→V→ℰFV : 𝒱⟦ B ⟧ V ∷ (M′ —↠ V)ᵒ ∷ 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
-        M′→V→ℰFV = ⊢ᵒ-sucP (Sᵒ Zᵒ) λ M′→V → 
-                     let M—↠V = constᵒI (M —→⟨ M→M′ ⟩ M′→V) in
-                     let M→V→ℰFV = Sᵒ(Sᵒ(instᵒ 𝒱V→ℰF[V][M] V)) in
-                     appᵒ (appᵒ M→V→ℰFV M—↠V) Zᵒ in
-    →ᵒI (→ᵒI M′→V→ℰFV)
 \end{code}
 
+Figure~\ref{fig:bind-lemma} shows the proof of \textsf{𝒫 ⊢ᵒ
+ℰ-bind-prop A B F} and \textsf{ℰ-bind} as a corollary. Note that after
+the use of \textsf{lobᵒ} induction, we obtain the premise \textsf{▷ᵒ
+ℰ-bind-prop A B F} which serves as the induction hypothesis. We then
+perform case analysis on the fact that $M$ is well-behaved and
+therefore satisfies progress, so it is either a well-behaved value or
+it can reduce. In the case $M$ is a value, we conclude immediately by
+applying the second premise, noting that $M$ reduces in zero steps to
+itself. In case $M$ reduces to some $M′$, we need to prove that $F ⟦ M ⟧$ satisfies
+progress and preservation and is therefore well behaved. The progress
+part is easy because $F ⟦ M ⟧$ reduces by rule $ξ$. Regarding preservation,
+we may assume $F ⟦ M ⟧$ takes a step to some $N$ and need to prove that $▷ᵒ \,ℰ⟦ A ⟧ \, N$.
+By the \textsf{frame-inv} lemma (in the Appendix), we have $N = F ⟦ M′ ⟧$.
+So we need to show that $▷ᵒ \,ℰ⟦ A ⟧ \, F ⟦ M′ ⟧$.
+We obtain this by the induction hypothesis instantiated on $M′$,
+so we must satisfy its two premises.
+From $ℰ⟦ B ⟧ \, M$ we have $▷ᵒ \, ℰ⟦ B ⟧ \, M′$ (by preservation)
+and by \textsf{Prem2-reduction} and \textsf{monoᵒ}
+we have $▷ᵒ\, (\textsf{Prem2}\, A\, B\, F\, M′)$.
+Note that the application of the induction hypothesis requires several
+uses of the distributive rules ▷→ and ▷∀ to push ▷ᵒ through those
+other logical connectives.
 
+
+\begin{figure}[tbp]
+\small
 \begin{code}
 ℰ-bind-aux : ∀{𝒫}{A}{B}{F} → 𝒫 ⊢ᵒ ℰ-bind-prop A B F
-ℰ-bind-aux {𝒫}{A}{B}{F} = lobᵒ (Λᵒ[ M ] →ᵒI (→ᵒI Goal))
-  where
-  Goal : ∀{M} → (𝒱V→ℰF[V] A B F M) ∷ ℰ⟦ B ⟧ M ∷ ▷ᵒ ℰ-bind-prop A B F ∷ 𝒫
-                 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
-  Goal{M} =
-   caseᵒ (ℰ-progress (Sᵒ Zᵒ)) Mval Mred 
+ℰ-bind-aux {𝒫}{A}{B}{F} = lobᵒ (Λᵒ[ M ] →ᵒI (→ᵒI aux)) where
+  aux : ∀{M} → (Prem2 A B F M) ∷ ℰ⟦ B ⟧ M ∷ ▷ᵒ ℰ-bind-prop A B F ∷ 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
+  aux {M} = caseᵒ (proj₁ᵒ (substᵒ ℰ-stmt (Sᵒ Zᵒ))) Mval Mred 
    where
-   𝒫′ = (𝒱V→ℰF[V] A B F M) ∷ ℰ⟦ B ⟧ M ∷ ▷ᵒ ℰ-bind-prop A B F ∷ 𝒫
+   𝒫′ = (Prem2 A B F M) ∷ ℰ⟦ B ⟧ M ∷ ▷ᵒ ℰ-bind-prop A B F ∷ 𝒫
 
    Mval : 𝒱⟦ B ⟧ M ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
-   Mval =
-     let 𝒱V→ℰF[V][M] = λ V → (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧) in
-     appᵒ (appᵒ (instᵒ{ϕᵃ = 𝒱V→ℰF[V][M]} (Sᵒ Zᵒ) M) (constᵒI (M END))) Zᵒ
+   Mval = let Prem2[M] = λ V → (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧) in
+          appᵒ (appᵒ (instᵒ{ϕᵃ = Prem2[M]} (Sᵒ Zᵒ) M) (constᵒI (M END))) Zᵒ
 
    Mred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mred = ℰ-intro progressMred preservationMred
@@ -88,39 +138,32 @@ open import cpp2024.STLCDeterministic
 
     preservationMred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ preservation A (F ⟦ M ⟧)
     preservationMred = (constᵒE Zᵒ λ redM →
-                Sᵒ (Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ FM→N →
-                                          Sᵒ (redM⇒▷ℰN redM FM→N))))
+                Sᵒ (Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ FM→N → Sᵒ (redM⇒▷ℰN redM FM→N))))
      where
      redM⇒▷ℰN : ∀{N} → reducible M → (F ⟦ M ⟧ —→ N) → 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)
-     redM⇒▷ℰN {N} rM FM→N =
-      let finv = frame-inv2{M}{N}{F} rM FM→N in
-      let M′ = proj₁ finv in
-      let M→M′ = proj₁ (proj₂ finv) in
-      let N≡ = proj₂ (proj₂ finv) in
+     redM⇒▷ℰN {N} rM FM→N
+         with frame-inv{M}{N}{F} rM FM→N
+     ... | M′ , M→M′ , N≡F[M′] =
       let ▷ℰM′ : 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M′
           ▷ℰM′ = appᵒ (instᵒ{ϕᵃ = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
-                        (ℰ-preservation (Sᵒ Zᵒ)) M′)
-                      (constᵒI M→M′) in
-      let ▷M′→V→𝒱V→ℰFV : 𝒫′ ⊢ᵒ ▷ᵒ (𝒱V→ℰF[V] A B F M′)
-          ▷M′→V→𝒱V→ℰFV = monoᵒ (𝒱V→ℰF[V]-expansion{𝒫′}{A}{B} M→M′ Zᵒ) in
+                        (proj₂ᵒ (substᵒ ℰ-stmt (Sᵒ Zᵒ))) M′) (constᵒI M→M′) in
+      let ▷M′→V→𝒱V→ℰFV : 𝒫′ ⊢ᵒ ▷ᵒ (Prem2 A B F M′)
+          ▷M′→V→𝒱V→ℰFV = monoᵒ (Prem2-reduction{𝒫′}{A}{B} M→M′ Zᵒ) in
       let IH : 𝒫′ ⊢ᵒ ▷ᵒ ℰ-bind-prop A B F
           IH = Sᵒ (Sᵒ Zᵒ) in
       let ▷ℰFM′ : 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (F ⟦ M′ ⟧))
-          ▷ℰFM′ = frame-prop-lemma IH ▷ℰM′ ▷M′→V→𝒱V→ℰFV in
-      subst (λ N → 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ N) (sym N≡) ▷ℰFM′
-      where
-      frame-prop-lemma : ∀{𝒫}{A}{B}{M}{F}
-         → 𝒫 ⊢ᵒ ▷ᵒ ℰ-bind-prop A B F  →  𝒫 ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M
-         → 𝒫 ⊢ᵒ ▷ᵒ 𝒱V→ℰF[V] A B F M   →  𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (F ⟦ M ⟧))
-      frame-prop-lemma{𝒫}{A}{B}{M}{F} IH ℰM V→FV =
-       appᵒ(▷→ (appᵒ(▷→ (instᵒ(▷∀{ϕᵃ = λ M → ℰ-bind-M A B F M} IH) M)) ℰM)) V→FV
-
-ℰ-bind : ∀{𝒫}{A}{B}{F}{M}
-   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ M
-   → 𝒫 ⊢ᵒ (∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧))
-     ----------------------------------------------------------
-   → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
-ℰ-bind {𝒫}{A}{B}{F}{M} ⊢ℰM ⊢𝒱V→ℰFV =
-  appᵒ (appᵒ (instᵒ{𝒫 = 𝒫}{ϕᵃ = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
+          ▷ℰFM′ = let ϕᵃ = λ M → ℰ-bind-M A B F M in
+                  appᵒ(▷→ (appᵒ(▷→ (instᵒ(▷∀{ϕᵃ = ϕᵃ} IH) M′)) ▷ℰM′)) ▷M′→V→𝒱V→ℰFV in
+      subst (λ N → 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ N) (sym N≡F[M′]) ▷ℰFM′
 \end{code}
 
+\begin{code}
+ℰ-bind {𝒫}{A}{B}{F}{M} ⊢ℰM ⊢𝒱V→ℰFV =
+  appᵒ (appᵒ (instᵒ{ϕᵃ = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
+\end{code}
+\caption{Proof of the \textsf{ℰ-bind} lemma.}
+\label{fig:bind-lemma}
+\end{figure}
+
+
+\clearpage
