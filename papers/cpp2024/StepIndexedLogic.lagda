@@ -61,9 +61,9 @@ Let $p, q, r$ range over (regular) propositions.
 variable p q r : Set
 \end{code}
 
-The ``true'' formula for SIL is embedded in Agda by defining an instance
-of the $\mathsf{Set}ᵒ$ record type, with the representation function
-mapping every natural number to true. The proofs of
+The ``true'' formula of SIL is embedded in Agda by constructing an
+instance of the $\mathsf{Set}ᵒ$ record type, with the representation
+function mapping every natural number to true. The proofs of
 downward-closedness and true-at-zero are straightforward.
 
 \begin{code}
@@ -141,7 +141,7 @@ We define the constantly true predicate as follows.
 ⊤ᵖ = (λ a → ⊤ᵒ)
 \end{code}
 
-The equivalence of predicates applied to the same argument forms and
+The equivalence of predicates applied to the same argument forms an
 equivalence relation.
 
 \begin{code}
@@ -159,11 +159,10 @@ equivalence relation.
 \label{sec:fun-approx-iter}
 
 The definition of recursive predicates and their fixpoint theorem rely
-on three concepts that we introduce in this section: functionals,
-$k$-approximation, and iteration.  In the section we introduce these
-concepts and prove several important lemmas concerning them. We adapt
-these definitions and lemmas from \citet{Appel:2001aa}, who apply them
-to the semantics of recursive types.
+on three concepts that we define in this section: functionals,
+$k$-approximation, and iteration.  We also prove several important
+lemmas concerning them. These definitions and lemmas are adapted from
+\citet{Appel:2001aa}.
 
 In our setting, a \emph{functional} is a function over step-indexed
 predicates.  Let $f,g,h$ range over functionals.
@@ -180,8 +179,8 @@ congruentᵖ : (Predᵒ A → Predᵒ B) → Set₁
 congruentᵖ f = ∀ {P Q} → (∀ a → P a ≡ᵒ Q a) → ∀ b → (f P b) ≡ᵒ (f Q b)
 \end{code}
 
-The $k$-approximation of a step-indexed predicate, $↓\, k\, ϕ$, is true at
-$i$ if $ϕ$ at $i$ is true and $i < k$, except when $k = 0$, in which
+The $k$-approximation of a step-indexed proposition, written $↓\, k\, ϕ$,
+is true at $i$ if $ϕ$ at $i$ is true and $i < k$, except when $k = 0$, in which
 case $↓\, k\, ϕ$ is true unconditionally.
 
 \begin{code}
@@ -208,8 +207,8 @@ propositions as follows.
 ↓ᵒ k ϕ = record { # = ↓ k (# ϕ) ; down = ↓-down {ϕ} k ; tz = tt }
 \end{code}
 
-The $k$-approximations of any two step-indexed propositions are
-equivalent when $k=0$ and $k=1$.
+\noindent The $k$-approximations of any two step-indexed propositions
+are equivalent when $k=0$ and $k=1$.
 
 \begin{code}
 ↓ᵒ-zero : ↓ᵒ zero ϕ ≡ᵒ ↓ᵒ zero ψ
@@ -1472,10 +1471,18 @@ const-strong {Γ}{A}{Δ} p x
 p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → const-strong p x ; congr = λ d=d′ → ≡ᵒ-refl refl }
 \end{code}
 
-\subsection{False}
+\subsection{True and False}
 
-The false formula of Agda is lifted into SIL by using the constant
-operators.
+We already defined ⊤ᵒ, but it remains to construct the open variant of
+the true formula, written ⊤ˢ. We do so by lifting Agda's true into SIL
+using the constant operator.
+
+\begin{code}
+⊤ˢ : Setˢ Γ (laters Γ)
+⊤ˢ = ⊤ ˢ
+\end{code}
+
+We similarly lift the false formula of Agda into SIL.
 
 \begin{code}
 ⊥ᵒ : Setᵒ
