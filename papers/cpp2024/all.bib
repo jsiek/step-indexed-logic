@@ -1,12 +1,61 @@
 %% This BibTeX bibliography file was created using BibDesk.
 %% https://bibdesk.sourceforge.io/
 
-%% Created for Jeremy Siek at 2023-06-15 14:58:45 -0400 
+%% Created for Jeremy Siek at 2023-07-21 15:08:14 -0400 
 
 
 %% Saved with string encoding Unicode (UTF-8) 
 
 
+
+@unpublished{Timany:2022aa,
+	author = {A. Timany and R. Krebbers and D. Dreyer and L. Birkedal},
+	date-added = {2023-07-21 13:15:30 -0400},
+	date-modified = {2023-07-21 13:16:39 -0400},
+	title = {A Logical Approach to Type Soundness},
+	year = {2022}}
+
+@article{Vezzosi:2019aa,
+	abstract = {Proof assistants based on dependent type theory provide expressive languages for both programming and proving within the same system. However, all of the major implementations lack powerful extensionality principles for reasoning about equality, such as function and propositional extensionality. These principles are typically added axiomatically which disrupts the constructive properties of these systems. Cubical type theory provides a solution by giving computational meaning to Homotopy Type Theory and Univalent Foundations, in particular to the univalence axiom and higher inductive types. This paper describes an extension of the dependently typed functional programming language Agda with cubical primitives, making it into a full-blown proof assistant with native support for univalence and a general schema of higher inductive types. These new primitives make function and propositional extensionality as well as quotient types directly definable with computational content. Additionally, thanks also to copatterns, bisimilarity is equivalent to equality for coinductive types. This extends Agda with support for a wide range of extensionality principles, without sacrificing type checking and constructivity.},
+	address = {New York, NY, USA},
+	articleno = {87},
+	author = {Vezzosi, Andrea and M\"{o}rtberg, Anders and Abel, Andreas},
+	date-added = {2023-07-21 12:06:53 -0400},
+	date-modified = {2023-07-21 12:06:58 -0400},
+	doi = {10.1145/3341691},
+	issue_date = {August 2019},
+	journal = {Proc. ACM Program. Lang.},
+	keywords = {Dependent Pattern Matching, Univalence, Cubical Type Theory, Higher Inductive Types},
+	month = {jul},
+	number = {ICFP},
+	numpages = {29},
+	publisher = {Association for Computing Machinery},
+	title = {Cubical Agda: A Dependently Typed Programming Language with Univalence and Higher Inductive Types},
+	url = {https://doi.org/10.1145/3341691},
+	volume = {3},
+	year = {2019},
+	bdsk-url-1 = {https://doi.org/10.1145/3341691}}
+
+@inproceedings{Veltri:2020aa,
+	abstract = {Dependent type theories with guarded recursion have shown themselves suitable for the development of denotational semantics of programming languages. In particular Ticked Cubical Type Theory (TCTT) has been used to show that for guarded labelled transition systems (GLTS) interpretation into the denotational semantics maps bisimilar processes to equal values. In fact the two notions are proved equivalent, allowing one to reason about equality in place of bisimilarity. We extend that result to the π-calculus, picking early congruence as the syntactic notion of equivalence between processes, showing that denotational models based on guarded recursive types can handle the dynamic creation of channels that goes beyond the scope of GLTSs. Hence we present a fully abstract denotational model for the early π-calculus, formalized as an extended example for Guarded Cubical Agda: a novel implementation of Ticked Cubical Type Theory based on Cubical Agda.},
+	address = {New York, NY, USA},
+	author = {Veltri, Niccol\`{o} and Vezzosi, Andrea},
+	booktitle = {Proceedings of the 9th ACM SIGPLAN International Conference on Certified Programs and Proofs},
+	date-added = {2023-07-21 11:51:06 -0400},
+	date-modified = {2023-07-21 15:08:13 -0400},
+	doi = {10.1145/3372885.3373814},
+	isbn = {9781450370974},
+	keywords = {ticked cubical type theory, denotational semantics, guarded recursion, pi-calculus},
+	location = {New Orleans, LA, USA},
+	numpages = {14},
+	pages = {270--283},
+	publisher = {Association for Computing Machinery},
+	series = {CPP 2020},
+	title = {Formalizing $\pi$-Calculus in Guarded Cubical Agda},
+	url = {https://doi.org/10.1145/3372885.3373814},
+	year = {2020},
+	bdsk-file-1 = {YnBsaXN0MDDRAQJccmVsYXRpdmVQYXRoXxAWR3VhcmRlZEN1YmljYWxBZ2RhLnBkZggLGAAAAAAAAAEBAAAAAAAAAAMAAAAAAAAAAAAAAAAAAAAx},
+	bdsk-url-1 = {https://doi.org/10.1145/3372885.3373814}}
 
 @article{Tait:1967aa,
 	author = {W. W. Tait},
@@ -2063,27 +2112,6 @@ machine.},
 	title = {SCADS},
 	year = {2015},
 	bdsk-file-1 = {YnBsaXN0MDDRAQJccmVsYXRpdmVQYXRobxAjAEsAdQBnAGwAZQByAC0ATQD8AGwAbABlAHIAMgAwADEANQBfAEMAaABhAHAAdABlAHIAXwBTAEMAQQBEAFMALgBwAGQAZggLGAAAAAAAAAEBAAAAAAAAAAMAAAAAAAAAAAAAAAAAAABh}}
-
-@article{10.1145/2034574.2034796,
-	address = {New York, NY, USA},
-	author = {Devriese, Dominique and Piessens, Frank},
-	date-added = {2020-06-19 09:22:28 -0400},
-	date-modified = {2020-06-19 09:22:28 -0400},
-	doi = {10.1145/2034574.2034796},
-	issn = {0362-1340},
-	issue_date = {September 2011},
-	journal = {SIGPLAN Not.},
-	keywords = {type classes, agda, instance arguments, ad hoc polymorphism},
-	month = sep,
-	number = {9},
-	numpages = {13},
-	pages = {143--155},
-	publisher = {Association for Computing Machinery},
-	title = {On the Bright Side of Type Classes: Instance Arguments in Agda},
-	url = {https://doi.org/10.1145/2034574.2034796},
-	volume = {46},
-	year = {2011},
-	bdsk-url-1 = {https://doi.org/10.1145/2034574.2034796}}
 
 @unpublished{McBride:2005aa,
 	author = {Conor McBride},

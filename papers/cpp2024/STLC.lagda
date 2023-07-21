@@ -35,6 +35,7 @@ open import EquivalenceRelation public
 \end{comment}
 
 \section{Case Study: Type Safety of the STLC with Recursive Functions}
+\label{sec:STLC}
 
 We provide an example application of our Step-Indexed Logic with a
 case study in proving semantic type safety for the STLC with recursive

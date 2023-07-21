@@ -27,6 +27,7 @@ postulate impossible : {A : Set} → A
 
 %===============================================================================
 \section{Representation of Step-Indexed Propositions}
+\label{sec:propositions}
 
 We represent the meaning of a step-indexed proposition with an Agda
 function from natural numbers to \textsf{Set}, which is the Agda type
@@ -111,6 +112,7 @@ instance
 \end{code}
 
 \section{Representation of Step-Indexed Predicates}
+\label{sec:predicates}
 
 To express step-indexed predicates over arbitrary Agda types, we
 define the type $\mathsf{Pred}ᵒ A$ to be a function from $A$ to
@@ -2010,6 +2012,7 @@ Next we turn to the proof theory of SIL.
 
 
 \section{Proof Theory for Step-Indexed Logic}
+\label{sec:proofs}
 
 The entailment relation of SIL $𝒫 ⊢ᵒ ϕ$ says that if the list of
 propositions $𝒫$ are true at time $k$, then $ϕ$ must also be true at

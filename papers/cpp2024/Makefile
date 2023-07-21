@@ -6,8 +6,12 @@ paper.pdf: paper.tex latex/cpp2024/StepIndexedLogic.tex latex/cpp2024/STLC.tex l
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 
+texclean:
+	rm -f paper.out paper.aux paper.bbl paper.blg
+
 clean:
-	rm -f paper.aux latex/cpp2024/*
+	rm -f paper.out paper.aux paper.bbl paper.blg latex/cpp2024/*
+
 
 latex/cpp2024/StepIndexedLogic.tex: StepIndexedLogic.lagda
 	agda --latex StepIndexedLogic.lagda

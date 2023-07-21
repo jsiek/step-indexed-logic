@@ -128,7 +128,8 @@
 \newcommand{\reduce}{\longrightarrow}
 \newcommand{\inj}[2]{#1 \,!\, #2}
 \newcommand{\proj}[2]{#1 \,?\, #2}
-\newcommand{\kapprox}{\mathrm{approx}}
+% \newcommand{\kapprox}[2]{\mathrm{approx}(#1, #2)}
+\newcommand{\kapprox}[2]{↓_{#1}\, #2}
 \newcommand{\varnow}{\mathsf{var}\mbox{-}\mathsf{now}}
 \newcommand{\laters}{\mathsf{laters}}
 \newcommand{\Now}{\mathsf{Now}}
@@ -206,6 +207,7 @@
 \newunicodechar{ƛ}{\ensuremath{\mathnormal\lambdabar}}
 \newunicodechar{Λ}{\ensuremath{\mathnormal\Lambda}}
 \newunicodechar{μ}{\ensuremath{\mu}}
+\newunicodechar{π}{\ensuremath{\pi}}
 \newunicodechar{ν}{\ensuremath{\nu}}
 \newunicodechar{ϕ}{\ensuremath{\phi}}
 \newunicodechar{ψ}{\ensuremath{\psi}}
@@ -297,11 +299,9 @@
   Step-indexed logical relations are an important tool in the
   metatheory of programming
   languages~\citep{Appel:2001aa,Ahmed:2006aa}, and their application
-  can be streamlined by use of modal logics such as
-  LSLR~\citep{Dreyer:2011wl}.  The Iris system~\citep{JUNG:2018aa}
-  provides support for reasoning about step-indexed logical relations
-  in the Coq proof assistant. This paper describes a shallow embedding
-  of a step-indexed modal logic in Agda and its application to a semantic
+  can be streamlined by use of step-indexed modal logics such as
+  LSLR~\citep{Dreyer:2011wl}.  This paper describes an embedding of a
+  step-indexed modal logic in Agda and its application to a semantic
   type safety proof for the Simply-Typed Lambda Calculus extended with
   recursive functions.
 \end{abstract}
@@ -343,66 +343,115 @@
 \label{sec:intro}
 
 Logical relations are a useful technique for proving properties of
-programming languages, from type safety to relational parametricity
-and noninterference.  Initially, logical relations were applied to
-terminating languages such as the Simply Typed Lambda
-Calculus~\citep{Tait:1967aa} and System F~\citep{GIRARD72}, but
-\citet{Appel:2001aa} extended the technique to handle languages with
-nontermination by introducing a step index into the logical
-relation. After some experience with applications of step-indexed
-logical
-relations~\citep{Ahmed:2004eu,Ahmed:2009aa,Neis:2009fk,Hur:2011aa},
-\citet{Dreyer:2011wl} designed the LSLR logic to streamline the
-reasoning about step indexes. Their research program eventually
-produced Iris~\citep{JUNG:2018aa}, a system that supports a
-combination of step indexed logical relations and separation logic
-within the Coq proof
+programming languages, from type safety~\citep{Timany:2022aa} to
+relational parametricity~\citep{REYNOLDS83}, and
+noninterference~\citep{heintze1998slam}.  Initially, logical relations
+were applied to terminating languages such as the Simply Typed Lambda
+Calculus~\citep{Tait:1967aa} and System F~\citep{GIRARD72}.
+\citet{Appel:2001aa} introduced step-indexed logical relations to
+handle languages with recursive types.  \citet{Dreyer:2011wl} designed
+the LSLR logic to streamline the reasoning about step indexed logical
+relations.  This work eventually led to Iris~\citep{JUNG:2018aa}, a
+system that supports a combination of step indexing and separation
+logic within the Coq proof
 assistant~\citep{The-Coq-Development-Team:2004kf,Huet:2016aa}.
 
-TODO: discuss guarded cubical agda
-
-The author is interested in step-indexed logical relations for
+The authors are interested in using step-indexed logical relations for
 purposes of developing mechanized proofs in Agda of the Gradual
 Guarantee~\citep{Siek:2015ac} and Parametricity~\citep{REYNOLDS74C}
 for gradually-typed polymorphic
-languages~\citep{Ahmed:2011fk,Ahmed:2017aa,Igarashi:2017aa,New:2019ab,Labrada:2020tk}.
-To streamline such developments in Agda, we need support for a
-step-indexed logic in Agda. This paper fills that need by showing how
-to build a shallow embedding of a step-indexed logic in Agda, a system
-that we abbreviate as SIL. To evaluate the utility of SIL, we present
-a case study of proving semantic type safety of a simple cast
-calculus, i.e., an internal language for the Gradually-Typed Lambda
-Calculus (GTLC)~\citep{Siek:2006bh,Siek:2007qy}. We find that SIL
-streamlines the definition of logical relations and is helpful in many
-of the proofs, but there is room for improvement regarding the
-ergonomics of interactive proof development using SIL.  Limitations in
-Agda's inference algorithm sometimes leads to verbosity in SIL
-proofs. It is worth noting that the authors have also proved the
-Gradual Guarantee for the GTLC using SIL and the lesssons from that
-experience confirm the findings in this paper.
+languages~\citep{Ahmed:2011fk,Ahmed:2017aa,Igarashi:2017aa,New:2019ab,Labrada:2020tk}. One
+option would be to use Guarded Cubical Agda~\citep{Veltri:2020aa}, but
+both Cubical Agda~\citep{Vezzosi:2019aa} and its extension with
+guarded fixpoints are experimental features of Agda that may not be
+supported indefinitely.  We would prefer to have a step-indexed logic
+that is embedded in (vanilla) Agda.
 
-
-
-Our goal is to define an operator for recursive predicates and relations
-with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
-recursive relation and $R$ is the definition of the relation, which
-can refer to $x$. We shall prove a fixpoint theorem which states that
-the recursive predicate is equal to its unfolding, something like the
-following.
+This paper fills that need by showing how to build a step-indexed
+logic in Agda, a system that we abbreviate as SIL.  This paper is a
+literate Agda file; all of the definitions and proofs have been
+checked with Agda 2.6.2.2. 
+%
+Most of the challenge in defining a step-indexed logic is in the
+definition of recursive predicates and their fixpoint theorem. The
+step-indexed models of \citet{Appel:2001aa} rely on an approximation
+operator, here written as $↓_n$, to define the semantic criteria for
+valid recursive definitions.  For example, they define a nonexpansive
+function to be one that satisfies
 \[
-  (μᵒ x. R) \app δ \app a ≡ᵒ R \app δ(x:= μᵒ x. R) \app a
+  ↓_n f(x) = ↓_n f(↓_n x)
 \]
-where $δ$ is an environment mapping variables to predicates.
+The step-indexed models of \citet{JUNG:2018aa} instead rely on
+a step-indexed notion of equality. For example, they define a
+nonexpansive function as one that satisfies
+\[
+  x \stackrel{n}{=} y \text{ implies } f(x) \stackrel{n}{=} f(y)
+\]
+We are not aware of any inherent reason to prefer one approach to the
+other, so we choose the approach of \citet{Appel:2001aa} because they
+provide perspicuous proofs of their fixpoint theorem.  So our approach
+to SIL can be seen as an implementation of the LSLR logic of
+\citet{Dreyer:2011wl} using the foundations of
+\citet{Appel:2001aa}. In particular, SIL defines the recursive
+predicate of SIL using function iteration, like this:
+\[
+  ⟦ μ F ⟧ \, x \, n = F^{n\plus 1}\, \top \, x \, n
+\]
+whereas LSLR uses substitution in the semantics of recursive types:
+\[
+   ⟦ μ r. R ⟧ \, x \, n = ⟦ R[μr.R/r] ⟧\,x\,n
+\]
 
+However, adapting the work of \citet{Appel:2001aa} to our setting was
+nontrivial because (1) their model is for recursive types, not a modal
+logic, and (2) their proofs were incomplete (which we learned part way
+through our development of SIL). To enable the nesting of recursive
+types inside other recursive types, one must prove that the $μ$ type
+constructor is nonexpansive and well founded, but \citet{Appel:2001aa}
+does not prove this (they prove those properties for the other type
+constructors).  We discuss this problem and its remedy in sections
+\ref{sec:appel-mcallester} and \ref{sec:open-propositions}.
 
+We organize this paper as follows. We review Appel an McAllester's
+work in Section~\ref{sec:appel-mcallester}, then introduce our
+representation of step-indexed propositions and predicates in Agda in
+Sections \ref{sec:propositions} and \ref{sec:predicates}.  We
+formalize several important concepts in
+Section~\ref{sec:fun-approx-iter}: functionals, approximation, and
+iteration, and prove some basic results about them.  We construct all
+of the logical connectives of SIL in
+Section~\ref{sec:open-propositions}, including the definition of
+recursive predicates and their fixpoint theorem.  The proof theory of
+SIL is developed in Section~\ref{sec:proofs}, where we construct the
+proof rules of this modal logic.  To evaluate the utility of SIL,
+Section~\ref{sec:STLC} presents a case study of proving semantic type
+safety for the Simply Typed Lambda Calculus extended with recursive
+functions. We find that SIL streamlines the definition of logical
+relations and is helpful in many of the proofs, but there is room for
+improvement regarding the ergonomics of interactive proof development
+using SIL.  Limitations in Agda's inference algorithm sometimes leads
+to verbosity in SIL proofs.
 
-Our proof of this fixpoint theorem is inspired by the fixpoint theorem
-of \citet{Appel:2001aa}. In that work, \citet{Appel:2001aa} use
-step-indexing to give a semantic definition of recursive types. Their
-fixpoint theorem proves that a recursive type is equal to its unfolding.
-They define a (semantic) type $\tau$ to be a relation between step indexes and
-syntactic values. They do not define a syntax for types, but instead
-define operators for constructing semantic types as follows.
+%% Our goal is to define an operator for recursive predicates and relations
+%% with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
+%% recursive relation and $R$ is the definition of the relation, which
+%% can refer to $x$. We shall prove a fixpoint theorem which states that
+%% the recursive predicate is equal to its unfolding, something like the
+%% following.
+%% \[
+%%   (μᵒ x. R) \app δ \app a ≡ᵒ R \app δ(x:= μᵒ x. R) \app a
+%% \]
+%% where $δ$ is an environment mapping variables to predicates.
+
+\section{Review of Appel and McAllester's Fixpoint Theorem}
+\label{sec:appel-mcallester}
+
+Our proof of the fixpoint theorem for SIL is inspired by the fixpoint
+theorem of \citet{Appel:2001aa}. Their fixpoint theorem proves that a
+recursive type is equal to its unfolding.  They define a (semantic)
+type $\tau$ to be a relation between step indexes and syntactic
+values. They do not define a syntax for types, but instead define
+operators for constructing semantic types as follows.
 \begin{align*}
   ⊥ &= \{ \} \\
   ⊤ &= \{ ⟨k,v⟩ \mid k ∈ ℕ\} \\
@@ -422,12 +471,12 @@ on later pairs in the input, that is, pairs of the form $⟨j,v′⟩$
 where $j < k$. \citet{Appel:2001aa} characterize this dependency
 with the help of the $k$-approximation function:
 \[
-  \kapprox(k,τ) = \{ ⟨j,v⟩ \mid j < k, ⟨j,v⟩ ∈ τ\} 
+  \kapprox{k}{τ} = \{ ⟨j,v⟩ \mid j < k, ⟨j,v⟩ ∈ τ\} 
 \]
 They define a \emph{well founded} function $F$ to be one that
 satisfies the following equation.
 \[
-  \kapprox(k \plus 1, F(τ)) = \kapprox(k \plus 1, F(\kapprox(k,τ)))
+  \kapprox{k \plus 1}{F(τ)} = \kapprox{k \plus 1}{F(\kapprox{k}{τ})}
 \]
 
 Functions over semantic types are not always well founded.  For
@@ -445,41 +494,39 @@ function. In such a function, the output can depend on pairs at the
 current step index as well as later ones. So a \emph{nonexpansive}
 function satisfies the following equation.
 \[
-  \kapprox(k, F(τ)) = \kapprox(k, F(\kapprox(k,τ)))
+  \kapprox{k}{F(τ)} = \kapprox{k}{F(\kapprox{k}{τ})}
 \]
 For example, $λα.α$ is nonexpansive and so is $λα.\mathbf{int}$.
 \citet{Appel:2001aa} then prove lemmas about the type constructors.
 For example, regarding products, they prove that if $F$ and $G$
 are nonexpansive functions, then so is $λ α. (F α) × (G α)$.
 
-It is worth noting that \citet{Appel:2001aa} neglect to prove such 
-lemmas for the $μ$ operator itself. For example, given $F : τ₁ → τ₂ → τ₃$
-that is nonexpansive in its first parameter and well founded in
-its second, then $λ α. μ (F α)$ is nonexpansive.
-On the other hand, if $F$ is well founded in both parameters,
-then $λ α. μ (F α)$ is well founded. We shall return to this point later.
-
+However, \citet{Appel:2001aa} neglect to prove such lemmas for the $μ$
+operator itself. For example, given $F : τ₁ → τ₂ → τ₃$ that is
+nonexpansive in its first parameter and well founded in its second,
+then $λ α. μ (F α)$ is nonexpansive.  On the other hand, if $F$ is
+well founded in both parameters, then $λ α. μ (F α)$ is well founded.
 
 Comparing the type operators of \citet{Appel:2001aa} to the logic
 operators of SIL, there are striking similarities. The function type
 operator is quite similar to implication, although one difference is
 that the function type operator uses strict less-than whereas
-implication uses non-strict less-than. The logic introduces the
-``later`` operator, whereas the type operators essentially bake the
-later operator into the type operators through their use of strict
+implication uses non-strict less-than. The logic introduces the later
+operator, whereas the type operators essentially bake the later
+operator into the type operators through their use of strict
 less-than.
 
-Our definition of recursive predicates will be similar to the
-recursive type of \citet{Appel:2001aa} in that we shall define the
-meaning of a recursive predicate by iteration.  On the other hand, we
-do not want a fixpoint theorem that requires the user of the logic to
-provide a proof that a particular proposition is well
-founded. Instead, we shall introduce a type system for propositions
-that ensure that $μ$ is only applied to well founded propositions, and
-that the proof of well foundedness is provided by our logic operators,
-not by the user of the logic.
+As noted above, our semantics of recursive predicates is similar to
+the recursive type of \citet{Appel:2001aa} in that we define recursive
+predicates via iteration.
+%
+However, we do not want to require users of the logic to have to prove
+the well foundedness of their recursive formulas.  Instead, we
+introduce a type system for propositions that ensure that $μ$ is only
+applied to well founded formulas, and that the proof of well
+foundedness is provided by our logical connectives, not by the user of
+the logic.
 
-TODO: ROAD MAP
 
 \input{latex/cpp2024/StepIndexedLogic.tex}
 
