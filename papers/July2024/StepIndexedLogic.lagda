@@ -1,5 +1,6 @@
 \begin{comment}
 \begin{code}
+{-# OPTIONS --without-K #-}
 module July2024.StepIndexedLogic where
 
 open import Data.Empty using (⊥; ⊥-elim)
