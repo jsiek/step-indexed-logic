@@ -2,7 +2,7 @@
 \begin{code}
 {-# OPTIONS --rewriting #-}
 
-module cpp2024.STLCBind where
+module July2024.STLCBind where
 
 open import Data.List using (List; []; _∷_; length)
 open import Data.Nat
@@ -28,9 +28,9 @@ open import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
-open import cpp2024.StepIndexedLogic
-open import cpp2024.STLC
-open import cpp2024.STLCDeterministic
+open import July2024.StepIndexedLogic
+open import July2024.STLC
+open import July2024.STLCDeterministic
 
 \end{code}
 \end{comment}

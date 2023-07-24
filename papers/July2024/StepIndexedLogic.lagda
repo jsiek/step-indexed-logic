@@ -1,6 +1,6 @@
 \begin{comment}
 \begin{code}
-module cpp2024.StepIndexedLogic where
+module July2024.StepIndexedLogic where
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)

@@ -300,10 +300,12 @@
   metatheory of programming
   languages~\citep{Appel:2001aa,Ahmed:2006aa}, and their application
   can be streamlined by use of step-indexed modal logics such as
-  LSLR~\citep{Dreyer:2011wl}.  This paper describes an embedding of a
-  step-indexed modal logic in Agda and its application to a semantic
-  type safety proof for the Simply-Typed Lambda Calculus extended with
-  recursive functions.
+  LSLR~\citep{Dreyer:2011wl}.  This paper describes a mechanization of
+  a step-indexed modal logic in the Agda proof assistant and its
+  application to a semantic type safety proof for the Simply-Typed
+  Lambda Calculus extended with recursive functions. The step-indexed
+  logic supports guarded recursive predicates via the later modality
+  and provides a fixpoint theorem adapted from \citet{Appel:2001aa}.
 \end{abstract}
 
 
@@ -528,18 +530,20 @@ foundedness is provided by our logical connectives, not by the user of
 the logic.
 
 
-\input{latex/cpp2024/StepIndexedLogic.tex}
+\input{latex/July2024/StepIndexedLogic.tex}
 
-\input{latex/cpp2024/STLC.tex}
-\input{latex/cpp2024/STLCBind.tex}
-\input{latex/cpp2024/STLCSafe.tex}
+\input{latex/July2024/STLC.tex}
+\input{latex/July2024/STLCBind.tex}
+\input{latex/July2024/STLCSafe.tex}
 
 \bibliographystyle{ACM-Reference-Format}
 \bibliography{all}
 
+\appendix
+\addcontentsline{toc}{section}{Appendix}
 \section*{Appendix}
 
-\input{latex/cpp2024/STLCDeterministic.tex}
+\input{latex/July2024/STLCDeterministic.tex}
 
 \end{document}
 \endinput
