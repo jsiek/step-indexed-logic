@@ -5,7 +5,7 @@ module July2024.OFE where
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat
-   using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
+   using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step; ≤-pred)
 open import Data.Nat.Properties
    using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s)
 open import Data.Product
@@ -26,14 +26,15 @@ postulate ex-mid : ∀ (P : Set) → P ⊎ ¬ P
 \end{code}
 \end{comment}
 
+The step-indexed equality a la Ordered Families of Equalities (OFE) that is used in Iris.
 \begin{code}
 _≡[_]_ : Setᵒ → ℕ → Setᵒ → Set
 ϕ ≡[ n ] ψ = ∀ m → m ≤ n → # ϕ m ⇔ # ψ m
 \end{code}
 
 \begin{code}
-OFE-approx-equiv : ∀{n : ℕ} → (↓ᵒ (suc n) ϕ ≡ᵒ ↓ᵒ (suc n) ψ ) ⇔ (ϕ ≡[ n ] ψ)
-OFE-approx-equiv {ϕ}{ψ}{n} = to , from
+kapprox-equiv-OFE : ∀{n} → (↓ᵒ (suc n) ϕ ≡ᵒ ↓ᵒ (suc n) ψ )  ⇔  (ϕ ≡[ n ] ψ)
+kapprox-equiv-OFE {ϕ}{ψ}{n} = to , from
   where to : ↓ᵒ (suc n) ϕ ≡ᵒ ↓ᵒ (suc n) ψ  →  ϕ ≡[ n ] ψ
         to ↓nϕ=↓nψ zero m≤n = (λ _ → tz ψ) , λ _ → tz ϕ
         to ↓nϕ=↓nψ (suc m) m≤n = toto , tofrom
@@ -56,34 +57,67 @@ OFE-approx-equiv {ϕ}{ψ}{n} = to , from
           fromfrom (s≤s k<n , ψsk) = (s≤s k<n) , (proj₂ (ϕ=nψ (suc k) k<n) ψsk)
 \end{code}
 
-
 \begin{code}
-abstract
-  _≡ᵒ[_]_ : Setᵒ → ℕ → Setᵒ → Set
-  ϕ ≡ᵒ[ n ] ψ = ↓ᵒ n ϕ ≡ᵒ ↓ᵒ n ψ 
-\end{code}
-
-≡ᵒ[] is an equivalence relation.
-
-\begin{code}
-abstract
-  ≡ᵒ[]-refl : ∀{n} → ϕ ≡ᵒ[ n ] ϕ
-  ≡ᵒ[]-refl = ≡ᵒ-refl refl
-
-  ≡ᵒ[]-sym : ∀{n} → ϕ ≡ᵒ[ n ] ψ → ψ ≡ᵒ[ n ] ϕ
-  ≡ᵒ[]-sym ϕ=ψ = ≡ᵒ-sym ϕ=ψ
-
-  ≡ᵒ[]-trans : ∀{n} → ϕ ≡ᵒ[ n ] ψ → ψ ≡ᵒ[ n ] þ → ϕ ≡ᵒ[ n ] þ
-  ≡ᵒ[]-trans ϕ=ψ ψ=þ = ≡ᵒ-trans ϕ=ψ ψ=þ
+nonexpansive : (Predᵒ A → Predᵒ B) → Set₁
+nonexpansive f = ∀ P k j → k ≤ j → ∀ b → ↓ᵒ k (f P b) ≡ᵒ ↓ᵒ k (f (↓ᵖ j P) b)
 \end{code}
 
 \begin{code}
-abstract
-  ≡ᵒ[]-mono : ∀ n m → m ≤ n → ϕ ≡ᵒ[ n ] ψ → ϕ ≡ᵒ[ m ] ψ
-  ≡ᵒ[]-mono {ϕ}{ψ} n m m≤n ϕ=[n]ψ =
-    let xx : ↓ᵒ n ϕ ≡ᵒ ↓ᵒ n ψ
-        xx = ϕ=[n]ψ in
-    let yy : ↓ᵒ m ϕ ≡ᵒ ↓ᵒ m ψ
-        yy = ≡ᵒ-intro λ k → (λ ↓mϕk → {!!}) , {!!} in
-    yy
+nonexpansive′ : (Predᵒ A → Predᵒ B) → Set₁
+nonexpansive′ f = ∀ P Q k → (∀ a → P a ≡[ k ] Q a) → ∀ b → (f P b) ≡[ k ] (f Q b)
+\end{code}
+
+
+\begin{code}
+NE⇒NE′ : ∀{A}{B}{f : Predᵒ A → Predᵒ B}
+  → congruentᵖ f
+  → nonexpansive f → nonexpansive′ f
+NE⇒NE′ {A}{B}{f} cong-f nef P Q k P=kQ b m m≤k = to m m≤k , fro m m≤k
+  where
+  to : ∀ m → m ≤ k → # (f P b) m → # (f Q b) m
+  to zero m≤k fPz = tz (f Q b)
+  to (suc m) sm≤k fPsm =
+      let ↓fP≡↓f↓P = nef P (2 + m) (2 + m) ≤-refl b in
+      let ↓fQ≡↓f↓Q = nef Q (2 + m) (2 + m) ≤-refl b in
+      let ↓P=↓Q = λ a → proj₂ (kapprox-equiv-OFE {ϕ = P a}{ψ = Q a}{n = suc m})
+                     λ n n≤sm → P=kQ a n (≤-trans n≤sm sm≤k) in
+      let f↓Psm = proj₂ (proj₁ (≡ᵒ-elim{k = suc m} ↓fP≡↓f↓P) (≤-refl , fPsm)) in
+      let f↓Qsm = proj₁ (≡ᵒ-elim{k = suc m} (cong-f ↓P=↓Q b)) f↓Psm in
+      let fQsm = proj₂ (proj₂ (≡ᵒ-elim{k = suc m} ↓fQ≡↓f↓Q) (≤-refl , f↓Qsm)) in
+      fQsm
+  fro : ∀ m → m ≤ k → # (f Q b) m → # (f P b) m
+  fro zero m≤k fQz = tz (f P b)
+  fro (suc m) sm≤k fQsm =
+      let ↓fP≡↓f↓P = nef P (2 + m) (2 + m) ≤-refl b in
+      let ↓fQ≡↓f↓Q = nef Q (2 + m) (2 + m) ≤-refl b in
+      let ↓P=↓Q = λ a → proj₂ (kapprox-equiv-OFE {ϕ = P a}{ψ = Q a}{n = suc m})
+                     λ n n≤sm → P=kQ a n (≤-trans n≤sm sm≤k) in
+      let f↓Qsm = proj₂ (proj₁ (≡ᵒ-elim{k = suc m} ↓fQ≡↓f↓Q) (≤-refl , fQsm)) in
+      let f↓Psm = proj₂ (≡ᵒ-elim{k = suc m} (cong-f ↓P=↓Q b)) f↓Qsm in
+      let fPsm = proj₂ (proj₂ (≡ᵒ-elim{k = suc m} ↓fP≡↓f↓P) (≤-refl , f↓Psm)) in
+      fPsm
+\end{code}
+
+\begin{code}
+NE′⇒NE : ∀{A}{B}{f : Predᵒ A → Predᵒ B}
+  → congruentᵖ f
+  → nonexpansive′ f → nonexpansive f
+NE′⇒NE {A} {B} {f} cong-f nef P .zero zero z≤n b = ↓ᵒ-zero
+NE′⇒NE {A} {B} {f} cong-f nef P k (suc j) k≤j b = ≡ᵒ-intro aux
+  where
+  aux : ∀ i → ↓ k (# (f P b)) i ⇔ ↓ k (# (f (↓ᵖ (suc j) P) b)) i
+  aux zero = (λ _ → tt) , λ _ → tt
+  aux (suc i) = to , fro
+    where
+    P=[j]=↓sjP : (a : A) → P a ≡[ j ] ↓ᵖ (suc j) P a
+    P=[j]=↓sjP a zero m≤j = (λ _ → tt) , λ _ → tz (P a)
+    P=[j]=↓sjP a (suc m) sm≤j = (λ Psm → s≤s sm≤j , Psm) , proj₂
+    
+    to : ↓ k (# (f P b)) (suc i) → ↓ k (# (f (↓ᵖ (suc j) P) b)) (suc i)
+    to (si<k , fPsi) =
+      si<k , proj₁ (nef P (↓ᵖ (suc j) P) j P=[j]=↓sjP b (suc i) (≤-pred (≤-trans si<k k≤j))) fPsi
+      
+    fro : ↓ k (# (f (↓ᵖ (suc j) P) b)) (suc i) → ↓ k (# (f P b)) (suc i)
+    fro (si<k , f↓sjPsi) =
+        si<k , proj₂ (nef P (↓ᵖ (suc j) P) j P=[j]=↓sjP b (suc i) (≤-pred (≤-trans si<k k≤j))) f↓sjPsi
 \end{code}
