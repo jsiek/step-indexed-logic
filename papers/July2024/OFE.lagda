@@ -69,9 +69,7 @@ nonexpansive′ f = ∀ P Q k → (∀ a → P a ≡[ k ] Q a) → ∀ b → (f 
 
 
 \begin{code}
-NE⇒NE′ : ∀{A}{B}{f : Predᵒ A → Predᵒ B}
-  → congruentᵖ f
-  → nonexpansive f → nonexpansive′ f
+NE⇒NE′ : ∀{A}{B}{f : Predᵒ A → Predᵒ B} → congruentᵖ f → nonexpansive f → nonexpansive′ f
 NE⇒NE′ {A}{B}{f} cong-f nef P Q k P=kQ b m m≤k = to m m≤k , fro m m≤k
   where
   to : ∀ m → m ≤ k → # (f P b) m → # (f Q b) m
@@ -99,11 +97,9 @@ NE⇒NE′ {A}{B}{f} cong-f nef P Q k P=kQ b m m≤k = to m m≤k , fro m m≤k
 \end{code}
 
 \begin{code}
-NE′⇒NE : ∀{A}{B}{f : Predᵒ A → Predᵒ B}
-  → congruentᵖ f
-  → nonexpansive′ f → nonexpansive f
-NE′⇒NE {A} {B} {f} cong-f nef P .zero zero z≤n b = ↓ᵒ-zero
-NE′⇒NE {A} {B} {f} cong-f nef P k (suc j) k≤j b = ≡ᵒ-intro aux
+NE′⇒NE : ∀{A}{B}{f : Predᵒ A → Predᵒ B} → nonexpansive′ f → nonexpansive f
+NE′⇒NE {A} {B} {f} nef P .zero zero z≤n b = ↓ᵒ-zero
+NE′⇒NE {A} {B} {f} nef P k (suc j) k≤j b = ≡ᵒ-intro aux
   where
   aux : ∀ i → ↓ k (# (f P b)) i ⇔ ↓ k (# (f (↓ᵖ (suc j) P) b)) i
   aux zero = (λ _ → tt) , λ _ → tt
@@ -120,4 +116,10 @@ NE′⇒NE {A} {B} {f} cong-f nef P k (suc j) k≤j b = ≡ᵒ-intro aux
     fro : ↓ k (# (f (↓ᵖ (suc j) P) b)) (suc i) → ↓ k (# (f P b)) (suc i)
     fro (si<k , f↓sjPsi) =
         si<k , proj₂ (nef P (↓ᵖ (suc j) P) j P=[j]=↓sjP b (suc i) (≤-pred (≤-trans si<k k≤j))) f↓sjPsi
+\end{code}
+
+\begin{code}
+NE′⇒congr : ∀{A}{B}{f : Predᵒ A → Predᵒ B} → nonexpansive′ f → congruentᵖ f
+NE′⇒congr {A}{B}{f} nef {P}{Q} P=Q b =
+    ≡ᵒ-intro (λ k → nef P Q k (λ a m m≤k → ≡ᵒ-elim{k = m} (P=Q a)) b k ≤-refl)
 \end{code}

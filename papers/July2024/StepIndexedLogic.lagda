@@ -208,24 +208,50 @@ propositions as follows.
 ↓ᵒ k ϕ = record { # = ↓ k (# ϕ) ; down = ↓-down {ϕ} k ; tz = tt }
 \end{code}
 
+\begin{code}
+infix 2 _≡[_]_
+_≡[_]_ : Setᵒ → ℕ → Setᵒ → Set
+ϕ ≡[ k ] ψ =  ↓ᵒ k ϕ  ≡ᵒ  ↓ᵒ k ψ
+\end{code}
+
+\begin{code}
+abstract
+  ≡[]-refl : ∀ {k} → ϕ ≡ ψ → ϕ ≡[ k ] ψ
+  ≡[]-refl {ϕ}{ψ}{k} refl = ≡ᵒ-refl{ϕ = ↓ᵒ k ϕ} refl
+
+  ≡[]-sym : ∀ {k} → ϕ ≡[ k ] ψ → ψ ≡[ k ] ϕ
+  ≡[]-sym {ϕ}{ψ}{k} ϕ=ψ = ≡ᵒ-sym{ϕ = ↓ᵒ k ϕ}{↓ᵒ k ψ} ϕ=ψ
+
+  ≡[]-trans : ∀ {k} → ϕ ≡[ k ] ψ → ψ ≡[ k ] þ → ϕ ≡[ k ] þ
+  ≡[]-trans {ϕ}{ψ}{þ}{k} ϕ=ψ ψ=þ = ≡ᵒ-trans{ϕ = ↓ᵒ k ϕ}{↓ᵒ k ψ}{↓ᵒ k þ} ϕ=ψ ψ=þ
+instance
+  SIL-Eq[] : ∀{k} → EquivalenceRelation Setᵒ
+  SIL-Eq[] {k} = record { _⩦_ = λ ϕ ψ → ϕ ≡[ k ] ψ ; ⩦-refl = ≡[]-refl ; ⩦-sym = ≡[]-sym ; ⩦-trans = ≡[]-trans }
+\end{code}
+
+\begin{code}
+≡[]ᵖ-refl : P ≡ Q → ∀ {k a} → P a ≡[ k ] Q a
+≡[]ᵖ-refl refl {k}{a} = ≡[]-refl refl
+\end{code}
+
 \noindent The $k$-approximations of any two step-indexed propositions
 are equivalent when $k=0$ and $k=1$.
 
 \begin{code}
-↓ᵒ-zero : ↓ᵒ zero ϕ ≡ᵒ ↓ᵒ zero ψ
+↓ᵒ-zero : ϕ ≡[ 0 ] ψ
 ↓ᵒ-zero = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
                      ; (suc i) → (λ {()}) , (λ {()})}
 
-↓ᵒ-one : ↓ᵒ 1 ϕ ≡ᵒ ↓ᵒ 1 ψ
+↓ᵒ-one : ϕ ≡[ 1 ] ψ
 ↓ᵒ-one = ≡ᵒ-intro λ {zero → (λ _ → tt) , λ _ → tt
                      ; (suc i) → (λ { (s≤s () , _)}) , (λ { (s≤s () , _)})}
 \end{code}
 
-Given two equivalent propositions $ϕ$ and $ψ$, their $k$-approximations are also
-eqivalent.
+Given two equivalent propositions $ϕ$ and $ψ$, their
+$k$-approximations are also eqivalent.
 
 \begin{code}
-cong-↓ᵒ : ∀ k → ϕ ≡ᵒ ψ → ↓ᵒ k ϕ ≡ᵒ ↓ᵒ k ψ
+cong-↓ᵒ : ∀ k → ϕ ≡ᵒ ψ → ϕ ≡[ k ] ψ
 cong-↓ᵒ {ϕ} {ψ} k ϕ=ψ = ≡ᵒ-intro aux
   where
   aux : (i : ℕ) → # (↓ᵒ k ϕ) i ⇔ # (↓ᵒ k ψ) i
@@ -254,23 +280,24 @@ cong-↓ {A} {k} {P} {Q} P=Q a = ≡ᵒ-intro aux
               , (λ {(si≤k , Qasi) → si≤k , ⇔-fro (≡ᵒ-elim (P=Q a)) Qasi})
 \end{code}
 
-A functional is \emph{wellfounded} if applying $k$-approximation to
+A functional is \emph{contractive} if applying $k$-approximation to
 its input does not change the $k{\plus}1$-approximation of its output.
 Intuitively, this corresponds to functions that only use their input
 at one step later in time.
 
 \begin{code}
-wellfoundedᵖ : ∀ (f : Predᵒ A → Predᵒ A) → Set₁
-wellfoundedᵖ f = ∀ a P k → ↓ᵒ (suc k) (f P a) ≡ᵒ ↓ᵒ (suc k) (f (↓ᵖ k P) a)
+contractiveᵖ : ∀ (f : Predᵒ A → Predᵒ A) → Set₁
+contractiveᵖ f = ∀ a P k → f P a ≡[ suc k ] f (↓ᵖ k P) a
 \end{code}
 
 The nth iteration of a function, $f^n$, is implemented by the
 following $\mathsf{iter}$ function.
 
 \begin{code}
-iter : ∀ {ℓ} {A : Set ℓ} → ℕ → (A → A) → (A → A)
-iter zero    f  =  id
-iter (suc n) f  =  f ∘ iter n f
+infixr 8 _^_
+_^_ : ∀ {ℓ} {A : Set ℓ} → (A → A) → ℕ → (A → A)
+f ^ zero     =  id
+f ^ (suc n)  =  f ∘ (f ^ n)
 \end{code}
 
 \noindent Iterating $k$ times is equivalent to iterating $j$ times
@@ -278,41 +305,47 @@ followed by $k ∸ j$ times, assuming that $j \leq k$.
 
 \begin{code}
 iter-subtract : ∀{ℓ}{A : Set ℓ}{a : A} (F : A → A) (j k : ℕ) → j ≤ k
-  → iter j F (iter (k ∸ j) F a) ≡ iter k F a
+  → (F ^ j) ((F ^ (k ∸ j)) a) ≡ (F ^ k) a
 iter-subtract {A = A} {a} F .zero k z≤n = refl
 iter-subtract {A = A} {a} F (suc j) (suc k) (s≤s j≤k)
   rewrite iter-subtract{A = A}{a} F j k j≤k = refl
 \end{code}
 
-Suppose a functional is wellfounded and congruent.  If you iterate the
+Suppose a functional is contractive and congruent.  If you iterate the
 functional $j$ times and then take the $j$-approximation, the
 initial predicate doesn't matter. This corresponds to Lemma 15 (part 1)
 of \citet{Appel:2001aa}.
 
 \begin{code}
-lemma15a : ∀ j (f : Predᵒ A → Predᵒ A) (a : A) → wellfoundedᵖ f → congruentᵖ f
-  → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter j f Q a)
+lemma15a : ∀ j (f : Predᵒ A → Predᵒ A) (a : A) → contractiveᵖ f → congruentᵖ f
+  → (f ^ j) P a ≡[ j ] (f ^ j) Q a
 lemma15a zero f a wf-f cong-f = ↓ᵒ-zero
 lemma15a {A}{P}{Q} (suc j) f a wf-f cong-f =
-  ↓ᵒ (suc j) (f (iter j f P) a)           ⩦⟨ wf-f a (iter j f P) j ⟩ 
-  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f P)) a)    ⩦⟨ cong-↓ (cong-f λ a → lemma15a j f a wf-f cong-f) a ⟩
-  ↓ᵒ (suc j) (f (↓ᵖ j (iter j f Q)) a)    ⩦⟨ ≡ᵒ-sym (wf-f a (iter j f Q) j) ⟩
-  ↓ᵒ (suc j) (f (iter j f Q) a)           ∎
+      f ((f ^ j) P) a
+  ⩦⟨ wf-f a ((f ^ j) P) j ⟩ 
+      f (↓ᵖ j ((f ^ j) P)) a
+  ⩦⟨ cong-↓ (cong-f λ a → lemma15a j f a wf-f cong-f) a ⟩
+      f (↓ᵖ j ((f ^ j) Q)) a
+  ⩦⟨ ≡ᵒ-sym (wf-f a ((f ^ j) Q) j) ⟩
+      f ((f ^ j) Q) a
+  ∎
 \end{code}
 
-Again assuming that the functional is wellfounded and congruent, if
+Again assuming that the functional is contractive and congruent, if
 you take the $j$ approximation of the output, iterating the
 functional more then $j$ times does not change the result.  This
 corresponds to Lemma 15 (part 2) of \citet{Appel:2001aa}.
 
 \begin{code}
-lemma15b : (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A) → j ≤ k → wellfoundedᵖ f → congruentᵖ f
-   → ↓ᵒ j (iter j f P a) ≡ᵒ ↓ᵒ j (iter k f P a)
+lemma15b : (k j : ℕ) (f : Predᵒ A → Predᵒ A) (a : A) → j ≤ k → contractiveᵖ f → congruentᵖ f
+   → (f ^ j) P a ≡[ j ] (f ^ k) P a
 lemma15b {A}{P} k j f a j≤k wf-f cong-f =
-  ↓ᵒ j (iter j f P a)                     ⩦⟨ lemma15a j f a wf-f cong-f ⟩
-  ↓ᵒ j (iter j f (iter (k ∸ j) f P) a)    ⩦⟨ cong-↓{A}{j}{iter j f (iter (k ∸ j) f P)}{iter k f P}
-                                             (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
-  ↓ᵒ j (iter k f P a)   ∎
+    (f ^ j) P a
+  ⩦⟨ lemma15a j f a wf-f cong-f ⟩
+    (f ^ j) ((f ^ (k ∸ j)) P) a
+  ⩦⟨ cong-↓{A}{j}{(f ^ j) ((f ^ (k ∸ j)) P)}{(f ^ k) P} (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
+    (f ^ k) P a
+  ∎
 \end{code}
 
 Appoximations are idempotent in the sense that applying the $k$ and
@@ -320,9 +353,9 @@ $j$ approximations in sequence, when $j \leq k$, is equivalent to
 just applying the $j$ approximation.
 
 \begin{code}
-double-↓ᵒ : ∀{j k} (S : Setᵒ) → j ≤ k → ↓ᵒ j (↓ᵒ k S) ≡ᵒ ↓ᵒ j S
-double-↓ᵒ {j}{k} S j≤k = ≡ᵒ-intro aux
-  where aux : ∀ i → ↓ j (↓ k (# S)) i ⇔ ↓ j (# S) i
+double-↓ᵒ : ∀{j k} (ϕ : Setᵒ) → j ≤ k → ↓ᵒ k ϕ ≡[ j ] ϕ
+double-↓ᵒ {j}{k} ϕ j≤k = ≡ᵒ-intro aux
+  where aux : ∀ i → ↓ j (↓ k (# ϕ)) i ⇔ ↓ j (# ϕ) i
         aux zero = (λ _ → tt) , (λ _ → tt)
         aux (suc i) = (λ {(a , b , c) → a , c}) , λ {(a , b) → a , ≤-trans a j≤k , b}
 \end{code}
@@ -330,7 +363,7 @@ double-↓ᵒ {j}{k} S j≤k = ≡ᵒ-intro aux
 This is a generalization of Lemma 17 of \citet{Appel:2001aa}, in which $j = k - 1$.
 
 \begin{code}
-lemma17ᵒ : ∀ k → ↓ᵒ k (↓ᵒ (suc k) ϕ) ≡ᵒ ↓ᵒ k ϕ
+lemma17ᵒ : ∀ k → ↓ᵒ (suc k) ϕ ≡[ k ] ϕ
 lemma17ᵒ {ϕ} k = double-↓ᵒ{k}{suc k} ϕ (n≤1+n k)
 \end{code}
 
@@ -561,7 +594,7 @@ have not yet given its definition. Similar to $\mathsf{Set}ᵒ$ it will
 be a record type. Its principal field is an environment functional
 (of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$) that represents the meaning
 of the formula. The record will also include two properties, that the
-functional is congruent and that it is wellfounded in a sense that is
+functional is congruent and that it is contractive in a sense that is
 somewhat involved.
 
 We define the $↓ᵈ$ operator to apply $k$-approximation to one of the
@@ -576,7 +609,7 @@ variable, specifies which predicate to apply the $k$-approximation.
 
 The semantic conditions that correspond to using the variable for a
 recursive predicate now vs. later are the notion of nonexpansive and
-wellfounded of \citet{Appel:2001aa}.  A direct adaptation of
+contractive of \citet{Appel:2001aa}.  A direct adaptation of
 nonexpansive to our setting yields the following, which says that
 given any environment $δ$ and variable $x$, the $k$-approximation of
 $P\app δ$ is equivalent to the $k$-approximation of $P$ applied to the
@@ -584,38 +617,38 @@ $k$ approximation of the $δ$ with respect to variable $x$.
 \[
   ↓\, k\, (P\, δ) ≡ᵒ ↓\, k\, (P\, (↓ᵈ\, k\, x\, δ)
 \]
-Simlarly, the direct adaption of wellfounded to our setting says
+Simlarly, the direct adaption of contractive to our setting says
 that the $k \plus 1$ approximation of $P\app δ$ is equivalent to the
 $k \plus 1$ approximation of $P$ applied to the $k$ approximation of
 the $δ$ with respect to variable $x$.
 \[
   ↓\, (k \plus 1) \, (P\, δ) ≡ᵒ ↓\, (k \plus 1) \, (P\, (↓ᵈ\, k\, x\, δ)
 \]
-However, these definitions of nonexpansive and wellfounded were not
+However, these definitions of nonexpansive and contractive were not
 general enough to handle more than one recursive predicate in scope.
 (Recall that \citet{Appel:2001aa} neglected to prove that $μ$
-preserves nonexpansive and wellfounded propositions.)  So instead of
+preserves nonexpansive and contractive propositions.)  So instead of
 taking the $k$-approximation of the input $δ$, we generalize $k$ to
 any $j$ greater or equal to $k$, yielding the following notions of
-\emph{strongly nonexpansive} and \emph{strongly wellfounded}
+\emph{strongly nonexpansive} and \emph{strongly contractive}
 functionals.
 
 \begin{code}
 strongly-nonexpansive : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
-strongly-nonexpansive x F = ∀ δ j k → k ≤ j → ↓ᵒ k (F δ) ≡ᵒ ↓ᵒ k (F (↓ᵈ j x δ))
+strongly-nonexpansive x F = ∀ δ j k → k ≤ j → F δ ≡[ k ] F (↓ᵈ j x δ)
 
-strongly-wellfounded : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
-strongly-wellfounded x F = ∀ δ j k → k ≤ j → ↓ᵒ (suc k) (F δ) ≡ᵒ ↓ᵒ (suc k) (F (↓ᵈ j x δ))
+strongly-contractive : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
+strongly-contractive x F = ∀ δ j k → k ≤ j → F δ ≡[ suc k ] F (↓ᵈ j x δ)
 \end{code}
 
 We say that an environment functional $F$ is \emph{strong in variable $x$
 at time $t$} if it is either strongly nonexpansive (when $t = \Now$) or
-strongly wellfounded (when $t = \Later$).
+strongly contractive (when $t = \Later$).
 
 \begin{code}
 strong-var : (x : Γ ∋ A) → Time → (RecEnv Γ → Setᵒ) → Set₁
 strong-var x Now F = strongly-nonexpansive x F
-strong-var x Later F = strongly-wellfounded x F
+strong-var x Later F = strongly-contractive x F
 \end{code}
 
 \noindent Next we define the \textsf{timeof} function to lookup the
@@ -631,7 +664,7 @@ For convenience, we define the following two elimination principles
 for functionals that are strong in a variable. If the variable's time
 is \textsf{Now}, then the functional is strongly nonexpansive, and if
 the time is \textsf{Later}, then the functional is strongly
-wellfounded.
+contractive.
 
 \begin{code}
 strong-now : ∀{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setᵒ}
@@ -639,7 +672,7 @@ strong-now : ∀{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setᵒ}
 strong-now gF eq rewrite eq = gF
 
 strong-later : ∀{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setᵒ}
-   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Later → strongly-wellfounded x F
+   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Later → strongly-contractive x F
 strong-later gF eq rewrite eq = gF
 \end{code}
 
@@ -745,7 +778,7 @@ function as follows.
 
 \begin{code}
 ↓-lookup : ∀{a}{k j}{δ : RecEnv Γ} (x : Γ ∋ A) (y : Γ ∋ B) → k ≤ j
-   → ↓ᵒ k (lookup{Γ}{A} x δ a) ≡ᵒ ↓ᵒ k (lookup{Γ}{A} x (↓ᵈ j y δ) a)
+   → lookup{Γ}{A} x δ a ≡[ k ] lookup{Γ}{A} x (↓ᵈ j y δ) a
 ↓-lookup {a = a}{δ = P , δ} zeroˢ zeroˢ k≤j = ≡ᵒ-sym (double-↓ᵒ (P a) k≤j)
 ↓-lookup zeroˢ (sucˢ y) k≤j = ≡ᵒ-refl refl
 ↓-lookup (sucˢ x) zeroˢ k≤j = ≡ᵒ-refl refl
@@ -788,7 +821,7 @@ The \textsf{lookup} function for a given variable $x$ is a strong
 functional when the list of times Δ is the result of
 $\varnow\,Γ\,x$. The time of $x$ in $\varnow\,Γ\,x$ is \textsf{Now},
 so it suffices to prove that \textsf{lookup} is strongly nonexpansive
-in $x$ and strongly wellfounded in the other variables, which we show
+in $x$ and strongly contractive in the other variables, which we show
 in Figure~\ref{fig:strong-lookup}.
 
 \begin{figure}[tbp]
@@ -799,10 +832,10 @@ strong-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ = SNE where
   SNE : strongly-nonexpansive zeroˢ (λ {(P , δ) → P a})
   SNE (P , δ) j k k≤j = ≡ᵒ-sym (double-↓ᵒ (P a) k≤j)
 strong-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y = SWF where
-  SWF : strongly-wellfounded (sucˢ y) (λ {(P , δ) → P a})
+  SWF : strongly-contractive (sucˢ y) (λ {(P , δ) → P a})
   SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
 strong-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = SWF where
-  SWF : strongly-wellfounded zeroˢ (λ (P , δ) → lookup x δ a)
+  SWF : strongly-contractive zeroˢ (λ (P , δ) → lookup x δ a)
   SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
 strong-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
     with timeof y (var-now Γ x) in eq-y
@@ -813,10 +846,10 @@ strong-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
     timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≡ Now → timeof y Δ ≡ Later
        → timeof x Δ ≢ timeof y Δ
     timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
-    SWF : strongly-wellfounded (sucˢ y) (λ {(P , δ) → lookup x δ a})
+    SWF : strongly-contractive (sucˢ y) (λ {(P , δ) → lookup x δ a})
     SWF (P , δ) j k k≤j =
       let eq = (lookup-diff{Γ}{δ = δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
-      subst (λ X → ↓ᵒ (suc k) (lookup x δ a) ≡ᵒ ↓ᵒ (suc k) (X a)) (sym eq) (≡ᵒ-refl refl)
+      subst (λ X → (lookup x δ a) ≡[ suc k ] (X a)) (sym eq) (≡ᵒ-refl refl)
 \end{code}
 \caption{The variable \textsf{lookup} function is a strong environment functional.}
 \label{fig:strong-lookup}
@@ -875,10 +908,10 @@ cong-▷ {ϕ}{ψ} ϕ=ψ = ≡ᵒ-intro aux
         aux (suc i) = (λ ϕi → ⇔-to (≡ᵒ-elim ϕ=ψ) ϕi) , (λ ψi → ⇔-fro (≡ᵒ-elim ϕ=ψ) ψi)
 \end{code}
 
-The operator $▷ᵒ$ is also wellfounded.
+The operator $▷ᵒ$ is also contractive.
 
 \begin{code}
-WF-▷ : ∀{k} (S : Setᵒ) → ↓ᵒ (suc k) (▷ᵒ S) ≡ᵒ ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))
+WF-▷ : ∀{k} (S : Setᵒ) → ▷ᵒ S ≡[ suc k ] ▷ᵒ (↓ᵒ k S)
 WF-▷ {k} S = ≡ᵒ-intro aux
   where aux : ∀ i → #(↓ᵒ (suc k) (▷ᵒ S)) i ⇔ #(↓ᵒ (suc k) (▷ᵒ (↓ᵒ k S))) i
         aux zero = (λ _ → tt) , (λ _ → tt)
@@ -900,18 +933,27 @@ strong-▷ {Γ}{Δ} S x
 ... | strongS
     with timeof x Δ
 ... | Now rewrite timeof-later{Γ} x = λ δ j k k≤j →
-  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                      ⩦⟨ WF-▷ {k} (♯ S δ) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S δ)))               ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (strongS δ j k k≤j)) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ))))      ⩦⟨ ≡ᵒ-sym (WF-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
-  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))             ∎
+      ▷ᵒ (♯ S δ)
+    ⩦⟨ WF-▷ {k} (♯ S δ) ⟩ 
+      ▷ᵒ (↓ᵒ k (♯ S δ))
+    ⩦⟨ cong-↓ᵒ (suc k) (cong-▷ (strongS δ j k k≤j)) ⟩ 
+      ▷ᵒ (↓ᵒ k (♯ S (↓ᵈ j x δ)))
+    ⩦⟨ ≡ᵒ-sym (WF-▷ {k} (♯ S (↓ᵈ j x δ))) ⟩ 
+      ▷ᵒ (♯ S (↓ᵈ j x δ))
+    ∎
 ... | Later rewrite timeof-later{Γ} x = λ δ j k k≤j →
-  ↓ᵒ (suc k) (▷ᵒ (♯ S δ))                         ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S δ)))            ⩦⟨ cong-↓ᵒ (suc k) (WF-▷ _) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S δ))))
-                            ⩦⟨ cong-↓ᵒ (suc k) (cong-↓ᵒ (suc (suc k)) (cong-▷ (strongS δ j k k≤j))) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))))  ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ (suc k) (WF-▷ _)) ⟩
-  ↓ᵒ (suc k) (↓ᵒ (2 + k) (▷ᵒ (♯ S (↓ᵈ j x δ))))               ⩦⟨ lemma17ᵒ (suc k) ⟩
-  ↓ᵒ (suc k) (▷ᵒ (♯ S (↓ᵈ j x δ)))                            ∎
+      ▷ᵒ (♯ S δ)
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ (suc k)) ⟩ 
+      ↓ᵒ (2 + k) (▷ᵒ (♯ S δ))
+    ⩦⟨ cong-↓ᵒ (suc k) (WF-▷ _) ⟩
+      ↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S δ)))
+    ⩦⟨ cong-↓ᵒ (suc k) (cong-↓ᵒ (suc (suc k)) (cong-▷ (strongS δ j k k≤j))) ⟩
+      ↓ᵒ (2 + k) (▷ᵒ (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ))))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ (suc k) (WF-▷ _)) ⟩
+      ↓ᵒ (2 + k) (▷ᵒ (♯ S (↓ᵈ j x δ)))
+    ⩦⟨ lemma17ᵒ (suc k) ⟩
+      ▷ᵒ (♯ S (↓ᵈ j x δ))
+    ∎
 \end{code}
 \caption{The later operator is a strong environment functional.}
 \label{fig:strong-later}
@@ -950,16 +992,24 @@ strong-↓ {Γ}{Δ}{i} S {A} x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → 
     let strongS = strong-now (strong S x) time-x δ j k k≤j in
-    ↓ᵒ k (↓ᵒ i (♯ S δ))                 ⩦⟨ permute-↓  ⟩ 
-    ↓ᵒ i (↓ᵒ k (♯ S δ))                 ⩦⟨ cong-↓ᵒ i strongS ⟩ 
-    ↓ᵒ i (↓ᵒ k (♯ S (↓ᵈ j x δ)))        ⩦⟨ permute-↓ ⟩
-    ↓ᵒ k (↓ᵒ i (♯ S (↓ᵈ j x δ)))        ∎
+      ↓ᵒ k (↓ᵒ i (♯ S δ))
+    ⩦⟨ permute-↓  ⟩ 
+      ↓ᵒ i (↓ᵒ k (♯ S δ))
+    ⩦⟨ cong-↓ᵒ i strongS ⟩ 
+      ↓ᵒ i (↓ᵒ k (♯ S (↓ᵈ j x δ)))
+    ⩦⟨ permute-↓ ⟩
+      ↓ᵒ k (↓ᵒ i (♯ S (↓ᵈ j x δ)))
+    ∎
 ... | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x δ j k k≤j in
-    ↓ᵒ (suc k) (↓ᵒ i (♯ S δ))                 ⩦⟨ permute-↓  ⟩ 
-    ↓ᵒ i (↓ᵒ (suc k) (♯ S δ))                 ⩦⟨ cong-↓ᵒ i strongS ⟩ 
-    ↓ᵒ i (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))        ⩦⟨ permute-↓ ⟩
-    ↓ᵒ (suc k) (↓ᵒ i (♯ S (↓ᵈ j x δ)))        ∎
+      ↓ᵒ (suc k) (↓ᵒ i (♯ S δ))
+    ⩦⟨ permute-↓  ⟩ 
+      ↓ᵒ i (↓ᵒ (suc k) (♯ S δ))
+    ⩦⟨ cong-↓ᵒ i strongS ⟩ 
+      ↓ᵒ i (↓ᵒ (suc k) (♯ S (↓ᵈ j x δ)))
+    ⩦⟨ permute-↓ ⟩
+      ↓ᵒ (suc k) (↓ᵒ i (♯ S (↓ᵈ j x δ)))
+    ∎
 \end{code}
 \caption{The $k$-approximation operator is a strong environment functional.}
 \label{fig:strong-approx}
@@ -996,15 +1046,24 @@ strong-let {Γ}{Δ}{A} T Sᵃ x
     let EQ : ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , ↓ᵈ j x δ)
           ≡ᵈ ((λ a → ↓ᵒ j  (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
         EQ = (λ a → strong-now (strong (Sᵃ a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    ↓ᵒ k (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))                      ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ)))         ⩦⟨ cong-↓ᵒ k strongTz ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ)))  ⩦⟨ lemma17ᵒ k ⟩
-    ↓ᵒ k (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ))               ⩦⟨ strongTsx ⟩
-    ↓ᵒ k (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , ↓ᵈ j x δ))        ⩦⟨ cong-↓ᵒ k (congr T EQ) ⟩
-    ↓ᵒ k (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ))               ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)))  ⩦⟨ cong-↓ᵒ k (≡ᵒ-sym strongTz2) ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)))         ⩦⟨ lemma17ᵒ k ⟩
-    ↓ᵒ k (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))                      ∎
+      ♯ T ((λ a → ♯ (Sᵃ a) δ) , δ)
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
+      ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))
+    ⩦⟨ cong-↓ᵒ k strongTz ⟩
+      ↓ᵒ (suc k) (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ))
+    ⩦⟨ lemma17ᵒ k ⟩
+      ♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ)
+    ⩦⟨ strongTsx ⟩
+      ♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , ↓ᵈ j x δ)
+    ⩦⟨ cong-↓ᵒ k (congr T EQ) ⟩
+      ♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩
+      ↓ᵒ (suc k) (♯ T ((λ a → ↓ᵒ j (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ))
+    ⩦⟨ cong-↓ᵒ k (≡ᵒ-sym strongTz2) ⟩
+      ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))
+    ⩦⟨ lemma17ᵒ k ⟩
+      ♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)
+    ∎
 ... | Later = λ δ j k k≤j →
     let strongTz = ((strong T) zeroˢ) ((λ a → ♯ (Sᵃ a) δ) , δ) (suc j) k (≤-trans k≤j (n≤1+n _)) in
     let strongTz2 = ((strong T) zeroˢ) (((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ))) , δ) (suc j) k (≤-trans k≤j (n≤1+n _)) in
@@ -1012,11 +1071,16 @@ strong-let {Γ}{Δ}{A} T Sᵃ x
         EQ = (λ a → strong-later (strong (Sᵃ a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
     let strongTsx = strong-later{x = sucˢ x}{Δ = cons Now Δ} ((strong T) (sucˢ x)) time-x
                  ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ) j k k≤j in
-    ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))                       ⩦⟨ strongTz ⟩
-    ↓ᵒ (suc k) (♯ T (↓ᵖ (suc j) (λ a → ♯ (Sᵃ a) δ) , δ))            ⩦⟨ cong-↓ᵒ (suc k) (congr T EQ) ⟩
-    ↓ᵒ (suc k) (♯ T (↓ᵖ (suc j) (λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ))   ⩦⟨ ≡ᵒ-sym strongTz2 ⟩
-    ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ))              ⩦⟨ strongTsx ⟩
-    ↓ᵒ (suc k) (♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))       ∎
+      ♯ T ((λ a → ♯ (Sᵃ a) δ) , δ)
+    ⩦⟨ strongTz ⟩
+      ♯ T (↓ᵖ (suc j) (λ a → ♯ (Sᵃ a) δ) , δ)
+    ⩦⟨ cong-↓ᵒ (suc k) (congr T EQ) ⟩
+      ♯ T (↓ᵖ (suc j) (λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ)
+    ⩦⟨ ≡ᵒ-sym strongTz2 ⟩
+      ♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ)
+    ⩦⟨ strongTsx ⟩
+      ♯ T ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ)
+    ∎
 \end{code}
 \caption{The \textsf{let}ˢ operator is a strong environment functional.}
 \label{fig:strong-let}
@@ -1039,7 +1103,7 @@ times, starting at the always true predicate as follows.
 
 \begin{code}
 μᵖ : (Predᵒ A → Predᵒ A) → A → (ℕ → Set)
-μᵖ f a k = #(iter (1 + k) f (λ a → ⊤ᵒ) a) k
+μᵖ f a k = #((f ^ (1 + k)) (λ a → ⊤ᵒ) a) k
 \end{code}
 
 Recall that the body $Sᵃ$ of a $μˢ Sᵃ$ has type
@@ -1065,12 +1129,12 @@ down-μᵖ : ∀{Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)} {a : A}{δ : Rec
 
 \noindent The proof relies on \textsf{lemma15b}, but applies it to a
 functional obtained by \textsf{env}-\textsf{fun}⇒\textsf{fun}.  So we
-need to prove that such a functional is wellfounded and congruent.
-The fact that $\eff{Sᵃ} δ$ is wellfounded is a direct consequence of
+need to prove that such a functional is contractive and congruent.
+The fact that $\eff{Sᵃ} δ$ is contractive is a direct consequence of
 $Sᵃ\app a$ being strong.
 
 \begin{code}
-wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) → wellfoundedᵖ (⟅ Sᵃ ⟆ δ)
+wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) → contractiveᵖ (⟅ Sᵃ ⟆ δ)
 wf-env-fun δ Sᵃ = λ a P k → strong (Sᵃ a) zeroˢ (P , δ) k k ≤-refl
 \end{code}
 
@@ -1086,7 +1150,7 @@ cong-env-fun δ Sᵃ = λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 
 \begin{code}
 lemma15b-env-fun : ∀(k j : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → j ≤ k
-  → ↓ᵒ j (iter j (⟅ Sᵃ ⟆ δ) P a) ≡ᵒ ↓ᵒ j (iter k (⟅ Sᵃ ⟆ δ) P a)
+  → ((⟅ Sᵃ ⟆ δ) ^ j) P a ≡[ j ] ((⟅ Sᵃ ⟆ δ) ^ k) P a
 lemma15b-env-fun{δ = δ} k j Sᵃ a j≤k =
   lemma15b k j (⟅ Sᵃ ⟆ δ) a j≤k (wf-env-fun δ Sᵃ) (cong-env-fun δ Sᵃ)
 \end{code}
@@ -1095,9 +1159,9 @@ The one other fact we need to prove that $μᵖ$ is downward closed is
 that \textsf{iter} is downward closed when applied to a functional.
 
 \begin{code}
-dc-iter : ∀(i : ℕ){A} (F : Predᵒ A → Predᵒ A) → ∀ a → downClosed (#(iter i F ⊤ᵖ a))
+dc-iter : ∀(i : ℕ){A} (F : Predᵒ A → Predᵒ A) → ∀ a → downClosed (#((F ^ i) ⊤ᵖ a))
 dc-iter zero F = λ a n _ k _ → tt
-dc-iter (suc i) F = λ a → down (F (iter i F ⊤ᵖ) a)
+dc-iter (suc i) F = λ a → down (F ((F ^ i) ⊤ᵖ) a)
 \end{code}
 
 \noindent We now prove that the $μᵖ$ function is downward closed when
@@ -1106,14 +1170,13 @@ applied to the result of $\eff{Sᵃ}$.
 \begin{code}
 down-μᵖ {Sᵃ = Sᵃ}{a}{δ} k iterskSᵃk zero j≤k = tz (⟅ Sᵃ ⟆ δ (id ⊤ᵖ) a)
 down-μᵖ {Sᵃ = Sᵃ}{a}{δ} (suc k′) μSᵃa (suc j′) (s≤s j′≤k′) =
-  let dc-iter-ssk : downClosed (# ((iter (2 + k′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a))
+  let dc-iter-ssk : downClosed (# ((((⟅ Sᵃ ⟆ δ) ^ (2 + k′)) ⊤ᵖ) a))
       dc-iter-ssk = dc-iter (2 + k′) (⟅ Sᵃ ⟆ δ) a in
-  let ↓-iter-ssk : #(↓ᵒ (2 + j′) ((iter (2 + k′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a))(suc j′)
+  let ↓-iter-ssk : #(↓ᵒ (2 + j′) ((((⟅ Sᵃ ⟆ δ) ^ (2 + k′)) ⊤ᵖ) a))(suc j′)
       ↓-iter-ssk = ≤-refl , (dc-iter-ssk (suc k′) μSᵃa (suc j′) (s≤s j′≤k′)) in
-  let eq : ↓ᵒ (2 + j′) ((iter (2 + j′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a)
-        ≡ᵒ ↓ᵒ (2 + j′) ((iter (2 + k′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a)
+  let eq : ((((⟅ Sᵃ ⟆ δ) ^ (2 + j′)) ⊤ᵖ) a)  ≡[ 2 + j′ ]  ((((⟅ Sᵃ ⟆ δ) ^ (2 + k′)) ⊤ᵖ) a)
       eq = lemma15b-env-fun {δ = δ} (2 + k′) (2 + j′) Sᵃ a (s≤s (s≤s j′≤k′)) in
-  let ↓-iter-ssj : #(↓ᵒ (2 + j′) ((iter (2 + j′) (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a)) (suc j′)
+  let ↓-iter-ssj : #(↓ᵒ (2 + j′) ((((⟅ Sᵃ ⟆ δ) ^ (2 + j′)) ⊤ᵖ) a)) (suc j′)
       ↓-iter-ssj = ⇔-to (≡ᵒ-elim (≡ᵒ-sym eq)) ↓-iter-ssk in
   proj₂ ↓-iter-ssj
 \end{code}
@@ -1151,26 +1214,26 @@ recursive predicate under $k$-approximation.
 \begin{code}
 abstract
   lemma18a : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
-     → ↓ᵒ k (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)
+     → muᵒ Sᵃ δ a ≡[ k ] ((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a
   lemma18a zero Sᵃ a δ zero = (λ x → tt) , (λ {x → tt})
   lemma18a zero Sᵃ a δ (suc j) = (λ {()}) , λ {()}
   lemma18a (suc k) Sᵃ a δ zero = (λ {x → tt}) , λ {x → tt}
   lemma18a (suc k′) Sᵃ a δ (suc j′) =
-    ↓ k (λ j₁ → # ((⟅ Sᵃ ⟆ δ) (iter j₁ (⟅ Sᵃ ⟆ δ) ⊤ᵖ) a) j₁) j                          ⩦⟨ ⩦-refl refl ⟩    
-    j < k  ×  # (iter (suc j) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a) j
+    ↓ k (λ j₁ → # ((⟅ Sᵃ ⟆ δ) (((⟅ Sᵃ ⟆ δ) ^ j₁)  ⊤ᵖ) a) j₁) j                          ⩦⟨ ⩦-refl refl ⟩    
+    j < k  ×  # (((⟅ Sᵃ ⟆ δ) ^ (suc j)) ⊤ᵖ a) j
          ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y}) , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
-    j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j                          ⩦⟨ EQ  ⟩    
-    j < k  ×  # (↓ᵒ (suc j) (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j
+    j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ (suc j)) ⊤ᵖ a)) j                          ⩦⟨ EQ  ⟩    
+    j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a)) j
          ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z}) , (λ {(x , y) → x , (≤-refl , y)})  ⟩
-    j < k  ×  # (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a) j                                            ⩦⟨ ⩦-refl refl  ⟩    
-    ↓ k (# (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j                                                ∎
+    j < k  ×  # (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a) j                                            ⩦⟨ ⩦-refl refl  ⟩    
+    ↓ k (# (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a)) j                                                ∎
     where
     k : ℕ
     k = suc k′
     j : ℕ
     j = suc j′
-    EQ : (j < k  ×  # (↓ᵒ (suc j) (iter (suc j) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j)
-         ⇔ (j < k  ×  # (↓ᵒ (suc j) (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)) j)
+    EQ : (j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ (suc j)) ⊤ᵖ a)) j)
+         ⇔ (j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a)) j)
     EQ = (λ {(s≤s x , y) →
            let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc j) Sᵃ a (s≤s x)) j) y in
            (s≤s x) , (≤-refl , proj₂ xx)})
@@ -1188,15 +1251,18 @@ abstract
 \small 
 \begin{code}
 lemma18b : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
-     → ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)) ≡ᵒ ↓ᵒ (1 + k) (iter (1 + k) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)
+     → ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ) ≡[ 1 + k ] ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) ⊤ᵖ a
 lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))           ⩦⟨ strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , δ) k k ≤-refl ⟩
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , δ))
-        ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (↓ᵖ k (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ) , δ))
-        ⩦⟨ ≡ᵖ-sym{A} (strong (Sᵃ a) zeroˢ ((iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ) , δ) k k ≤-refl) {a} ⟩
-   ↓ᵒ (suc k) (♯ (Sᵃ a) (iter k (⟅ Sᵃ ⟆ δ) ⊤ᵖ , δ))        ⩦⟨ ≡ᵒ-refl refl ⟩
-   ↓ᵒ (suc k) (iter (suc k) (⟅ Sᵃ ⟆ δ) ⊤ᵖ a)            ∎
+       ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
+   ⩦⟨ strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , δ) k k ≤-refl ⟩
+       ♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , δ)
+   ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
+       ♯ (Sᵃ a) (↓ᵖ k (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ) , δ)
+   ⩦⟨ ≡ᵖ-sym{A} (strong (Sᵃ a) zeroˢ ((((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ) , δ) k k ≤-refl) {a} ⟩
+       ♯ (Sᵃ a) (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ , δ)
+   ⩦⟨ ≡ᵒ-refl refl ⟩
+       ((⟅ Sᵃ ⟆ δ) ^ (suc k)) ⊤ᵖ a
+   ∎
 \end{code}
 \caption{One unrolling of $muᵒ\, Sᵃ\, δ$ is equivalent to $k \plus 1$ iterations of
 $\eff{Sᵃ}\, δ$, under $k\plus 1$-approximation.}
@@ -1208,15 +1274,21 @@ $\eff{Sᵃ}\, δ$, under $k\plus 1$-approximation.}
 \small
 \begin{code}
 lemma19a : ∀ (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (k : ℕ) (δ : RecEnv Γ)
-   → ↓ᵒ k (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))
+   → muᵒ Sᵃ δ a ≡[ k ] ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
 lemma19a {A}{Γ}{Δ} Sᵃ a k δ =
     let f = (⟅ Sᵃ ⟆ δ) in
-    ↓ᵒ k (muᵒ Sᵃ δ a)                        ⩦⟨ lemma18a k Sᵃ a δ  ⟩
-    ↓ᵒ k (iter k f ⊤ᵖ a)                     ⩦⟨ lemma15b-env-fun (suc k) k Sᵃ a (n≤1+n k) ⟩
-    ↓ᵒ k (iter (suc k) f ⊤ᵖ a)               ⩦⟨ ≡ᵖ-sym (lemma17ᵒ{(iter (suc k) f ⊤ᵖ) a} k) {a} ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (iter (suc k) f ⊤ᵖ a))  ⩦⟨ cong-↓ (λ a → ≡ᵒ-sym (lemma18b k Sᵃ a δ))  a  ⟩
-    ↓ᵒ k (↓ᵒ (suc k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)))    ⩦⟨ lemma17ᵒ{(♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))} k ⟩
-    ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                 ∎
+      muᵒ Sᵃ δ a
+  ⩦⟨ lemma18a k Sᵃ a δ  ⟩
+      (f ^ k) ⊤ᵖ a
+  ⩦⟨ lemma15b-env-fun (suc k) k Sᵃ a (n≤1+n k) ⟩
+      (f ^ (suc k)) ⊤ᵖ a
+  ⩦⟨ ≡ᵖ-sym (lemma17ᵒ{((f ^ (suc k)) ⊤ᵖ) a} k) {a} ⟩
+      ↓ᵒ (suc k) ((f ^ (suc k)) ⊤ᵖ a)
+   ⩦⟨ cong-↓ (λ a → ≡ᵒ-sym (lemma18b k Sᵃ a δ))  a  ⟩
+      ↓ᵒ (suc k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))
+   ⩦⟨ lemma17ᵒ{(♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))} k ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
+   ∎
 \end{code}
 \caption{$muᵒ\, Sᵃ\, δ$ is equivalent to one unrolling of itself under $k$-approximation.}
 \label{fig:lemma19a}
@@ -1227,7 +1299,7 @@ proceeds by cases on whether the variable in question is assigned to
 \textsf{Now} in Δ, in which case we need to show that \textsf{mu}ᵒ is
 strongly nonexpansive with respect to that variable, or the variable
 is assigned to \textsf{Later} in Δ, in which case we need to show that
-\textsf{mu}ᵒ is strongly wellfounded.
+\textsf{mu}ᵒ is strongly contractive.
 
 The proof that \textsf{mu}ᵒ is strongly nonexpansive
 (Figure~\ref{fig:mu-nonexpansive}) demonstrates why we need to
@@ -1265,16 +1337,23 @@ so we are required to show $k′ ≤ j$, but that follows immediately from $1 \p
 \begin{code}
 mu-nonexpansive : ∀{Γ}{Δ : Times Γ}{A}{B} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Now → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
-   → ↓ᵒ k (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k (muᵒ Sᵃ (↓ᵈ j x δ) a)
+   → muᵒ Sᵃ δ a ≡[ k ] muᵒ Sᵃ (↓ᵈ j x δ) a
 mu-nonexpansive {Γ} {Δ} {A} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-zero
 mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
-  ↓ᵒ k (muᵒ Sᵃ δ a)                                          ⩦⟨ lemma19a Sᵃ a k δ ⟩
-  ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                             ⩦⟨ nonexp-Sᵃ-sx ⟩
-  ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ))                      ⩦⟨ wf-Sᵃ-z1 ⟩
-  ↓ᵒ k (♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ δ) , ↓ᵈ j x δ))              ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
-  ↓ᵒ k (♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ))     ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
-  ↓ᵒ k (♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ))             ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a k (↓ᵈ j x δ)) ⟩
-  ↓ᵒ k (muᵒ Sᵃ (↓ᵈ j x δ) a)                                                        ∎
+      muᵒ Sᵃ δ a
+  ⩦⟨ lemma19a Sᵃ a k δ ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
+  ⩦⟨ nonexp-Sᵃ-sx ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ)
+  ⩦⟨ wf-Sᵃ-z1 ⟩
+      ♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ δ) , ↓ᵈ j x δ)
+  ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
+      ♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ)
+  ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ)
+  ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a k (↓ᵈ j x δ)) ⟩
+      muᵒ Sᵃ (↓ᵈ j x δ) a
+  ∎
   where
   IH : ∀ a → ↓ᵒ k′ (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k′ (muᵒ Sᵃ (↓ᵈ j x δ) a)
   IH a = mu-nonexpansive Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
@@ -1289,28 +1368,35 @@ mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
 \label{fig:mu-nonexpansive}
 \end{figure}
 
-Figure~\ref{fig:mu-wellfounded} gives the proof for the second case,
-that \textsf{mu}ᵒ is strongly wellfounded. The proof is similar to the
+Figure~\ref{fig:mu-contractive} gives the proof for the second case,
+that \textsf{mu}ᵒ is strongly contractive. The proof is similar to the
 previous one.
 
 \begin{figure}[tbp]
 \small
 \begin{code}
-mu-wellfounded : (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
+mu-contractive : (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Later → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
-   → ↓ᵒ (1 + k) (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ (1 + k) (muᵒ Sᵃ (↓ᵈ j x δ) a)
-mu-wellfounded {A} {Γ} {Δ} {B} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-one
-mu-wellfounded {A} {Γ} {Δ} {B} Sᵃ a x time-x δ (suc k′) j k≤j =
-  ↓ᵒ (1 + k) (muᵒ Sᵃ δ a)                                       ⩦⟨ lemma19a Sᵃ a (1 + k) δ ⟩
-  ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , δ))                          ⩦⟨ wf-Sᵃ-sx ⟩
-  ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ))                   ⩦⟨ wf-Sᵃ-z1 ⟩
-  ↓ᵒ (1 + k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , ↓ᵈ j x δ))            ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
-  ↓ᵒ (1 + k) (♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ))   ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
-  ↓ᵒ (1 + k) (♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , (↓ᵈ j x δ)))        ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a (1 + k) _) ⟩
-  ↓ᵒ (1 + k) (muᵒ Sᵃ (↓ᵈ j x δ) a)                                              ∎
+   → muᵒ Sᵃ δ a ≡[ 1 + k ] muᵒ Sᵃ (↓ᵈ j x δ) a
+mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-one
+mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ (suc k′) j k≤j =
+      muᵒ Sᵃ δ a
+  ⩦⟨ lemma19a Sᵃ a (1 + k) δ ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
+  ⩦⟨ wf-Sᵃ-sx ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ)
+  ⩦⟨ wf-Sᵃ-z1 ⟩
+      ♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , ↓ᵈ j x δ)
+  ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
+      ♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ)
+  ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
+      ♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , (↓ᵈ j x δ))
+  ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a (1 + k) _) ⟩
+      muᵒ Sᵃ (↓ᵈ j x δ) a
+  ∎
   where
   IH : ∀ a → ↓ᵒ (1 + k′) (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ (1 + k′) (muᵒ Sᵃ (↓ᵈ j x δ) a)
-  IH a = mu-wellfounded Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
+  IH a = mu-contractive Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
   k : ℕ
   k = 1 + k′
   wf-Sᵃ-sx = strong-later{A = B}{sucˢ x}{Δ = cons Later Δ}
@@ -1318,8 +1404,8 @@ mu-wellfounded {A} {Γ} {Δ} {B} Sᵃ a x time-x δ (suc k′) j k≤j =
   wf-Sᵃ-z1 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , ↓ᵈ j x δ) k k ≤-refl 
   wf-Sᵃ-z2 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl 
 \end{code}
-\caption{\textsf{mu}ᵒ is strongly wellfounded.}
-\label{fig:mu-wellfounded}
+\caption{\textsf{mu}ᵒ is strongly contractive.}
+\label{fig:mu-contractive}
 \end{figure}
 
 Finally, we put the two cases together to show that \textsf{mu}ᵒ is a strong
@@ -1333,7 +1419,7 @@ strong-fun-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (cons L
 strong-fun-mu {Γ} {Δ} {A} Sᵃ a x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → mu-nonexpansive Sᵃ a x time-x δ k j k≤j
-... | Later = λ δ j k k≤j → mu-wellfounded Sᵃ a x time-x δ k j k≤j
+... | Later = λ δ j k k≤j → mu-contractive Sᵃ a x time-x δ k j k≤j
 \end{code}
 \caption{\textsf{mu}ᵒ is a strong environment functional.}
 \label{fig:mu-strong-env-fun}
@@ -1350,11 +1436,11 @@ congruent functions $f$ and $g$.
 \begin{code}
 cong-iter : ∀{A}{a : A} (i : ℕ) (f g : Predᵒ A → Predᵒ A)
   → (∀ P Q a → (∀ b → P b ≡ᵒ Q b) → f P a ≡ᵒ g Q a) → (I : Predᵒ A)
-  → iter i f I a ≡ᵒ iter i g I a
+  → (f ^ i) I a ≡ᵒ (g ^ i) I a
 cong-iter zero f g f=g I = ≡ᵒ-refl refl
 cong-iter{A}{a} (suc i) f g f=g I =
   let IH = λ b → cong-iter{A}{b} i f g f=g I in
-  f=g (iter i f I) (iter i g I) a IH
+  f=g ((f ^ i) I) ((g ^ i) I) a IH
 \end{code}
 
 \noindent The result \textsf{mu}ᵒ is congruent follows immediately from the lemma.
@@ -1389,7 +1475,7 @@ are equivalent. This is straightforward to prove by induction on the
 step index, as shown below.
 
 \begin{code}
-equiv-downᵒ : (∀ k → ↓ᵒ k ϕ ≡ᵒ ↓ᵒ k ψ) → ϕ ≡ᵒ ψ
+equiv-downᵒ : (∀ k → ϕ ≡[ k ] ψ) → ϕ ≡ᵒ ψ
 equiv-downᵒ {ϕ}{ψ} ↓ϕ=↓ψ = ≡ᵒ-intro aux
   where aux : ∀ i → # ϕ i ⇔ # ψ i
         aux zero = (λ _ → tz ψ) , (λ _ → tz ϕ)
@@ -1541,7 +1627,7 @@ abstract
 
 \begin{code}
 abstract
-  nonexpansive-∀ : ∀{k} → ↓ᵒ k (∀ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (P a))
+  nonexpansive-∀ : ∀{k} → (∀ᵒ[ a ] P a)  ≡[ k ]  (∀ᵒ[ a ] ↓ᵒ k (P a))
   nonexpansive-∀ zero = (λ x → tt) , (λ x → tt)
   nonexpansive-∀ (suc i) = (λ {(a , b) → a , (λ c → a , b c)}) , λ {(a , b) → a , (λ a → proj₂ (b a))}
 \end{code}
@@ -1556,17 +1642,23 @@ strong-all : (P : A → Setˢ Γ Δ) → strong-fun Δ (λ δ → ∀ᵒ[ a ] �
 strong-all {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
-      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ nonexpansive-∀ ⟩
-      ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
-          ⩦⟨ cong-↓ᵒ k (cong-∀(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ k (∀ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))                  ⩦⟨ ≡ᵒ-sym nonexpansive-∀ ⟩
-      ↓ᵒ k (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))                            ∎
+        ∀ᵒ[ a ] ♯ (P a) δ
+      ⩦⟨ nonexpansive-∀ ⟩
+        ∀ᵒ[ a ] ↓ᵒ k (♯ (P a) δ)
+      ⩦⟨ cong-↓ᵒ k (cong-∀(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
+        ∀ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ))
+      ⩦⟨ ≡ᵒ-sym nonexpansive-∀ ⟩
+        ∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ)
+      ∎
 ... | Later = λ δ j k k≤j → 
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ nonexpansive-∀ ⟩
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
-                      ⩦⟨ cong-↓ᵒ (suc k) (cong-∀ (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-∀ ⟩
-      ↓ᵒ (suc k) (∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))                 ∎
+        ∀ᵒ[ a ] ♯ (P a) δ
+      ⩦⟨ nonexpansive-∀ ⟩
+        ∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ)
+      ⩦⟨ cong-↓ᵒ (suc k) (cong-∀ (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
+        ∀ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ))
+      ⩦⟨ ≡ᵒ-sym nonexpansive-∀ ⟩
+        ∀ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ)
+      ∎
 \end{code}
 \caption{The forall quantifier is a strong environment functional.}
 \label{fig:strong-all}
@@ -1614,7 +1706,7 @@ abstract
 \begin{code}
 abstract
   nonexpansive-∃ : ∀{A}{P : Predᵒ A}{k}{{_ : Inhabited A}}
-    → ↓ᵒ k (∃ᵒ[ a ] P a) ≡ᵒ ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (P a))
+    → (∃ᵒ[ a ] P a) ≡[ k ] (∃ᵒ[ a ] ↓ᵒ k (P a))
   nonexpansive-∃ {A} {P} {k} zero = (λ x → tt) , (λ x → tt)
   nonexpansive-∃ {A} {P} {k} (suc i) = (λ {(a , (b , c)) → a , (b , (a , c))}) , λ { (a , b , c) → a , b , proj₂ c}
 \end{code}
@@ -1629,18 +1721,23 @@ strong-exists : {{_ : Inhabited A}} (P : A → Setˢ Γ Δ)
 strong-exists {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
-      ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) δ)                                      ⩦⟨ nonexpansive-∃ ⟩
-      ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) δ))
-          ⩦⟨ cong-↓ᵒ k (cong-∃(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ k (∃ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ)))               ⩦⟨ ≡ᵒ-sym nonexpansive-∃ ⟩
-      ↓ᵒ k (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))   ∎
+        ∃ᵒ[ a ] ♯ (P a) δ
+      ⩦⟨ nonexpansive-∃ ⟩
+        ∃ᵒ[ a ] ↓ᵒ k (♯ (P a) δ)
+      ⩦⟨ cong-↓ᵒ k (cong-∃(λ a → strong-now(strong(P a) x) time-x δ j k k≤j)) ⟩
+        ∃ᵒ[ a ] ↓ᵒ k (♯ (P a) (↓ᵈ j x δ))
+      ⩦⟨ ≡ᵒ-sym nonexpansive-∃ ⟩
+        ∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ)
+      ∎
 ... | Later = λ δ j k k≤j →
-      ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) δ)                                ⩦⟨ nonexpansive-∃ ⟩
-      ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ))
-                      ⩦⟨ cong-↓ᵒ (suc k) (cong-∃
-                          (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
-      ↓ᵒ (suc k) (∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-∃ ⟩
-      ↓ᵒ (suc k) (∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ))            ∎
+        ∃ᵒ[ a ] ♯ (P a) δ
+      ⩦⟨ nonexpansive-∃ ⟩
+        ∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) δ)
+      ⩦⟨ cong-↓ᵒ (suc k) (cong-∃ (λ a → strong-later (strong (P a) x) time-x δ j k k≤j)) ⟩
+        ∃ᵒ[ a ] ↓ᵒ (suc k) (♯ (P a) (↓ᵈ j x δ))
+      ⩦⟨ ≡ᵒ-sym nonexpansive-∃ ⟩
+        ∃ᵒ[ a ] ♯ (P a) (↓ᵈ j x δ)
+      ∎
 \end{code}
 \caption{The existential quantifier is a strong environment functional.}
 \label{fig:strong-exists}
@@ -1690,7 +1787,7 @@ cong-×ᵒ {ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ k → ⇔
 \noindent The conjunction connective is also nonexpansive.
 
 \begin{code}
-nonexpansive-× : ∀{k} → ↓ᵒ k (ϕ ×ᵒ ψ) ≡ᵒ ↓ᵒ k ((↓ᵒ k ϕ) ×ᵒ (↓ᵒ k ψ))
+nonexpansive-× : ∀{k} → ϕ ×ᵒ ψ ≡[ k ] (↓ᵒ k ϕ) ×ᵒ (↓ᵒ k ψ)
 nonexpansive-× {ϕ}{ψ} = ≡ᵒ-intro (λ i → aux i)
   where
   aux : ∀{k} i → #(↓ᵒ k (ϕ ×ᵒ ψ)) i ⇔ #(↓ᵒ k ((↓ᵒ k ϕ) ×ᵒ (↓ᵒ k ψ))) i
@@ -1724,46 +1821,69 @@ strong-pair {Γ}{Δ₁}{Δ₂} S T {A} x
 ... | Now | Now = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                                         ⩦⟨ nonexpansive-× ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T δ))            ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ))          ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))         ∎
+      ♯ S δ ×ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-× ⟩ 
+      ↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩
+      ♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Now | Later = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ))                 ⩦⟨ cong-↓ᵒ k nonexpansive-× ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-×ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-×) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ)))               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ))                            ⩦⟨ nonexpansive-× ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))      ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))      ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))                    ∎
+      ♯ S δ ×ᵒ ♯ T δ
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ)
+    ⩦⟨ cong-↓ᵒ k nonexpansive-× ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-×ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ)))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-×) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ))
+    ⩦⟨ lemma17ᵒ k ⟩ 
+      ♯ S δ ×ᵒ ♯ T (↓ᵈ j x δ)
+    ⩦⟨ nonexpansive-× ⟩ 
+      ↓ᵒ k (♯ S δ) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ cong-↓ᵒ k (cong-×ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
+      ♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Later | Now = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ×ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k nonexpansive-× ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-×ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-×) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ))               ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ)                            ⩦⟨ nonexpansive-× ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ))             ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))    ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))                   ∎
+      ♯ S δ ×ᵒ ♯ T δ
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ)
+    ⩦⟨ cong-↓ᵒ k nonexpansive-× ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-×ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-×) ⟩ 
+      ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ)
+    ⩦⟨ lemma17ᵒ k ⟩ 
+      ♯ S (↓ᵈ j x δ) ×ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-× ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-×ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
+      ♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Later | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ (1 + k) (♯ S δ ×ᵒ ♯ T δ)                            ⩦⟨ nonexpansive-× ⟩ 
-    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ))  ⩦⟨ cong-↓ᵒ (1 + k) (cong-×ᵒ strongS strongT) ⟩ 
-    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
-    ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ))               ∎
+      ♯ S δ ×ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-× ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ) ×ᵒ ↓ᵒ (1 + k) (♯ T δ)
+    ⩦⟨ cong-↓ᵒ (1 + k) (cong-×ᵒ strongS strongT) ⟩ 
+      ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ×ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-× ⟩ 
+      ♯ S (↓ᵈ j x δ) ×ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 \end{code}
 \caption{Conjunction is a strong environment functional.}
 \label{fig:strong-pair}
@@ -1813,7 +1933,7 @@ cong-⊎ᵒ {ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ k → �
 \noindent The disjunction connective is also nonexpansive.
 
 \begin{code}
-nonexpansive-⊎ : ∀{k} → ↓ᵒ k (ϕ ⊎ᵒ ψ) ≡ᵒ ↓ᵒ k ((↓ᵒ k ϕ) ⊎ᵒ (↓ᵒ k ψ))
+nonexpansive-⊎ : ∀{k} → (ϕ ⊎ᵒ ψ) ≡[ k ] ((↓ᵒ k ϕ) ⊎ᵒ (↓ᵒ k ψ))
 nonexpansive-⊎ {ϕ}{ψ}{k} = ≡ᵒ-intro (λ i → aux i)
   where
   aux : ∀ i → #(↓ᵒ k (ϕ ⊎ᵒ ψ)) i ⇔ #(↓ᵒ k ((↓ᵒ k ϕ) ⊎ᵒ (↓ᵒ k ψ))) i
@@ -1840,46 +1960,69 @@ strong-sum {Γ}{Δ₁}{Δ₂} S T {A} x
 ... | Now | Now = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                                         ⩦⟨ nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T δ))        ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ))   ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))           ∎
+      ♯ S δ ⊎ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-⊎ ⟩ 
+      ↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩
+      ♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Now | Later = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-⊎ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-⊎) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ)))             ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ))              ⩦⟨ nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))         ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))      ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))         ∎
+      ♯ S δ ⊎ᵒ ♯ T δ
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ)
+    ⩦⟨ cong-↓ᵒ k nonexpansive-⊎ ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-⊎ᵒ (≡ᵒ-refl refl) strongT)) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ)))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-⊎) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ))
+    ⩦⟨ lemma17ᵒ k ⟩ 
+      ♯ S δ ⊎ᵒ ♯ T (↓ᵈ j x δ)
+    ⩦⟨ nonexpansive-⊎ ⟩ 
+      ↓ᵒ k (♯ S δ) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ strongS (≡ᵒ-refl refl)) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
+      ♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Later | Now = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ ⊎ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ))                ⩦⟨ cong-↓ᵒ k nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-⊎ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                                                ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-⊎) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ))         ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ)                 ⩦⟨ nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ))     ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))   ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))        ∎
+      ♯ S δ ⊎ᵒ ♯ T δ
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ)
+    ⩦⟨ cong-↓ᵒ k nonexpansive-⊎ ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-⊎ᵒ strongS (≡ᵒ-refl refl))) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k nonexpansive-⊎) ⟩ 
+      ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ)
+    ⩦⟨ lemma17ᵒ k ⟩ 
+      ♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-⊎ ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-⊎ᵒ (≡ᵒ-refl refl) strongT) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) ⊎ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
+      ♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Later | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ (1 + k) (♯ S δ ⊎ᵒ ♯ T δ)                ⩦⟨ nonexpansive-⊎ ⟩ 
-    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ))    ⩦⟨ cong-↓ᵒ (1 + k) (cong-⊎ᵒ strongS strongT) ⟩ 
-    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ))  ⊎ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))) ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
-    ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ))   ∎
+      ♯ S δ ⊎ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-⊎ ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ) ⊎ᵒ ↓ᵒ (1 + k) (♯ T δ)
+    ⩦⟨ cong-↓ᵒ (1 + k) (cong-⊎ᵒ strongS strongT) ⟩ 
+      ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ))  ⊎ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym nonexpansive-⊎ ⟩ 
+      ♯ S (↓ᵈ j x δ) ⊎ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 \end{code}
 \caption{Disjunction is a strong environment functional.}
 \label{fig:strong-sum}
@@ -1932,7 +2075,7 @@ cong-→ {ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ k →
 \noindent The implication connective is also nonexpansive.
 
 \begin{code}
-nonexpansive-→ : ∀{k} → ↓ᵒ k (ϕ →ᵒ ψ) ≡ᵒ ↓ᵒ k ((↓ᵒ k ϕ) →ᵒ (↓ᵒ k ψ))
+nonexpansive-→ : ∀{k} → (ϕ →ᵒ ψ) ≡[ k ] ((↓ᵒ k ϕ) →ᵒ (↓ᵒ k ψ))
 nonexpansive-→ {ϕ}{ψ}{k} = ≡ᵒ-intro (λ i → aux i)
   where
   aux : ∀ i → #(↓ᵒ k (ϕ →ᵒ ψ)) i ⇔ #(↓ᵒ k ((↓ᵒ k ϕ) →ᵒ (↓ᵒ k ψ))) i
@@ -1957,48 +2100,71 @@ strong-imp {Γ}{Δ₁}{Δ₂} S T {A} x
 ... | Now | Now = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                         ⩦⟨ nonexpansive-→{♯ S δ}{♯ T δ} ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T δ))        ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ))  ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}{↓ᵒ k (♯ S (↓ᵈ j x δ))}
-                                           {↓ᵒ k (♯ T δ)}{↓ᵒ k (♯ T (↓ᵈ j x δ))} (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))) ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))  ∎
+      ♯ S δ →ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-→{♯ S δ}{♯ T δ} ⟩ 
+      ↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}{↓ᵒ k (♯ S (↓ᵈ j x δ))}
+                        {↓ᵒ k (♯ T δ)}{↓ᵒ k (♯ T (↓ᵈ j x δ))} (≡ᵒ-refl refl) strongT) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩
+      ♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Now | Later = λ δ j k k≤j →
     let strongS = strong-now (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T δ}) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)))  ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k)
-              (cong-→{↓ᵒ (1 + k) (♯ S δ)}{↓ᵒ (1 + k) (♯ S δ)} (≡ᵒ-refl refl) strongT)) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))))
-                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T (↓ᵈ j x δ)})) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ)))           ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ))              ⩦⟨ nonexpansive-→{♯ S δ}{♯ T (↓ᵈ j x δ)} ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))             ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))  ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))           ∎
+      ♯ S δ →ᵒ ♯ T δ
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T δ}) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-→{↓ᵒ (1 + k) (♯ S δ)}{↓ᵒ (1 + k) (♯ S δ)} (≡ᵒ-refl refl) strongT)) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ)))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T (↓ᵈ j x δ)})) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T (↓ᵈ j x δ))
+    ⩦⟨ lemma17ᵒ k ⟩ 
+      ♯ S δ →ᵒ ♯ T (↓ᵈ j x δ)
+    ⩦⟨ nonexpansive-→{♯ S δ}{♯ T (↓ᵈ j x δ)} ⟩ 
+      ↓ᵒ k (♯ S δ) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ cong-↓ᵒ k (cong-→ strongS (≡ᵒ-refl refl)) ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T (↓ᵈ j x δ)}) ⟩ 
+      ♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Later | Now = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-now (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ k (♯ S δ →ᵒ ♯ T δ)                             ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ))   ⩦⟨ cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T δ}) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                   ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-→ strongS (≡ᵒ-refl refl))) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (1 + k) (♯ T δ)))
-                       ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T δ})) ⟩ 
-    ↓ᵒ k (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ))            ⩦⟨ lemma17ᵒ k ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ)               ⩦⟨ nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T δ} ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ))  ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}
+      ♯ S δ →ᵒ ♯ T δ
+    ⩦⟨ ≡ᵒ-sym (lemma17ᵒ k) ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (nonexpansive-→{♯ S δ}{♯ T δ}) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ cong-↓ᵒ k (cong-↓ᵒ (1 + k) (cong-→ strongS (≡ᵒ-refl refl))) ⟩ 
+      ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (1 + k) (♯ T δ))
+    ⩦⟨ ≡ᵒ-sym (cong-↓ᵒ k (nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T δ})) ⟩ 
+      ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ)
+    ⩦⟨ lemma17ᵒ k ⟩ 
+      ♯ S (↓ᵈ j x δ) →ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-→{♯ S (↓ᵈ j x δ)}{♯ T δ} ⟩ 
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T δ)
+    ⩦⟨ cong-↓ᵒ k (cong-→{↓ᵒ k (♯ S (↓ᵈ j x δ))}
                      {↓ᵒ k (♯ S (↓ᵈ j x δ))}{↓ᵒ k (♯ T δ)}{↓ᵒ k (♯ T (↓ᵈ j x δ))} (≡ᵒ-refl refl) strongT) ⟩ 
-    ↓ᵒ k (↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ)))  ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S _}{♯ T _}) ⟩ 
-    ↓ᵒ k (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))    ∎
+      ↓ᵒ k (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ k (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S _}{♯ T _}) ⟩ 
+      ♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 ... | Later | Later = λ δ j k k≤j →
     let strongS = strong-later (strong S x) time-x1 δ j k k≤j in
     let strongT = strong-later (strong T x) time-x2 δ j k k≤j in
-    ↓ᵒ (1 + k) (♯ S δ →ᵒ ♯ T δ)                ⩦⟨ nonexpansive-→{♯ S δ}{♯ T δ} ⟩ 
-    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)) ⩦⟨ cong-↓ᵒ (1 + k) (cong-→ strongS strongT) ⟩ 
-    ↓ᵒ (1 + k) (↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))) ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S _}{♯ T _}) ⟩ 
-    ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ))   ∎
+      ♯ S δ →ᵒ ♯ T δ
+    ⩦⟨ nonexpansive-→{♯ S δ}{♯ T δ} ⟩ 
+      ↓ᵒ (1 + k) (♯ S δ) →ᵒ ↓ᵒ (1 + k) (♯ T δ)
+    ⩦⟨ cong-↓ᵒ (1 + k) (cong-→ strongS strongT) ⟩ 
+      ↓ᵒ (1 + k) (♯ S (↓ᵈ j x δ)) →ᵒ ↓ᵒ (1 + k) (♯ T (↓ᵈ j x δ))
+    ⩦⟨ ≡ᵒ-sym (nonexpansive-→{♯ S _}{♯ T _}) ⟩ 
+      ♯ S (↓ᵈ j x δ) →ᵒ ♯ T (↓ᵈ j x δ)
+    ∎
 \end{code}
 \caption{Implication is a strong environment functional.}
 \label{fig:strong-imp}
