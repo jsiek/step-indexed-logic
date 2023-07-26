@@ -40,29 +40,29 @@ instance
                       }
 
 infixr 2 _⇔_
-_⇔_ : Set → Set → Set
+_⇔_ : ∀{ℓ} → Set ℓ → Set ℓ → Set ℓ
 P ⇔ Q = (P → Q) × (Q → P)
 
-⇔-intro : ∀{P Q : Set}
+⇔-intro : ∀{ℓ}{P Q : Set ℓ}
   → (P → Q)
   → (Q → P)
     -------
   → P ⇔ Q
 ⇔-intro PQ QP = PQ , QP
 
-⇔-elim : ∀{P Q : Set}
+⇔-elim : ∀{ℓ}{P Q : Set ℓ}
   → P ⇔ Q
     -----------------
   → (P → Q) × (Q → P)
 ⇔-elim PQ = PQ
 
-⇔-to : ∀{P Q : Set}
+⇔-to : ∀{ℓ}{P Q : Set ℓ}
   → P ⇔ Q
     -------
   → (P → Q)
 ⇔-to PQ = proj₁ PQ
 
-⇔-fro : ∀{P Q : Set}
+⇔-fro : ∀{ℓ}{P Q : Set ℓ}
   → P ⇔ Q
     -------
   → (Q → P)

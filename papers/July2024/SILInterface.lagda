@@ -20,99 +20,16 @@ open import Relation.Nullary using (¬_)
 open import Function using (id; _∘_)
 open import Level using (Lift)
 open import EquivalenceRelation public
+open import July2024.Prelude
 
 \end{code}
 \end{comment}
 
-\noindent Let $A,B,C$ range over Agda types (element of \textsf{Set})
-
-\begin{code}
-variable A B C : Set
-\end{code}
-
-\begin{code}
-Context : Set₁
-Context = List Set
-variable Γ : Context
-\end{code}
-
-\noindent The following data type defines well-typed de Bruijn indices.
-
-\begin{code}
-data _∋_ : Context → Set → Set₁ where
-  zeroˢ : (A ∷ Γ) ∋ A
-  sucˢ : Γ ∋ B → (A ∷ Γ) ∋ B
-variable x y z : Γ ∋ A
-\end{code}
-
-\begin{code}
-data Time : Set where
-  Now : Time
-  Later : Time
-
-data Times : Context → Set₁ where
-  ∅ : Times []
-  cons : Time → Times Γ → Times (A ∷ Γ)
-\end{code}
-Let $Δ$ range over these lists of times.
-\begin{code}
-variable Δ Δ₁ Δ₂ : Times Γ
-\end{code}
-
-\begin{code}
-laters : ∀ (Γ : Context) → Times Γ
-laters [] = ∅
-laters (A ∷ Γ) = cons Later (laters Γ)
-
-var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
-var-now (B ∷ Γ) zeroˢ = cons Now (laters Γ)
-var-now (B ∷ Γ) (sucˢ x) = cons Later (var-now Γ x)
-\end{code}
-
-\begin{code}
-choose : Time → Time → Time
-choose Now Now = Now
-choose Now Later = Now
-choose Later Now = Now
-choose Later Later = Later
-\end{code}
-
-\begin{code}
-_∪_ : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
-_∪_ {[]} Δ₁ Δ₂ = ∅
-_∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (Δ₁ ∪ Δ₂)
-\end{code}
-
-\begin{code}
-record Inhabited (A : Set) : Set where
-  field elt : A
-open Inhabited {{...}} public
-\end{code}
-
-\begin{code}
-record SILᵒ : Set₂ where
-  field
-    {- Step-Indexed Propositions -}
-    Setᵒ : Set₁
-    # : Setᵒ → ℕ → Set
-
-  Predᵒ : Set → Set₁
-  Predᵒ A = A → Setᵒ
-
-  RecEnv : Context → Set₁
-  RecEnv [] = topᵖ 
-  RecEnv (A ∷ Γ) = Predᵒ A × RecEnv Γ
-\end{code}
-
 \begin{code}
 record SIL : Set₂ where
   infix 1 _⊢ᵒ_
-  infix 2 _≡ᵒ_
   infix 2 _≡ˢ_
 
-  field S : SILᵒ
-  open SILᵒ S
-  
   field
     {- Open Step-Indexed Propositions -}
     Setˢ : (Γ : Context) → Times Γ → Set₁
@@ -131,7 +48,6 @@ record SIL : Set₂ where
     ↓ᵒ : ℕ → Setᵒ → Setᵒ
     _ᵒ : Set → Setᵒ
     μᵒ : (A → Setˢ (A ∷ []) (cons Later ∅)) → (A → Setᵒ)
-    _≡ᵒ_ : Setᵒ → Setᵒ → Set
 
     {- Proof Theory -}
     _⊢ᵒ_ : List Setᵒ → Setᵒ → Set
@@ -178,6 +94,9 @@ record SIL : Set₂ where
     ∀ˢ : (A → Setˢ Γ Δ) → Setˢ Γ Δ
     ∃ˢ : {{_ : Inhabited A}} → (A → Setˢ Γ Δ) → Setˢ Γ Δ
     _ˢ : Set → Setˢ Γ (laters Γ)
+
+    {- Equations for Open Formulas -}
+    ♯⊤ˢ : ∀ {Γ} (δ : RecEnv Γ) → ♯ ⊤ˢ δ ≡ ⊤ᵒ
 
     _≡ˢ_ : Setˢ Γ Δ → Setˢ Γ Δ → Set₁
     fixpointˢ : ∀ (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → μˢ F a ≡ˢ letˢ (μˢ F) (F a)
