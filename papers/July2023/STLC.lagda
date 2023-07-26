@@ -2,7 +2,7 @@
 \begin{code}
 {-# OPTIONS --rewriting #-}
 
-module July2024.STLC where
+module July2023.STLC where
 
 open import Data.List using (List; []; _∷_; length)
 open import Data.Nat
@@ -28,7 +28,7 @@ open import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
-open import July2024.StepIndexedLogic
+open import July2023.StepIndexedLogic
 open import EquivalenceRelation public
 
 \end{code}
@@ -575,7 +575,7 @@ then it must either be a lambda abstraction or a fixpoint value.
 𝒱⇒ℰ : ∀{A}{𝒫}{V} →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ V  →  𝒫 ⊢ᵒ ℰ⟦ A ⟧ V
 𝒱⇒ℰ {A}{𝒫}{V} 𝒫⊢𝒱V = ℰ-intro prog pres
     where prog = inj₁ᵒ 𝒫⊢𝒱V
-          pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ V—→N →
+          pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ V—→N →
                    ⊢ᵒ-sucP (Sᵒ 𝒫⊢𝒱V) λ 𝒱V →
                       ⊥-elim (value-irreducible (𝒱⇒Value A V 𝒱V ) V—→N))
 \end{code}

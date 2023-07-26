@@ -2,7 +2,7 @@
 \begin{code}
 {-# OPTIONS --rewriting #-}
 
-module July2024.STLCSafe where
+module July2023.STLCSafe where
 
 open import Data.List using (List; []; _∷_; length)
 open import Data.Nat
@@ -28,10 +28,10 @@ open import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
-open import July2024.StepIndexedLogic
-open import July2024.STLC
-open import July2024.STLCDeterministic
-open import July2024.STLCBind
+open import July2023.StepIndexedLogic
+open import July2023.STLC
+open import July2023.STLCDeterministic
+open import July2023.STLCBind
 
 \end{code}
 \end{comment}
@@ -94,7 +94,7 @@ and that γ is well-behaved.
 compatible-μ : ∀{Γ}{A}{B}{V} → Value V  →  ((A ⇒ B) ∷ Γ) ⊨ⱽ V ⦂ (A ⇒ B)
    → Γ ⊨ⱽ (μ V) ⦂ (A ⇒ B)
 compatible-μ {Γ}{A}{B}{V} v ⊨V γ =
-  lobᵒ (substᵒ (≡ᵒ-sym 𝒱-μ) (constᵒI (subst-preserves-value (ext γ) _ v) ,ᵒ ▷𝒱V))
+  lobᵒ (substᵒ (≡ᵒ-sym 𝒱-μ) (pureᵒI (subst-preserves-value (ext γ) _ v) ,ᵒ ▷𝒱V))
   where
   V' = ⟪ ext γ ⟫ V
   ▷𝒱V : ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (μ V')) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (⟪ μ V' • γ ⟫ V))
@@ -163,18 +163,18 @@ compatible-case {Γ}{L}{M}{N}{A} ⊨L ⊨M ⊨N γ =
      𝒱ℕ-inv{V}{n = n}{𝒫₁ V ⊢ᵒ ℰ⟦ A ⟧ (case V (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))} 𝒱Vsn
      (λ { refl → {- Case V = zero -}
        let prog : 𝒫₁ `zero ⊢ᵒ progress A (case `zero (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
-           prog = inj₂ᵒ (constᵒI (_ , β-zero)) in
+           prog = inj₂ᵒ (pureᵒI (_ , β-zero)) in
        let pres : 𝒫₁ `zero ⊢ᵒ preservation A (case `zero (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
-           pres = Λᵒ[ N ] (→ᵒI (constᵒE Zᵒ λ {r →
+           pres = Λᵒ[ N ] (→ᵒI (pureᵒE Zᵒ λ {r →
              let N≡⟪γ⟫M = deterministic r β-zero in
              Sᵒ (subst (λ N → 𝒫₁ `zero ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)) (sym N≡⟪γ⟫M) (monoᵒ (Sᵒ (Sᵒ (⊨M γ)))))})) in
        ℰ-intro prog pres})
      (λ { V′ refl →  {- Case V = suc V′ -}
        let v = 𝒱⇒Value `ℕ V′ 𝒱Vsn in
        let prog : 𝒫₁ (`suc V′) ⊢ᵒ progress A (case (`suc V′) (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
-           prog = inj₂ᵒ (constᵒI (_ , (β-suc v))) in
+           prog = inj₂ᵒ (pureᵒI (_ , (β-suc v))) in
        let pres : 𝒫₁ (`suc V′) ⊢ᵒ preservation A (case (`suc V′) (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
-           pres = Λᵒ[ L ] (→ᵒI (constᵒE Zᵒ λ {r →
+           pres = Λᵒ[ L ] (→ᵒI (pureᵒE Zᵒ λ {r →
              let L≡⟪γ⟫N[V] = deterministic r (β-suc v) in
              let ▷ℰN[V′] : 𝒫₁ (`suc V′) ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ (⟪ V′ • γ ⟫ N)
                  ▷ℰN[V′] = monoᵒ (⊢ᵒ-intro λ {k (a , b , c) → ⊢ᵒ-elim (⊨N (V′ • γ)) k (a , c)}) in
@@ -202,9 +202,9 @@ apply-λ : ∀{A}{B}{W}{N′}{𝒫} → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (ƛ N′
   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ (ƛ N′ · W)
 apply-λ {A}{B}{W}{N′}{𝒫} ⊢𝒱V ⊢𝒱W w = 
   let prog : 𝒫 ⊢ᵒ progress B (ƛ N′ · W)
-      prog = inj₂ᵒ (constᵒI (_ , (β-ƛ w))) in
+      prog = inj₂ᵒ (pureᵒI (_ , (β-ƛ w))) in
   let pres : 𝒫 ⊢ᵒ preservation B (ƛ N′ · W)
-      pres = Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ {r →
+      pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ {r →
                let ⊢▷ℰN′W : 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ (N′ [ W ]))
                    ⊢▷ℰN′W = appᵒ (instᵒ (substᵒ 𝒱-fun ⊢𝒱V) W) (monoᵒ ⊢𝒱W) in
                Sᵒ (subst (λ N → 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)) (sym (deterministic r (β-ƛ w))) ⊢▷ℰN′W)}) in
@@ -239,7 +239,7 @@ apply-μ : ∀{A}{B}{W}{V′}{𝒫} → 𝒫 ⊢ᵒ ▷ᵒ WBApp A B
   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ (μ V′ · W)
 apply-μ {A = A}{B}{W}{V′}{𝒫} IH ⊢𝒱V v ⊢𝒱W w = 
   let prog : 𝒫 ⊢ᵒ progress B (μ V′ · W)
-      prog = inj₂ᵒ (constᵒI (_ , β-μ (Value-μ-inv v) w)) in
+      prog = inj₂ᵒ (pureᵒI (_ , β-μ (Value-μ-inv v) w)) in
   let ▷ℰV[μV]·W : (μ V′ · W —→ (V′ [ μ V′ ]) · W) ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ ((V′ [ μ V′ ]) · W)
       ▷ℰV[μV]·W =
         let ▷𝒱V[μV] = proj₂ᵒ (substᵒ 𝒱-μ (Sᵒ ⊢𝒱V)) in

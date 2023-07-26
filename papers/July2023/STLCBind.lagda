@@ -2,7 +2,7 @@
 \begin{code}
 {-# OPTIONS --rewriting #-}
 
-module July2024.STLCBind where
+module July2023.STLCBind where
 
 open import Data.List using (List; []; _∷_; length)
 open import Data.Nat
@@ -28,9 +28,9 @@ open import Relation.Binary.PropositionalEquality as Eq
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
-open import July2024.StepIndexedLogic
-open import July2024.STLC
-open import July2024.STLCDeterministic
+open import July2023.StepIndexedLogic
+open import July2023.STLC
+open import July2023.STLCDeterministic
 
 \end{code}
 \end{comment}
@@ -73,7 +73,7 @@ Prem2-reduction {𝒫}{A}{B}{F}{M}{M′} M→M′ Prem2[M] =
    Λᵒ[ V ] →ᵒI (→ᵒI M′→V→ℰFV) where
    M′→V→ℰFV : ∀{V} → 𝒱⟦ B ⟧ V ∷ (M′ —↠ V)ᵒ ∷ 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
    M′→V→ℰFV {V} = ⊢ᵒ-sucP (Sᵒ Zᵒ) λ M′→V → 
-                  let M—↠V = constᵒI (M —→⟨ M→M′ ⟩ M′→V) in
+                  let M—↠V = pureᵒI (M —→⟨ M→M′ ⟩ M′→V) in
                   let M→V→ℰFV = Sᵒ (Sᵒ (instᵒ Prem2[M] V)) in
                   appᵒ (appᵒ M→V→ℰFV M—↠V) Zᵒ
 \end{code}
@@ -128,17 +128,17 @@ other logical connectives.
 
    Mval : 𝒱⟦ B ⟧ M ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mval = let Prem2[M] = λ V → (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧) in
-          appᵒ (appᵒ (instᵒ{ϕᵃ = Prem2[M]} (Sᵒ Zᵒ) M) (constᵒI (M END))) Zᵒ
+          appᵒ (appᵒ (instᵒ{ϕᵃ = Prem2[M]} (Sᵒ Zᵒ) M) (pureᵒI (M END))) Zᵒ
 
    Mred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mred = ℰ-intro progressMred preservationMred
     where
     progressMred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ progress A (F ⟦ M ⟧)
-    progressMred = inj₂ᵒ (constᵒE Zᵒ λ {(M′ , M→M′) → constᵒI (_ , (ξ F M→M′))})
+    progressMred = inj₂ᵒ (pureᵒE Zᵒ λ {(M′ , M→M′) → pureᵒI (_ , (ξ F M→M′))})
 
     preservationMred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ preservation A (F ⟦ M ⟧)
-    preservationMred = (constᵒE Zᵒ λ redM →
-                Sᵒ (Λᵒ[ N ] →ᵒI (constᵒE Zᵒ λ FM→N → Sᵒ (redM⇒▷ℰN redM FM→N))))
+    preservationMred = (pureᵒE Zᵒ λ redM →
+                Sᵒ (Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ FM→N → Sᵒ (redM⇒▷ℰN redM FM→N))))
      where
      redM⇒▷ℰN : ∀{N} → reducible M → (F ⟦ M ⟧ —→ N) → 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)
      redM⇒▷ℰN {N} rM FM→N
@@ -146,7 +146,7 @@ other logical connectives.
      ... | M′ , M→M′ , N≡F[M′] =
       let ▷ℰM′ : 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M′
           ▷ℰM′ = appᵒ (instᵒ{ϕᵃ = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
-                        (proj₂ᵒ (substᵒ ℰ-stmt (Sᵒ Zᵒ))) M′) (constᵒI M→M′) in
+                        (proj₂ᵒ (substᵒ ℰ-stmt (Sᵒ Zᵒ))) M′) (pureᵒI M→M′) in
       let ▷M′→V→𝒱V→ℰFV : 𝒫′ ⊢ᵒ ▷ᵒ (Prem2 A B F M′)
           ▷M′→V→𝒱V→ℰFV = monoᵒ (Prem2-reduction{𝒫′}{A}{B} M→M′ Zᵒ) in
       let IH : 𝒫′ ⊢ᵒ ▷ᵒ ℰ-bind-prop A B F

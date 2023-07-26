@@ -1,7 +1,7 @@
 \begin{comment}
 \begin{code}
 {-# OPTIONS --without-K #-}
-module July2024.StepIndexedLogic where
+module July2023.StepIndexedLogic where
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
@@ -61,6 +61,8 @@ Let $p, q, r$ range over (regular) propositions.
 \begin{code}
 variable p q r : Set
 \end{code}
+
+
 
 The ``true'' formula of SIL is embedded in Agda by constructing an
 instance of the $\mathsf{Set}ᵒ$ record type, with the representation
@@ -1525,13 +1527,13 @@ fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
 SIL. We now move onto to the simpler connectives, including the
 logical connectives from first-order logical.
 
-\subsection{Constant}
+\subsection{Pure}
 
 A step-indexed logic such as LSLR is typically specialized to include
 atomic formulas to express properties of programs in a particular
 language. Here we instead allow arbitrary Agda propositions to be
 included in a step-indexed proposition by way of the following
-constant operator. Given a proposition $p$, the formula $p\,ᵒ$ is true
+pure operator. Given a proposition $p$, the formula $p\,ᵒ$ is true
 at zero and everywhere else it is equivalent to $p$.
 
 \begin{code}
@@ -1542,11 +1544,11 @@ p ᵒ = record { # = λ { zero → ⊤ ; (suc k) → p }
              ; tz = tt }
 \end{code}
 
-\noindent The constant operator is a strong environment functiuonal.
+\noindent The pure operator is a strong environment functiuonal.
 
 \begin{code}
-const-strong : ∀ (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ᵒ)
-const-strong {Γ}{A}{Δ} p x
+pure-strong : ∀ (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ᵒ)
+pure-strong {Γ}{A}{Δ} p x
     with timeof x Δ
 ... | Now = λ δ j k k≤j → ≡ᵒ-refl refl
 ... | Later = λ δ j k k≤j → ≡ᵒ-refl refl
@@ -1555,7 +1557,7 @@ const-strong {Γ}{A}{Δ} p x
 \noindent So we define the constant SIL formula $pˢ$ as the following record.
 
 \begin{code}
-p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → const-strong p x ; congr = λ d=d′ → ≡ᵒ-refl refl }
+p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → pure-strong p x ; congr = λ d=d′ → ≡ᵒ-refl refl }
 \end{code}
 
 \subsection{True and False}
@@ -2435,13 +2437,13 @@ one can provide an Agda function that quantifies over $p$.
 
 \begin{code}
 abstract
-  constᵒI : ∀{p : Set} → p → 𝒫 ⊢ᵒ p ᵒ
-  constᵒI s zero ⊨𝒫n = tt
-  constᵒI s (suc n) ⊨𝒫n = s
+  pureᵒI : ∀{p : Set} → p → 𝒫 ⊢ᵒ p ᵒ
+  pureᵒI s zero ⊨𝒫n = tt
+  pureᵒI s (suc n) ⊨𝒫n = s
 
-  constᵒE : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
-  constᵒE {𝒫} {p} {R} ⊢p p→⊢R zero 𝒫n = tz R
-  constᵒE {𝒫} {p} {R} ⊢p p→⊢R (suc n) 𝒫n = p→⊢R (⊢p (suc n) 𝒫n) (suc n) 𝒫n
+  pureᵒE : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+  pureᵒE {𝒫} {p} {R} ⊢p p→⊢R zero 𝒫n = tz R
+  pureᵒE {𝒫} {p} {R} ⊢p p→⊢R (suc n) 𝒫n = p→⊢R (⊢p (suc n) 𝒫n) (suc n) 𝒫n
 \end{code}
 
 The next two rules provide ways to make use of premises to the left of

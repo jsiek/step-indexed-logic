@@ -373,7 +373,38 @@ This paper fills that need by showing how to build a step-indexed
 logic in Agda, a system that we abbreviate as SIL.  This paper is a
 literate Agda file; all of the definitions and proofs have been
 checked with Agda 2.6.2.2. 
-%
+
+
+%% Our goal is to define an operator for recursive predicates and relations
+%% with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
+%% recursive relation and $R$ is the definition of the relation, which
+%% can refer to $x$. We shall prove a fixpoint theorem which states that
+%% the recursive predicate is equal to its unfolding, something like the
+%% following.
+%% \[
+%%   (μᵒ x. R) \app δ \app a ≡ᵒ R \app δ(x:= μᵒ x. R) \app a
+%% \]
+%% where $δ$ is an environment mapping variables to predicates.
+
+UNDER CONSTRUCTION
+
+To evaluate the utility of SIL, Section~\ref{sec:STLC} presents a case
+study of proving semantic type safety for the Simply Typed Lambda
+Calculus extended with recursive functions. We find that SIL
+streamlines the definition of logical relations and is helpful in many
+of the proofs, but there is room for improvement regarding the
+ergonomics of interactive proof development using SIL.  Limitations in
+Agda's inference algorithm sometimes leads to verbosity in SIL proofs.
+
+
+\input{latex/July2023/SILIntro.tex}
+
+\input{latex/July2023/STLC.tex}
+\input{latex/July2023/STLCBind.tex}
+\input{latex/July2023/STLCSafe.tex}
+
+\section{Constructing a Step-Indexed Logic}
+
 Most of the challenge in defining a step-indexed logic is in the
 definition of recursive predicates and their fixpoint theorem. The
 step-indexed models of \citet{Appel:2001aa} rely on an approximation
@@ -414,44 +445,23 @@ does not prove this (they prove those properties for the other type
 constructors).  We discuss this problem and its remedy in sections
 \ref{sec:appel-mcallester} and \ref{sec:open-propositions}.
 
-We organize this paper as follows. We review Appel an McAllester's
-work in Section~\ref{sec:appel-mcallester}, then introduce our
-representation of step-indexed propositions and predicates in Agda in
-Sections \ref{sec:propositions} and \ref{sec:predicates}.  We
-formalize several important concepts in
+We organize the rest of the article as follows. We review Appel an
+McAllester's work in Section~\ref{sec:appel-mcallester}, then
+introduce our representation of step-indexed propositions and
+predicates in Agda in Sections \ref{sec:propositions} and
+\ref{sec:predicates}.  We formalize several important concepts in
 Section~\ref{sec:fun-approx-iter}: functionals, approximation, and
 iteration, and prove some basic results about them.  We construct all
 of the logical connectives of SIL in
 Section~\ref{sec:open-propositions}, including the definition of
 recursive predicates and their fixpoint theorem.  The proof theory of
 SIL is developed in Section~\ref{sec:proofs}, where we construct the
-proof rules of this modal logic.  To evaluate the utility of SIL,
-Section~\ref{sec:STLC} presents a case study of proving semantic type
-safety for the Simply Typed Lambda Calculus extended with recursive
-functions. We find that SIL streamlines the definition of logical
-relations and is helpful in many of the proofs, but there is room for
-improvement regarding the ergonomics of interactive proof development
-using SIL.  Limitations in Agda's inference algorithm sometimes leads
-to verbosity in SIL proofs.
+proof rules of this modal logic.
 
-%% Our goal is to define an operator for recursive predicates and relations
-%% with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
-%% recursive relation and $R$ is the definition of the relation, which
-%% can refer to $x$. We shall prove a fixpoint theorem which states that
-%% the recursive predicate is equal to its unfolding, something like the
-%% following.
-%% \[
-%%   (μᵒ x. R) \app δ \app a ≡ᵒ R \app δ(x:= μᵒ x. R) \app a
-%% \]
-%% where $δ$ is an environment mapping variables to predicates.
-
-\input{latex/July2024/STLC.tex}
-\input{latex/July2024/STLCBind.tex}
-\input{latex/July2024/STLCSafe.tex}
 
 \input{review-appel.tex}
 
-\input{latex/July2024/StepIndexedLogic.tex}
+\input{latex/July2023/StepIndexedLogic.tex}
 
 
 \bibliographystyle{ACM-Reference-Format}
@@ -461,7 +471,7 @@ to verbosity in SIL proofs.
 \addcontentsline{toc}{section}{Appendix}
 \section*{Appendix}
 
-\input{latex/July2024/STLCDeterministic.tex}
+\input{latex/July2023/STLCDeterministic.tex}
 
 \end{document}
 \endinput
