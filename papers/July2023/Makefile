@@ -1,4 +1,4 @@
-paper.pdf: paper.tex latex/July2023/StepIndexedLogic.tex latex/July2023/SILIntro.tex latex/July2023/STLC.tex latex/July2023/STLCDeterministic.tex latex/July2023/STLCBind.tex latex/July2023/STLCSafe.tex latex/July2023/STLCDeterministic.tex
+paper.pdf: paper.tex latex/July2023/StepIndexedLogic.tex latex/July2023/SILIntro.tex latex/July2023/SILReference.tex latex/July2023/STLC.tex latex/July2023/STLCDeterministic.tex latex/July2023/STLCBind.tex latex/July2023/STLCSafe.tex latex/July2023/STLCDeterministic.tex
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper
@@ -18,6 +18,9 @@ latex/July2023/StepIndexedLogic.tex: StepIndexedLogic.lagda
 
 latex/July2023/SILIntro.tex: SILIntro.lagda StepIndexedLogic.lagda
 	agda --latex SILIntro.lagda
+
+latex/July2023/SILReference.tex: SILReference.lagda StepIndexedLogic.lagda
+	agda --latex SILReference.lagda
 
 latex/July2023/STLC.tex: STLC.lagda StepIndexedLogic.lagda
 	agda --latex STLC.lagda

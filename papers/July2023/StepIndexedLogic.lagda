@@ -61,8 +61,10 @@ Let $p, q, r$ range over (regular) propositions.
 \begin{code}
 variable p q r : Set
 \end{code}
-
-
+Let $i, j, k, m , n$ range over natural numbers.
+\begin{code}
+variable i j k m n : ℕ
+\end{code}
 
 The ``true'' formula of SIL is embedded in Agda by constructing an
 instance of the $\mathsf{Set}ᵒ$ record type, with the representation
@@ -432,8 +434,8 @@ data Time : Set where
   Later : Time
 
 data Times : Context → Set₁ where
-  ∅ : Times []
-  cons : Time → Times Γ → Times (A ∷ Γ)
+  [] : Times []
+  _∷_ : Time → Times Γ → Times (A ∷ Γ)
 \end{code}
 Let $Δ$ range over these lists of times.
 \begin{code}
@@ -459,12 +461,12 @@ to express this constraint, which also relies on the
 following auxiliary $\laters$ function.
 \begin{code}
 laters : ∀ (Γ : Context) → Times Γ
-laters [] = ∅
-laters (A ∷ Γ) = cons Later (laters Γ)
+laters [] = []
+laters (A ∷ Γ) = Later ∷ (laters Γ)
 
 var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
-var-now (B ∷ Γ) zeroˢ = cons Now (laters Γ)
-var-now (B ∷ Γ) (sucˢ x) = cons Later (var-now Γ x)
+var-now (B ∷ Γ) zeroˢ = Now ∷ (laters Γ)
+var-now (B ∷ Γ) (sucˢ x) = Later ∷ (var-now Γ x)
 \end{code}
 
 \noindent There is some redundancy in the type system, for example, in
@@ -503,8 +505,8 @@ choose Later Later = Later
 
 \begin{code}
 _∪_ : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
-_∪_ {[]} Δ₁ Δ₂ = ∅
-_∪_ {A ∷ Γ} (cons x Δ₁) (cons y Δ₂) = cons (choose x y) (Δ₁ ∪ Δ₂)
+_∪_ {[]} Δ₁ Δ₂ = []
+_∪_ {A ∷ Γ} (x ∷ Δ₁) (y ∷ Δ₂) = choose x y ∷ Δ₁ ∪ Δ₂
 \end{code}
 
 The universal and existential quantifiers of SIL use Agda functions,
@@ -521,6 +523,14 @@ definition of the existential quantifier.
 record Inhabited (A : Set) : Set where
   field elt : A
 open Inhabited {{...}} public
+\end{code}
+
+\noindent Of course the natural numbers are inhabited.
+
+\begin{code}
+instance
+  Inhabited-ℕ : Inhabited ℕ
+  Inhabited-ℕ = record { elt = zero }
 \end{code}
 
 The constant formula $pˢ$ takes a (non-indexed) proposition $p$ and
@@ -568,9 +578,9 @@ _∈_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
 
 ↓ˢ : ℕ → Setˢ Γ Δ → Setˢ Γ Δ
 
-letˢ : (A → Setˢ Γ Δ) → Setˢ (A ∷ Γ) (cons Later Δ) → Setˢ Γ Δ   
+letˢ : (A → Setˢ Γ Δ) → Setˢ (A ∷ Γ) (Later ∷ Δ) → Setˢ Γ Δ   
 
-μˢ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → (A → Setˢ Γ Δ)
+μˢ : (A → Setˢ (A ∷ Γ) (Later ∷ Δ)) → (A → Setˢ Γ Δ)
 
 infixr 6 _→ˢ_
 _→ˢ_ : Setˢ Γ Δ₁ → Setˢ Γ Δ₂ → Setˢ Γ (Δ₁ ∪ Δ₂)
@@ -643,6 +653,12 @@ strongly-contractive : (x : Γ ∋ A) → (RecEnv Γ → Setᵒ) → Set₁
 strongly-contractive x F = ∀ δ j k → k ≤ j → F δ ≡[ suc k ] F (↓ᵈ j x δ)
 \end{code}
 
+\begin{code}
+SC⇒SNE : (x : Γ ∋ A) (F : RecEnv Γ → Setᵒ) → strongly-contractive x F → strongly-nonexpansive x F
+SC⇒SNE x F SC δ j zero k≤j = ↓ᵒ-zero
+SC⇒SNE x F SC δ j (suc k) k≤j = SC δ j k (≤-trans (n≤1+n k) k≤j)
+\end{code}
+
 We say that an environment functional $F$ is \emph{strong in variable $x$
 at time $t$} if it is either strongly nonexpansive (when $t = \Now$) or
 strongly contractive (when $t = \Later$).
@@ -658,8 +674,8 @@ time for a variable $x$ in $Δ$.
 
 \begin{code}
 timeof : (x : Γ ∋ A) → Times Γ → Time
-timeof {B ∷ Γ} zeroˢ (cons t Δ) = t
-timeof {B ∷ Γ} (sucˢ x) (cons t Δ) = timeof x Δ
+timeof {B ∷ Γ} zeroˢ (t ∷ Δ) = t
+timeof {B ∷ Γ} (sucˢ x) (t ∷ Δ) = timeof x Δ
 \end{code}
 
 For convenience, we define the following two elimination principles
@@ -795,10 +811,10 @@ compare them directly, so we instead compare their times in Δ.
 \begin{code}
 lookup-diff : ∀{Γ}{Δ : Times Γ}{A}{B}{δ : RecEnv Γ}{j} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≢ timeof y Δ
    → lookup{Γ}{A} x (↓ᵈ j y δ) ≡ lookup{Γ}{A} x δ
-lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
-lookup-diff {C ∷ Γ} {cons t Δ} zeroˢ (sucˢ y) neq = refl
-lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) zeroˢ neq = refl
-lookup-diff {C ∷ Γ} {cons t Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
+lookup-diff {C ∷ Γ} {t ∷ Δ} zeroˢ zeroˢ neq = ⊥-elim (neq refl)
+lookup-diff {C ∷ Γ} {t ∷ Δ} zeroˢ (sucˢ y) neq = refl
+lookup-diff {C ∷ Γ} {t ∷ Δ} (sucˢ x) zeroˢ neq = refl
+lookup-diff {C ∷ Γ} {t ∷ Δ} (sucˢ x) (sucˢ y) neq = lookup-diff x y neq
 \end{code}
 
 The time of a variable $x$ is \textsf{Now} in the list of times
@@ -833,23 +849,23 @@ strong-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → strong-fun (var-now Γ x) (
 strong-lookup {.(A ∷ _)} {A} {a} zeroˢ zeroˢ = SNE where
   SNE : strongly-nonexpansive zeroˢ (λ {(P , δ) → P a})
   SNE (P , δ) j k k≤j = ≡ᵒ-sym (double-↓ᵒ (P a) k≤j)
-strong-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y = SWF where
-  SWF : strongly-contractive (sucˢ y) (λ {(P , δ) → P a})
-  SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
-strong-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = SWF where
-  SWF : strongly-contractive zeroˢ (λ (P , δ) → lookup x δ a)
-  SWF (P , δ) j k k≤j = ≡ᵒ-refl refl
+strong-lookup {.(A ∷ _)} {A} {a} zeroˢ (sucˢ y) rewrite timeof-later y = SC where
+  SC : strongly-contractive (sucˢ y) (λ {(P , δ) → P a})
+  SC (P , δ) j k k≤j = ≡ᵒ-refl refl
+strong-lookup {.(_ ∷ _)} {A} {a} (sucˢ x) zeroˢ = SC where
+  SC : strongly-contractive zeroˢ (λ (P , δ) → lookup x δ a)
+  SC (P , δ) j k k≤j = ≡ᵒ-refl refl
 strong-lookup {B ∷ Γ} {A} {a} (sucˢ x) (sucˢ y)
     with timeof y (var-now Γ x) in eq-y
 ... | Now = SNE where
     SNE : strongly-nonexpansive (sucˢ y) (λ {(P , δ) → lookup x δ a})
     SNE (P , δ) j k k≤j = ↓-lookup x y k≤j 
-... | Later = SWF where
+... | Later = SC where
     timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≡ Now → timeof y Δ ≡ Later
        → timeof x Δ ≢ timeof y Δ
     timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
-    SWF : strongly-contractive (sucˢ y) (λ {(P , δ) → lookup x δ a})
-    SWF (P , δ) j k k≤j =
+    SC : strongly-contractive (sucˢ y) (λ {(P , δ) → lookup x δ a})
+    SC (P , δ) j k k≤j =
       let eq = (lookup-diff{Γ}{δ = δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
       subst (λ X → (lookup x δ a) ≡[ suc k ] (X a)) (sym eq) (≡ᵒ-refl refl)
 \end{code}
@@ -1035,7 +1051,7 @@ and given in Figure~\ref{fig:strong-let}. The proof relies on \textsf{lemma17}.
 \begin{figure}[tbp]
 \small
 \begin{code}
-strong-let : ∀{Γ}{Δ : Times Γ}{A} (T : Setˢ (A ∷ Γ) (cons Later Δ)) (Sᵃ : A → Setˢ Γ Δ)
+strong-let : ∀{Γ}{Δ : Times Γ}{A} (T : Setˢ (A ∷ Γ) (Later ∷ Δ)) (Sᵃ : A → Setˢ Γ Δ)
    → strong-fun Δ (λ δ → ♯ T ((λ a → ♯ (Sᵃ a) δ) , δ))
 strong-let {Γ}{Δ}{A} T Sᵃ x
    with timeof x Δ in time-x
@@ -1043,7 +1059,7 @@ strong-let {Γ}{Δ}{A} T Sᵃ x
     let strongTz = ((strong T) zeroˢ) ((λ a → ♯ (Sᵃ a) δ) , δ) j k k≤j in
     let strongTz2 = ((strong T) zeroˢ) ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , (↓ᵈ j x δ))
                    j k k≤j in
-    let strongTsx = strong-now{x = sucˢ x}{Δ = cons Now Δ} ((strong T) (sucˢ x)) time-x
+    let strongTsx = strong-now{x = sucˢ x}{Δ = Now ∷ Δ} ((strong T) (sucˢ x)) time-x
                  ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , δ) j k k≤j in
     let EQ : ((λ a → ↓ᵒ j (♯ (Sᵃ a) δ)) , ↓ᵈ j x δ)
           ≡ᵈ ((λ a → ↓ᵒ j  (♯ (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
@@ -1071,7 +1087,7 @@ strong-let {Γ}{Δ}{A} T Sᵃ x
     let strongTz2 = ((strong T) zeroˢ) (((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ))) , δ) (suc j) k (≤-trans k≤j (n≤1+n _)) in
     let EQ : ((λ a → ↓ᵒ (suc j) (♯ (Sᵃ a) δ)) , δ) ≡ᵈ ((λ a → ↓ᵒ (suc j)  (♯ (Sᵃ a) (↓ᵈ j x δ))) , δ)
         EQ = (λ a → strong-later (strong (Sᵃ a) x) time-x δ j j ≤-refl) , ≡ᵈ-refl in
-    let strongTsx = strong-later{x = sucˢ x}{Δ = cons Now Δ} ((strong T) (sucˢ x)) time-x
+    let strongTsx = strong-later{x = sucˢ x}{Δ = Now ∷ Δ} ((strong T) (sucˢ x)) time-x
                  ((λ a → ♯ (Sᵃ a) (↓ᵈ j x δ)) , δ) j k k≤j in
       ♯ T ((λ a → ♯ (Sᵃ a) δ) , δ)
     ⩦⟨ strongTz ⟩
@@ -1116,7 +1132,7 @@ Recall that the body $Sᵃ$ of a $μˢ Sᵃ$ has type
 So we define the following function to convert from the former to the later.
 
 \begin{code}
-⟅_⟆ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → (Predᵒ A → Predᵒ A)
+⟅_⟆ : (A → Setˢ (A ∷ Γ) (Later ∷ Δ)) → RecEnv Γ → (Predᵒ A → Predᵒ A)
 ⟅ Sᵃ ⟆  δ μS = λ a → ♯ (Sᵃ a) (μS , δ)
 \end{code}
 
@@ -1125,7 +1141,7 @@ So we define the following function to convert from the former to the later.
 Our first goal is to prove that μᵖ is downward closed in the following sense.
 
 \begin{code}
-down-μᵖ : ∀{Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)} {a : A}{δ : RecEnv Γ}
+down-μᵖ : ∀{Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)} {a : A}{δ : RecEnv Γ}
   → downClosed (μᵖ (⟅ Sᵃ ⟆ δ) a)
 \end{code}
 
@@ -1136,14 +1152,14 @@ The fact that $\eff{Sᵃ} δ$ is contractive is a direct consequence of
 $Sᵃ\app a$ being strong.
 
 \begin{code}
-wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) → contractiveᵖ (⟅ Sᵃ ⟆ δ)
+wf-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) → contractiveᵖ (⟅ Sᵃ ⟆ δ)
 wf-env-fun δ Sᵃ = λ a P k → strong (Sᵃ a) zeroˢ (P , δ) k k ≤-refl
 \end{code}
 
 \noindent Similarly, $\eff{Sᵃ}\,δ$ is congruent because $Sᵃ\app a$ is congruent.
 
 \begin{code}
-cong-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ))
+cong-env-fun : ∀ (δ : RecEnv Γ) (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ))
    → congruentᵖ (⟅ Sᵃ ⟆ δ)
 cong-env-fun δ Sᵃ = λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 \end{code}
@@ -1151,7 +1167,7 @@ cong-env-fun δ Sᵃ = λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ})
 \noindent So we have the following adaptation of \textsf{lemma15b}.
 
 \begin{code}
-lemma15b-env-fun : ∀(k j : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) → j ≤ k
+lemma15b-env-fun : ∀(k j : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A) → j ≤ k
   → ((⟅ Sᵃ ⟆ δ) ^ j) P a ≡[ j ] ((⟅ Sᵃ ⟆ δ) ^ k) P a
 lemma15b-env-fun{δ = δ} k j Sᵃ a j≤k =
   lemma15b k j (⟅ Sᵃ ⟆ δ) a j≤k (wf-env-fun δ Sᵃ) (cong-env-fun δ Sᵃ)
@@ -1188,7 +1204,7 @@ function, \textsf{mu}ᵒ, that builds a \textsf{Set}ᵒ record given a
 predicate into \textsf{Set}ˢ, an environment, and an element of $A$.
 
 \begin{code}
-muᵒ : (A → Setˢ (A ∷ Γ) (cons Later Δ)) → RecEnv Γ → A → Setᵒ
+muᵒ : (A → Setˢ (A ∷ Γ) (Later ∷ Δ)) → RecEnv Γ → A → Setᵒ
 muᵒ Sᵃ δ a = record { # = μᵖ (⟅ Sᵃ ⟆ δ) a ; down = down-μᵖ {Sᵃ = Sᵃ}
                     ; tz = tz (⟅ Sᵃ ⟆ δ ⊤ᵖ a) }
 \end{code}
@@ -1215,32 +1231,32 @@ recursive predicate under $k$-approximation.
 \small
 \begin{code}
 abstract
-  lemma18a : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
+  lemma18a : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
      → muᵒ Sᵃ δ a ≡[ k ] ((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a
   lemma18a zero Sᵃ a δ zero = (λ x → tt) , (λ {x → tt})
   lemma18a zero Sᵃ a δ (suc j) = (λ {()}) , λ {()}
   lemma18a (suc k) Sᵃ a δ zero = (λ {x → tt}) , λ {x → tt}
   lemma18a (suc k′) Sᵃ a δ (suc j′) =
-    ↓ k (λ j₁ → # ((⟅ Sᵃ ⟆ δ) (((⟅ Sᵃ ⟆ δ) ^ j₁)  ⊤ᵖ) a) j₁) j                          ⩦⟨ ⩦-refl refl ⟩    
-    j < k  ×  # (((⟅ Sᵃ ⟆ δ) ^ (suc j)) ⊤ᵖ a) j
-         ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y}) , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
-    j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ (suc j)) ⊤ᵖ a)) j                          ⩦⟨ EQ  ⟩    
-    j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a)) j
-         ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z}) , (λ {(x , y) → x , (≤-refl , y)})  ⟩
-    j < k  ×  # (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a) j                                            ⩦⟨ ⩦-refl refl  ⟩    
-    ↓ k (# (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a)) j                                                ∎
+      ↓ (suc k′) (λ j₁ → # ((⟅ Sᵃ ⟆ δ) (((⟅ Sᵃ ⟆ δ) ^ j₁)  ⊤ᵖ) a) j₁) (suc j′)
+    ⩦⟨ ⩦-refl refl ⟩    
+      (suc j′) < (suc k′)  ×  # (((⟅ Sᵃ ⟆ δ) ^ (suc (suc j′))) ⊤ᵖ a) (suc j′)
+    ⩦⟨ (λ {(s≤s x , y) → s≤s x , ≤-refl , y}) , (λ {(s≤s x , (y , z)) → (s≤s x) , z}) ⟩
+      (suc j′) < (suc k′)  ×  # (↓ᵒ (suc (suc j′)) (((⟅ Sᵃ ⟆ δ) ^ (suc (suc j′))) ⊤ᵖ a)) (suc j′)
+    ⩦⟨ EQ  ⟩    
+      (suc j′) < (suc k′)  ×  # (↓ᵒ (suc (suc j′)) (((⟅ Sᵃ ⟆ δ) ^ (suc k′)) ⊤ᵖ a)) (suc j′)
+    ⩦⟨ (λ {(s≤s x , (s≤s y , z)) → (s≤s x) , z}) , (λ {(x , y) → x , (≤-refl , y)})  ⟩
+      (suc j′) < (suc k′)  ×  # (((⟅ Sᵃ ⟆ δ) ^ (suc k′)) ⊤ᵖ a) (suc j′)
+    ⩦⟨ ⩦-refl refl  ⟩    
+      ↓ (suc k′) (# (((⟅ Sᵃ ⟆ δ) ^ (suc k′)) ⊤ᵖ a)) (suc j′)
+    ∎
     where
-    k : ℕ
-    k = suc k′
-    j : ℕ
-    j = suc j′
-    EQ : (j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ (suc j)) ⊤ᵖ a)) j)
-         ⇔ (j < k  ×  # (↓ᵒ (suc j) (((⟅ Sᵃ ⟆ δ) ^ k) ⊤ᵖ a)) j)
+    EQ : ((suc j′) < (suc k′)  ×  # (↓ᵒ (suc (suc j′)) (((⟅ Sᵃ ⟆ δ) ^ (suc (suc j′))) ⊤ᵖ a)) (suc j′))
+         ⇔ ((suc j′) < (suc k′)  ×  # (↓ᵒ (suc (suc j′)) (((⟅ Sᵃ ⟆ δ) ^ (suc k′)) ⊤ᵖ a)) (suc j′))
     EQ = (λ {(s≤s x , y) →
-           let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc j) Sᵃ a (s≤s x)) j) y in
+           let xx = proj₁ ((lemma15b-env-fun (suc k′) (suc (suc j′)) Sᵃ a (s≤s x)) (suc j′)) y in
            (s≤s x) , (≤-refl , proj₂ xx)})
        , (λ {(s≤s x , (s≤s y , z)) →
-           let xx = proj₂ ((lemma15b-env-fun(suc k′)(suc j) Sᵃ a (s≤s x)) j) (≤-refl , z) in
+           let xx = proj₂ ((lemma15b-env-fun(suc k′)(suc (suc j′)) Sᵃ a (s≤s x)) (suc j′)) (≤-refl , z) in
            s≤s x , (≤-refl , (proj₂ xx))})
 \end{code}
 \caption{$\mathsf{mu}ᵒ\, Sᵃ\, δ\, a$ is equivalent to the $k$ iteration of
@@ -1252,7 +1268,7 @@ abstract
 \begin{figure}[tbp]
 \small 
 \begin{code}
-lemma18b : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (δ : RecEnv Γ)
+lemma18b : ∀ (k : ℕ) (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
      → ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ) ≡[ 1 + k ] ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) ⊤ᵖ a
 lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
        ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
@@ -1275,7 +1291,7 @@ $\eff{Sᵃ}\, δ$, under $k\plus 1$-approximation.}
 \begin{figure}[tbp]
 \small
 \begin{code}
-lemma19a : ∀ (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (k : ℕ) (δ : RecEnv Γ)
+lemma19a : ∀ (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A) (k : ℕ) (δ : RecEnv Γ)
    → muᵒ Sᵃ δ a ≡[ k ] ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
 lemma19a {A}{Γ}{Δ} Sᵃ a k δ =
     let f = (⟅ Sᵃ ⟆ δ) in
@@ -1337,13 +1353,13 @@ so we are required to show $k′ ≤ j$, but that follows immediately from $1 \p
 \begin{figure}[tbp]
 \small
 \begin{code}
-mu-nonexpansive : ∀{Γ}{Δ : Times Γ}{A}{B} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
+mu-nonexpansive : ∀{Γ}{Δ : Times Γ}{A}{B} (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Now → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
    → muᵒ Sᵃ δ a ≡[ k ] muᵒ Sᵃ (↓ᵈ j x δ) a
 mu-nonexpansive {Γ} {Δ} {A} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-zero
 mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
       muᵒ Sᵃ δ a
-  ⩦⟨ lemma19a Sᵃ a k δ ⟩
+  ⩦⟨ lemma19a Sᵃ a (suc k′) δ ⟩
       ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
   ⩦⟨ nonexp-Sᵃ-sx ⟩
       ♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ)
@@ -1353,16 +1369,14 @@ mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
       ♯ (Sᵃ a) (↓ᵖ k′ (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ)
   ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
       ♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ)
-  ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a k (↓ᵈ j x δ)) ⟩
+  ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a (suc k′) (↓ᵈ j x δ)) ⟩
       muᵒ Sᵃ (↓ᵈ j x δ) a
   ∎
   where
   IH : ∀ a → ↓ᵒ k′ (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ k′ (muᵒ Sᵃ (↓ᵈ j x δ) a)
   IH a = mu-nonexpansive Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
-  k : ℕ
-  k = 1 + k′
-  nonexp-Sᵃ-sx = strong-now{x = sucˢ x}{Δ = cons Later Δ}
-                    (strong (Sᵃ a) (sucˢ x)) time-x (muᵒ Sᵃ δ , δ) j k k≤j
+  nonexp-Sᵃ-sx = strong-now{x = sucˢ x}{Δ = Later ∷ Δ}
+                    (strong (Sᵃ a) (sucˢ x)) time-x (muᵒ Sᵃ δ , δ) j (suc k′) k≤j
   wf-Sᵃ-z1 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , ↓ᵈ j x δ) k′ k′ ≤-refl
   wf-Sᵃ-z2 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ ≤-refl
 \end{code}
@@ -1377,34 +1391,32 @@ previous one.
 \begin{figure}[tbp]
 \small
 \begin{code}
-mu-contractive : (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A) (x : Γ ∋ B)
+mu-contractive : (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Later → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
    → muᵒ Sᵃ δ a ≡[ 1 + k ] muᵒ Sᵃ (↓ᵈ j x δ) a
 mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ zero j k≤j = ↓ᵒ-one
 mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ (suc k′) j k≤j =
       muᵒ Sᵃ δ a
-  ⩦⟨ lemma19a Sᵃ a (1 + k) δ ⟩
+  ⩦⟨ lemma19a Sᵃ a (1 + (1 + k′)) δ ⟩
       ♯ (Sᵃ a) (muᵒ Sᵃ δ , δ)
   ⩦⟨ wf-Sᵃ-sx ⟩
       ♯ (Sᵃ a) (muᵒ Sᵃ δ , ↓ᵈ j x δ)
   ⩦⟨ wf-Sᵃ-z1 ⟩
-      ♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ δ) , ↓ᵈ j x δ)
+      ♯ (Sᵃ a) (↓ᵖ (1 + k′) (muᵒ Sᵃ δ) , ↓ᵈ j x δ)
   ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) (IH , ≡ᵈ-refl)) a ⟩
-      ♯ (Sᵃ a) (↓ᵖ k (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ)
+      ♯ (Sᵃ a) (↓ᵖ (1 + k′) (muᵒ Sᵃ (↓ᵈ j x δ)) , ↓ᵈ j x δ)
   ⩦⟨ ≡ᵒ-sym wf-Sᵃ-z2 ⟩
       ♯ (Sᵃ a) (muᵒ Sᵃ (↓ᵈ j x δ) , (↓ᵈ j x δ))
-  ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a (1 + k) _) ⟩
+  ⩦⟨ ≡ᵒ-sym (lemma19a Sᵃ a (1 + (1 + k′)) _) ⟩
       muᵒ Sᵃ (↓ᵈ j x δ) a
   ∎
   where
   IH : ∀ a → ↓ᵒ (1 + k′) (muᵒ Sᵃ δ a) ≡ᵒ ↓ᵒ (1 + k′) (muᵒ Sᵃ (↓ᵈ j x δ) a)
   IH a = mu-contractive Sᵃ a x time-x δ k′ j (≤-trans (n≤1+n _) k≤j)
-  k : ℕ
-  k = 1 + k′
-  wf-Sᵃ-sx = strong-later{A = B}{sucˢ x}{Δ = cons Later Δ}
-              (strong (Sᵃ a) (sucˢ x)) time-x (muᵒ Sᵃ δ , δ) j k k≤j 
-  wf-Sᵃ-z1 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , ↓ᵈ j x δ) k k ≤-refl 
-  wf-Sᵃ-z2 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k ≤-refl 
+  wf-Sᵃ-sx = strong-later{A = B}{sucˢ x}{Δ = Later ∷ Δ}
+              (strong (Sᵃ a) (sucˢ x)) time-x (muᵒ Sᵃ δ , δ) j (1 + k′) k≤j 
+  wf-Sᵃ-z1 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ δ , ↓ᵈ j x δ) (1 + k′) (1 + k′) ≤-refl 
+  wf-Sᵃ-z2 = strong (Sᵃ a) zeroˢ (muᵒ Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) (1 + k′) (1 + k′) ≤-refl 
 \end{code}
 \caption{\textsf{mu}ᵒ is strongly contractive.}
 \label{fig:mu-contractive}
@@ -1416,7 +1428,7 @@ environment functional (Figure~\ref{fig:mu-strong-env-fun}).
 \begin{figure}[tbp]
 \small
 \begin{code}
-strong-fun-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+strong-fun-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A)
    → strong-fun Δ (λ δ → muᵒ Sᵃ δ a)
 strong-fun-mu {Γ} {Δ} {A} Sᵃ a x
     with timeof x Δ in time-x
@@ -1448,7 +1460,7 @@ cong-iter{A}{a} (suc i) f g f=g I =
 \noindent The result \textsf{mu}ᵒ is congruent follows immediately from the lemma.
 
 \begin{code}
-congruent-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+congruent-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A)
    → congruent (λ δ → muᵒ Sᵃ δ a)
 congruent-mu{Γ}{Δ}{A} Sᵃ a {δ}{δ′} δ=δ′ = ≡ᵒ-intro Goal
   where
@@ -1499,7 +1511,7 @@ abstract
 and then \textsf{equiv-down}ˢ.
 
 \begin{code}
-fixpointˢ : ∀ (F : A → Setˢ (A ∷ Γ) (cons Later Δ)) (a : A)
+fixpointˢ : ∀ (F : A → Setˢ (A ∷ Γ) (Later ∷ Δ)) (a : A)
    → μˢ F a ≡ˢ letˢ (μˢ F) (F a)
 fixpointˢ F a = equiv-downˢ λ k → ≡ˢ-intro (lemma19a F a k)
 \end{code}
@@ -1510,16 +1522,22 @@ streamline this situation, we define the following μᵒ connective,
 which specializes μˢ to the situation where $Γ = []$.
 
 \begin{code}
-μᵒ : (A → Setˢ (A ∷ []) (cons Later ∅)) → (A → Setᵒ)
+μᵒ : (A → Setˢ (A ∷ []) (Later ∷ [])) → (A → Setᵒ)
 μᵒ P = muᵒ P ttᵖ
 \end{code}
 
 \noindent Also for convenience, we provide the following
 specialization of the fixpoint theorem for μᵒ.
 
+TODO: Move letᵒ to an appropriate place
 \begin{code}
-fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (cons Later ∅)) (a : A)
-   → μᵒ P a ≡ᵒ ♯ (P a) (μᵒ P , ttᵖ)
+letᵒ : Predᵒ A → Setˢ (A ∷ []) (Later ∷ []) → Setᵒ
+letᵒ P T = (♯ T) (P , ttᵖ)
+\end{code}
+
+\begin{code}
+fixpointᵒ : ∀{A} (P : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A)
+   → μᵒ P a ≡ᵒ letᵒ (μᵒ P) (P a)
 fixpointᵒ P a = ≡ˢ-elim (fixpointˢ P a) ttᵖ
 \end{code}
 
@@ -1547,8 +1565,8 @@ p ᵒ = record { # = λ { zero → ⊤ ; (suc k) → p }
 \noindent The pure operator is a strong environment functiuonal.
 
 \begin{code}
-pure-strong : ∀ (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ᵒ)
-pure-strong {Γ}{A}{Δ} p x
+strong-pure : ∀ (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ᵒ)
+strong-pure {Γ}{A}{Δ} p x
     with timeof x Δ
 ... | Now = λ δ j k k≤j → ≡ᵒ-refl refl
 ... | Later = λ δ j k k≤j → ≡ᵒ-refl refl
@@ -1557,20 +1575,23 @@ pure-strong {Γ}{A}{Δ} p x
 \noindent So we define the constant SIL formula $pˢ$ as the following record.
 
 \begin{code}
-p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → pure-strong p x ; congr = λ d=d′ → ≡ᵒ-refl refl }
+p ˢ = record { ♯ = λ δ → p ᵒ ; strong = λ x → strong-pure p x ; congr = λ d=d′ → ≡ᵒ-refl refl }
 \end{code}
 
 \subsection{True and False}
 
 We already defined ⊤ᵒ, but it remains to construct the open variant of
-the true formula, written ⊤ˢ. We do so by lifting Agda's true into SIL
-using the constant operator.
+the true formula, written ⊤ˢ.
 
 \begin{code}
 ⊤ˢ : Setˢ Γ (laters Γ)
-⊤ˢ = ⊤ ˢ
+⊤ˢ = record { ♯ = λ δ → ⊤ᵒ ; strong = strong-⊤ ; congr = λ _ → ≡ᵒ-refl refl }
+  where
+  strong-⊤ : strong-fun (laters Γ) (λ δ → ⊤ᵒ)
+  strong-⊤ x rewrite timeof-later x = λ δ j k k≤j → ≡ᵒ-refl refl
 \end{code}
 
+We do so by lifting Agda's true into SIL using the constant operator.
 We similarly lift the false formula of Agda into SIL.
 
 \begin{code}
@@ -1804,8 +1825,8 @@ to choosing between the times in each list.
 \begin{code}
 timeof-combine : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{A}{x : Γ ∋ A}
    → timeof x (Δ₁ ∪ Δ₂) ≡ choose (timeof x Δ₁) (timeof x Δ₂)
-timeof-combine {B ∷ Γ} {cons s Δ₁} {cons t Δ₂} {.B} {zeroˢ} = refl
-timeof-combine {B ∷ Γ} {cons s Δ₁} {cons t Δ₂} {A} {sucˢ x} =
+timeof-combine {B ∷ Γ} {s ∷ Δ₁} {t ∷ Δ₂} {.B} {zeroˢ} = refl
+timeof-combine {B ∷ Γ} {s ∷ Δ₁} {t ∷ Δ₂} {A} {sucˢ x} =
   timeof-combine {Γ} {Δ₁} {Δ₂} {A} {x}
 \end{code}
 
@@ -2477,3 +2498,17 @@ and that produces a proof of ψ.
     ⊢ᵒ-intro λ { zero x → tz ψ
                ; (suc n) 𝒫sn → let ⊢ψ = ϕsn⊢ψ (⊢ᵒ-elim ⊢ϕ (suc n) 𝒫sn) in ⊢ᵒ-elim ⊢ψ (suc n) 𝒫sn }
 \end{code}
+
+
+\begin{code}
+foldᵒ : ∀{𝒫} (P : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ letᵒ (μᵒ P) (P a)  →  𝒫 ⊢ᵒ μᵒ P a
+foldᵒ P a P[μP] = substᵒ (≡ᵒ-sym (fixpointᵒ P a)) P[μP]
+\end{code}
+
+\begin{code}
+unfoldᵒ : ∀{𝒫} (P : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ μᵒ P a  →  𝒫 ⊢ᵒ letᵒ (μᵒ P) (P a)
+unfoldᵒ P a μP = substᵒ (fixpointᵒ P a) μP
+\end{code}
+
+
+

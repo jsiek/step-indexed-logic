@@ -67,18 +67,35 @@ data Type : Set where
   _⇒_ : Type → Type → Type
 \end{code}
 
-The proof of semantic type safety relies on a lemma regarding
-substitution whose proof is quite involved but quite standard.  We can
-obtain the substitution lemma for free if we use the Abstract Binding
-Tree (ABT) library~\citep{Siek:2021to} to define the syntax of terms.
-The library is parameterized by a type \textsf{Op} that specifies the
-constructors and a function \textsf{sig} that describes the arity and
-binding structure of each term constructor. For this variant of the
-STLC, the terms include lambda abstraction, application, the zero
+Our definition of STLC terms is isomorphic to the following data type.
+
+\begin{code}
+module AsIf where
+  data Term : Set where
+    `_ : Var → Term
+    ƛ : Term → Term
+    _·_ : Term → Term → Term
+    `zero : Term
+    `suc : Term → Term
+    case : Term → Term → Term → Term
+    μ : Term → Term
+\end{code}
+
+\noindent Instead of using the above data type, we instead use
+Abstract Binding Tree (ABT) library~\citep{Siek:2021to} to define the
+syntax of terms. The reason is that the proof of semantic type safety
+relies on a lemma regarding substitution whose proof is quite involved
+but standard.  We can obtain this substitution lemma for free if we
+use the ABT library.
+
+The ABT library is parameterized by a type \textsf{Op} that specifies
+the constructors and a function \textsf{sig} that describes the arity
+and binding structure of each term constructor. For this variant of
+the STLC, the terms include lambda abstraction, application, the zero
 numeral, the successor operation, case analysis on natural numbers,
 and a recursive fixpoint operator. The ABT library automatically
-includes a constructor for variables (de Bruijn indices), so we
-do not need to include them in \textsf{Op}.
+includes a constructor for variables (de Bruijn indices), so we do not
+need to include them in \textsf{Op}.
 
 \begin{code}
 data Op : Set where
@@ -185,6 +202,48 @@ _ = example where
   example : ∀ M N → ⟪ M • N • id ⟫ (` 2) ≡ ` 0
   example M N rewrite sub-var (M • N • id) 2 = refl
 \end{code}
+
+\noindent The ↑ operator increments the de Bruijn indices.
+
+\begin{code}
+_ = example where
+  example : ⟪ ↑ ⟫ (` 0) ≡ ` 1
+  example rewrite sub-var ↑ 0 | ren-def suc 0 = refl
+\end{code}
+
+\noindent The sequencing operator (σ ⨟ τ) creates a substitution that is equivalent
+to applying σ and then τ.
+
+\begin{code}
+_ : ∀ σ τ M → ⟪ σ ⨟ τ ⟫ M ≡ ⟪ τ ⟫ (⟪ σ ⟫ M)
+_ = λ σ τ M → refl
+\end{code}
+
+\noindent The \textsf{ext} operator transports a substitution
+underneath one variable binder. For example, applying the substitution
+σ to a lambda abstraction pushes through to apply $\mathsf{ext}\,σ$ to
+its body.
+
+\begin{code}
+_ : ∀ σ N → ⟪ σ ⟫ (ƛ N) ≡ ƛ (⟪ ext σ ⟫ N)
+_ = λ σ N → refl
+\end{code}
+
+\noindent The \textsf{ext} operator is equivalent to 
+
+\begin{code}
+_ : ∀ σ → ext σ ≡ ` 0 • (σ ⨟ ↑)
+_ = λ σ → refl
+\end{code}
+
+\noindent The following is the substitution lemma that we shall need
+from the ABT library.
+
+\begin{code}
+_ : ∀ σ N V → (⟪ ext σ ⟫ N) [ V ] ≡ ⟪ V • σ ⟫ N
+_ = λ σ N V → exts-sub-cons {σ}{N}{V}
+\end{code}
+
 
 \subsection{Dynamic Semantics of STLC}
 \label{sec:STLC-reduction}
@@ -409,10 +468,10 @@ below. It simply dispatches to the non-recursive \textsf{pre}-ℰ and
 Γ₁ : Context
 Γ₁ = ((Type × Term) ⊎ (Type × Term)) ∷ []
 
-pre-ℰ : Type → Term → Setˢ Γ₁ (cons Later ∅)
-pre-𝒱 : Type → Term → Setˢ Γ₁ (cons Later ∅)
+pre-ℰ : Type → Term → Setˢ Γ₁ (Later ∷ [])
+pre-𝒱 : Type → Term → Setˢ Γ₁ (Later ∷ [])
 
-pre-𝒱⊎ℰ : ((Type × Term) ⊎ (Type × Term)) → Setˢ Γ₁ (cons Later ∅)
+pre-𝒱⊎ℰ : ((Type × Term) ⊎ (Type × Term)) → Setˢ Γ₁ (Later ∷ [])
 pre-𝒱⊎ℰ (inj₁ (A , V)) = pre-𝒱 A V
 pre-𝒱⊎ℰ (inj₂ (A , M)) = pre-ℰ A M
 
@@ -433,10 +492,10 @@ only one recursive predicate in scope and its de Bruijn index is zero.
 We define the following shorthand notation for refering to 𝒱 and ℰ.
 
 \begin{code}
-𝒱ˢ⟦_⟧ : Type → Term → Setˢ Γ₁ (cons Now ∅)
+𝒱ˢ⟦_⟧ : Type → Term → Setˢ Γ₁ (Now ∷ [])
 𝒱ˢ⟦ A ⟧ V = inj₁ (A , V) ∈ zeroˢ
 
-ℰˢ⟦_⟧ : Type → Term → Setˢ Γ₁ (cons Now ∅)
+ℰˢ⟦_⟧ : Type → Term → Setˢ Γ₁ (Now ∷ [])
 ℰˢ⟦ A ⟧ M = inj₂ (A , M) ∈ zeroˢ
 \end{code}
 
