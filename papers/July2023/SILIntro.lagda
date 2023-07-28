@@ -8,7 +8,7 @@ open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; _*_; z≤n; s≤s; _≤′_; ≤′-step; ≤-pred)
 open import Data.Nat.Properties
-   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s)
+   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s; 0≢1+n)
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
@@ -58,14 +58,18 @@ Section~\ref{sec:intro-recursive-predicates}. The purpose of
 Step-Indexed Logic is to hide that step indexing from the PL
 metatheorist. So the PL metatheorist generally won't care about SIL's
 notion of time and just wants to reason about formulas that are true
-or false. This can be recovered by saying that a SIL formula is really
-true (it is a tautology) if and only if the formula is true at all
-times.
+or false. This can be recovered by saying that a SIL formula ϕ is
+really true, written [] ⊢ᵒ ϕ, if and only if the formula is true at
+all times. (We recommend ignoring the Agda proofs in this section as
+they involve ideas that we have not yet discussed.)
 
 \begin{code}
-tautology : Setᵒ → Set
-tautology ϕ = ∀ n → # ϕ n
+_ : ([] ⊢ᵒ ϕ)  ⇔  (∀ n → # ϕ n)
+_ = (λ ⊢ϕ k → ⊢ᵒE ⊢ϕ k tt) , λ ∀nϕn → ⊢ᵒI λ n _ → ∀nϕn n
 \end{code}
+
+\noindent We discuss the entailment relation ⊢ᵒ in more detail in
+Section~\ref{sec:proof-rules}.
 
 The ``pure'' connective imports (timeless) Agda propositions into SIL.
 
@@ -75,23 +79,18 @@ _ = _ᵒ
 \end{code}
 
 \noindent For example, we can use the pure connective to express
-properties of numbers, such as $1 \plus 1 = 2$. (We recommend ignoring
-the Agda proofs in this section as they involve ideas that we have not
-yet discussed.)
+properties of numbers, such as $1 \plus 1 = 2$. 
 
 \begin{code}
-_ : tautology ((1 + 1 ≡ 2)ᵒ)
-_ = λ {zero → tt ; (suc k) → refl}
+_ : [] ⊢ᵒ (1 + 1 ≡ 2)ᵒ
+_ = pureᵒI refl
 \end{code}
 
 \noindent Of course, it is not true that $0 = 1$. 
 
 \begin{code}
-_ : ¬ tautology ((0 ≡ 1)ᵒ)
-_ = λ taut[0=1] → aux (taut[0=1] 1) 
-  where
-  aux : 0 ≡ 1  →  ⊥
-  aux ()
+_ : ¬  ([] ⊢ᵒ (0 ≡ 1)ᵒ)
+_ = λ ⊢0=1ᵒ → ⊥ᵒ⇒⊥ (let-pureᵒ[ 0=1 ] ⊢0=1ᵒ within ⊥⇒⊥ᵒ (0≢1+n 0=1))
 \end{code}
 
 
@@ -107,8 +106,8 @@ _ = ⊤ᵒ
 \noindent and of course it's true!
 
 \begin{code}
-_ : tautology ⊤ᵒ
-_ = λ k → tt
+_ : [] ⊢ᵒ ⊤ᵒ
+_ = ttᵒ
 \end{code}
 
 \noindent SIL includes the logical connectives for false, conjunction,
@@ -133,11 +132,9 @@ ones in Agda. For example, conjunction in SIL is equivalent to
 conjunction in Agda.
 
 \begin{code}
-_ : tautology (ϕ ×ᵒ ψ) ⇔ tautology ϕ × tautology ψ
-_ = (λ taut[ϕ×ψ] → (λ k → proj₁ (taut[ϕ×ψ] k)) , (λ k → proj₂ (taut[ϕ×ψ] k)))
-   , (λ {(taut[ϕ] , taut[ψ]) k → (taut[ϕ] k) , (taut[ψ] k)})
+_ : ([] ⊢ᵒ ϕ ×ᵒ ψ) ⇔ (([] ⊢ᵒ ϕ) × ([] ⊢ᵒ ψ))
+_ = (λ ϕ×ψ → (proj₁ᵒ ϕ×ψ , proj₂ᵒ ϕ×ψ)) , λ {(ϕ , ψ) → (ϕ ,ᵒ ψ)}
 \end{code}
-
 
 \subsection{SIL is a first-order logic}
 
@@ -154,16 +151,16 @@ _ = ∀ᵒ
 \noindent Its meaning is equivalent to Agda′s ∀ quantifier.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ} →  tautology (∀ᵒ ϕᵃ) ⇔ (∀ a → tautology (ϕᵃ a))
-_ = (λ taut∀ϕ a k → taut∀ϕ k a) , λ ∀a→taut[ϕa] k a → ∀a→taut[ϕa] a k
+_ : ∀{ϕᵃ : A → Setᵒ} →  ([] ⊢ᵒ ∀ᵒ ϕᵃ) ⇔ (∀ a → [] ⊢ᵒ ϕᵃ a)
+_ = (λ ∀ϕ a → ∀ᵒE ∀ϕ a) , λ ∀aϕa → Λᵒ[ a ] ∀aϕa a
 \end{code}
 
 \noindent As a simple example, the following SIL formula asserts that,
 for any $x$, $2x = x \plus x$.
 
 \begin{code}
-_ : tautology (∀ᵒ λ x → (2 * x ≡ x + (x + 0))ᵒ)
-_ = λ {zero x → tt ; (suc k) x → refl }
+_ : [] ⊢ᵒ ∀ᵒ λ x → (2 * x ≡ x + (x + 0))ᵒ
+_ = Λᵒ[ x ] pureᵒI refl
 \end{code}
 
 \noindent SIL provides alternate notation for universal
@@ -171,8 +168,8 @@ quantification, replacing the λ with a pair of brackets around the
 bound variable.
 
 \begin{code}
-_ : tautology (∀ᵒ[ x ] (2 * x ≡ x + (x + 0))ᵒ)
-_ = λ {zero x → tt ; (suc k) x → refl }
+_ : [] ⊢ᵒ ∀ᵒ[ x ⦂ ℕ ] (2 * x ≡ x + (x + 0))ᵒ
+_ = Λᵒ[ x ] pureᵒI refl
 \end{code}
 
 For the existential quantifier of SIL, we also use Agda functions for
@@ -190,10 +187,9 @@ existential in SIL to state that there exists an $x$ such that
 $2x =6$.
 
 \begin{code}
-_ : tautology (∃ᵒ[ x ] (2 * x ≡ 6)ᵒ)
-_ = λ {zero → zero , tt ; (suc k) → 3 , refl}
+_ : [] ⊢ᵒ ∃ᵒ[ x ] (2 * x ≡ 6)ᵒ
+_ = ∃ᵒI 3 (pureᵒI refl)
 \end{code}
-
 
 \subsection{SIL has User-defined Recursive Predicates}
 \label{sec:intro-recursive-predicates}
@@ -224,7 +220,7 @@ Evenˢ n = (n ≡ zero)ˢ ⊎ˢ (∃ˢ[ m ] (n ≡ 2 + m)ˢ ×ˢ ▷ˢ (m ∈ ze
 
 \begin{code}
 Even′ : ℕ → Set
-Even′ n = tautology (μᵒ Evenˢ n)
+Even′ n = [] ⊢ᵒ μᵒ Evenˢ n
 \end{code}
 
 \begin{comment}
@@ -232,14 +228,17 @@ Even′ n = tautology (μᵒ Evenˢ n)
 Sanity check to make sure that the two definitions are equivalent.
 
 \begin{code}
+{-
 even⇒even′ : ∀ n → Even n → Even′ n
 even⇒even′ .zero Even-zero zero = inj₁ tt
 even⇒even′ .zero Even-zero (suc k) = inj₁ refl
 even⇒even′ .(2 + m) (Even-plus-two m even-n) zero = inj₁ tt
 even⇒even′ .(2 + m) (Even-plus-two m even-n) (suc k) = inj₂ (m , (refl , even⇒even′ m even-n k))
+-}
 \end{code}
 
 \begin{code}
+{-
 even′⇒even : ∀ n → Even′ n → Even n
 even′⇒even n even′-n = induct n n ≤-refl (even′-n n) where
   induct : ∀ n k → n ≤ k → # (μᵒ Evenˢ n) k → Even n
@@ -249,12 +248,13 @@ even′⇒even n even′-n = induct n n ≤-refl (even′-n n) where
   ... | inj₁ refl = Even-zero
   ... | inj₂ (m , refl , even′-m-k) = Even-plus-two m (induct m k m≤k even′-m-k)
       where m≤k = ≤-trans (n≤1+n m) (≤-pred n≤k)
+      -}
 \end{code}
 \end{comment}
 
 \noindent There are a few odd things in the definition of
-\textsf{Even}ˢ.  First, the superscripts have changed from "0" to
-"s". Second, where one would have expected $m ∈ \mathsf{Even}$,
+\textsf{Even}ˢ.  First, the superscripts have changed from ``o'' to
+``s''. Second, where one would have expected $m ∈ \mathsf{Even}$,
 instead we have $▷ˢ (m ∈ \mathsf{zero}ˢ)$.  The $\mathsf{zero}ˢ$ is a
 de Bruijn index for refering to recursively defined predicates. In
 general one can nest recursive definitions in SIL, so the de Bruijn
@@ -363,23 +363,15 @@ in \textsf{Odds}′.
 
 \begin{code}
 Evens′ : ℕ → Set
-Evens′ n = tautology (μᵒ Evens⊎Odds (inj₁ n))
+Evens′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₁ n)
 
 Odds′ : ℕ → Set
-Odds′ n = tautology (μᵒ Evens⊎Odds (inj₂ n))
+Odds′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₂ n)
 \end{code}
 
 
 \subsection{The Proof Language of SIL}
 \label{sec:proof-rules}
-
-The proofs in the prior section were written in raw Agda, relying on
-the definitions of the SIL connectives and explicitly reasoning about
-the step indices. Sometimes that is an expedient route to take and the
-Reference Section~\ref{sec:SIL-reference} lists the defining equation
-for each of SIL connective. However, the goal of SIL is to hide the
-step-indexing, so SIL provides proof rules for its logical connectives
-and this section shows how to use them.
 
 We write $𝒫 ⊢ᵒ ϕ$ for entailment, which means that ϕ is true when
 the list of formulas in 𝒫 are true.
@@ -389,8 +381,8 @@ _ : List Setᵒ → Setᵒ → Set
 _ = _⊢ᵒ_
 \end{code}
 
-\noindent When $𝒫$ is the empty list, entailment is the same as the
-\textsf{tautology} function we defined above.
+\noindent When $𝒫$ is the empty list, as in $[] ⊢ᵒ ϕ$, then we
+say that ϕ is unconditionally true (or just true).
 
 We discuss the proof rules in the same order as the discussion of
 SIL formulas in the beginning of this Section~\ref{sec:SIL-intro}.
@@ -429,7 +421,134 @@ _ : ∀(x y : ℕ) → [] ⊢ᵒ (x ≡ y) ᵒ → [] ⊢ᵒ (y ≡ x)ᵒ
 _ = λ x y x=yᵒ → pureᵒE x=yᵒ λ {refl → pureᵒI refl}
 \end{code}
 
+For the propositional connectives, many of the SIL proof rules are the
+same as the Agda proof rules, but with a superscript ``o''.  For
+example, in Agda the introduction rule for ⊤ is \textsf{tt} so in SIL
+it is \textsf{tt}ᵒ.
 
+\begin{code}
+_ : 𝒫 ⊢ᵒ ⊤ᵒ 
+_ = ttᵒ
+\end{code}
+
+\noindent For conjunction, the introduction rule is the comma
+and elimination is \textsf{proj₁ᵒ} and \textsf{proj₂ᵒ}.
+
+\begin{code}
+_ : 𝒫 ⊢ᵒ ϕ → 𝒫 ⊢ᵒ ψ → 𝒫 ⊢ᵒ ϕ ×ᵒ ψ
+_ = _,ᵒ_
+
+_ : 𝒫 ⊢ᵒ ϕ ×ᵒ ψ  →  𝒫 ⊢ᵒ ϕ
+_ = proj₁ᵒ
+
+_ : 𝒫 ⊢ᵒ ϕ ×ᵒ ψ  →  𝒫 ⊢ᵒ ψ
+_ = proj₂ᵒ
+\end{code}
+
+\noindent For disjunction, the introduction rules are \textsf{inj₁ᵒ} and
+\textsf{inj₂ᵒ}.
+
+\begin{code}
+_ : 𝒫 ⊢ᵒ ϕ → 𝒫 ⊢ᵒ ϕ ⊎ᵒ ψ
+_ = inj₁ᵒ
+
+_ : 𝒫 ⊢ᵒ ψ → 𝒫 ⊢ᵒ ϕ ⊎ᵒ ψ
+_ = inj₂ᵒ
+\end{code}
+
+\noindent Agda uses its builtin pattern-matching to eliminate
+disjunction. So for SIL, we instead define the following \textsf{case}
+rule. If you have a proof of $ϕ ⊎ᵒ ψ$ and would like to prove þ, then
+it suffices to prove two cases: 1) assuming ϕ show þ and 2)
+assuming ψ show þ.
+
+\begin{code}
+_ : 𝒫 ⊢ᵒ ϕ ⊎ᵒ ψ  →  ϕ ∷ 𝒫 ⊢ᵒ þ  →  ψ ∷ 𝒫 ⊢ᵒ þ  →  𝒫 ⊢ᵒ þ
+_ = caseᵒ
+\end{code}
+
+Implication is introduced by λᵒ.
+
+\begin{code}
+_ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
+_ = λᵒ
+\end{code}
+
+\noindent For example, the following is the trivial proof that ϕ implies ϕ.
+
+\begin{code}
+_ : ∀ ϕ →  [] ⊢ᵒ ϕ →ᵒ ϕ
+_ = λ ϕ →  λᵒ ϕ λ x → x
+\end{code}
+
+\noindent SIL provides an alternative syntax that replaces the extra λ
+with brackets.
+
+\begin{code}
+_ : ∀ ϕ →  [] ⊢ᵒ ϕ →ᵒ ϕ
+_ = λ ϕ →  λᵒ[ x ⦂ ϕ ] x
+\end{code}
+
+\noindent Implication is eliminated by →ᵒE
+\begin{code}
+_ : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
+_ = →ᵒE
+\end{code}
+
+Moving on to the proof rules for universal and existential quantifiers.
+The universal quantifier is introduced by Λᵒ.
+
+\begin{code}
+_ : {ϕᵃ : A → Setᵒ} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
+_ = Λᵒ
+\end{code}
+
+\noindent SIL also provides a bracket notation for Λᵒ. For example,
+the following is a proof that for any natural $x$, $x = x$.
+
+\begin{code}
+∀x,x=x : [] ⊢ᵒ ∀ᵒ[ x ⦂ ℕ ] (x ≡ x)ᵒ
+∀x,x=x = Λᵒ[ x ] pureᵒI refl
+\end{code}
+
+\noindent The universal quantifier is eliminated by ∀ᵒE.
+
+\begin{code}
+_ : ∀{ϕᵃ : A → Setᵒ} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
+_ = ∀ᵒE
+\end{code}
+
+\noindent For example, the following proves that $1 = 1$ using the
+above fact that we proved about naturals. 
+
+\begin{code}
+_ : [] ⊢ᵒ (1 ≡ 1)ᵒ
+_ = ∀ᵒE{ϕᵃ = λ x → (x ≡ x)ᵒ} ∀x,x=x 1
+\end{code}
+
+\begin{comment}
+\begin{code}
+_ : [] ⊢ᵒ (1 ≡ 1)ᵒ
+_ = instᵒ ∀x,x=x ⦂∀[ x ] (x ≡ x)ᵒ at 1
+\end{code}
+\end{comment}
+
+The existential quantifier of SIL is introduced by the rule ∃ᵒI and
+eliminated by the rule ∃ᵒE.
+
+\begin{code}
+_ : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} → (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
+_ = ∃ᵒI
+
+_ : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
+     → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+_ = ∃ᵒE
+\end{code}
+
+\begin{code}
+_ : ([] ⊢ᵒ ∃ᵒ[ x ] (n ≡ 2 * x)ᵒ) → ([] ⊢ᵒ ∃ᵒ[ x ] (2 * n ≡ 2 * x)ᵒ)
+_ = λ ⊢n-even → ∃ᵒE ⊢n-even λ x → pureᵒE Zᵒ λ {refl → ∃ᵒI (2 * x) (pureᵒI refl)}
+\end{code}
 
 
 For example, we can change our previous definition of the even
@@ -437,10 +556,15 @@ numbers, \textsf{Even}′, to instead use entailment.
 
 \begin{code}
 Even″ : ℕ → Set
-Even″ n = [] ⊢ᵒ (μᵒ Evenˢ n)
+Even″ n = [] ⊢ᵒ μᵒ Evenˢ n
 \end{code}
 
 \begin{code}
-_ : [] ⊢ᵒ μᵒ Evenˢ 0
-_ = foldᵒ Evenˢ 0 (inj₁ᵒ (pureᵒI refl))
+even-zero : [] ⊢ᵒ μᵒ Evenˢ 0
+even-zero = foldᵒ Evenˢ 0 (inj₁ᵒ (pureᵒI refl))
+\end{code}
+
+\begin{code}
+even-two : [] ⊢ᵒ μᵒ Evenˢ 2
+even-two = foldᵒ Evenˢ 2 (inj₂ᵒ (∃ᵒI 0 (pureᵒI refl ,ᵒ monoᵒ even-zero)))
 \end{code}

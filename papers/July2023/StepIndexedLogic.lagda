@@ -1636,6 +1636,21 @@ syntax ∀ᵒ-syntax (λ x → P) = ∀ᵒ[ x ] P
 _ = ∀ᵒ[ x ] (x + 0 ≡ x)ᵒ
 \end{code}
 
+\noindent In some situations, Agda has trouble infering the type of
+the quantifier. So we also provide the following version of ∀ᵒ that
+includes an explicit type annotation.
+
+\begin{code}
+∀ᵒ-annot : ∀ A → Predᵒ A → Setᵒ
+∀ᵒ-annot A = ∀ᵒ{A = A}
+\end{code}
+
+\begin{code}
+∀ᵒ-annot-syntax = ∀ᵒ-annot
+infix 2 ∀ᵒ-annot-syntax
+syntax ∀ᵒ-annot-syntax A (λ x → P) = ∀ᵒ[ x ⦂ A ] P
+\end{code}
+
 \noindent The forall quantifier is congruent in the following sense.
 
 \begin{code}
@@ -2254,11 +2269,11 @@ unfold its definition.
 
 \begin{code}
 abstract
-  ⊢ᵒ-intro : (∀ n → # (Πᵒ 𝒫) n → # ϕ n) → 𝒫 ⊢ᵒ ϕ
-  ⊢ᵒ-intro 𝒫→ϕ = 𝒫→ϕ
+  ⊢ᵒI : (∀ n → # (Πᵒ 𝒫) n → # ϕ n) → 𝒫 ⊢ᵒ ϕ
+  ⊢ᵒI 𝒫→ϕ = 𝒫→ϕ
 
-  ⊢ᵒ-elim : 𝒫 ⊢ᵒ ϕ → (∀ n → # (Πᵒ 𝒫) n → # ϕ n)
-  ⊢ᵒ-elim 𝒫⊢ϕ = 𝒫⊢ϕ
+  ⊢ᵒE : 𝒫 ⊢ᵒ ϕ → (∀ n → # (Πᵒ 𝒫) n → # ϕ n)
+  ⊢ᵒE 𝒫⊢ϕ = 𝒫⊢ϕ
 \end{code}
 
 Now we proceed to define the proof rules of SIL. The first, \textsf{mono}ᵒ
@@ -2356,6 +2371,15 @@ abstract
   ⊥-elimᵒ ⊢⊥ ϕ (suc n) ⊨𝒫sn = ⊥-elim (⊢⊥ (suc n) ⊨𝒫sn)
 \end{code}
 
+TODO: explain
+\begin{code}
+⊥⇒⊥ᵒ : ⊥ → 𝒫 ⊢ᵒ ⊥ᵒ
+⊥⇒⊥ᵒ ()
+
+⊥ᵒ⇒⊥ : [] ⊢ᵒ ⊥ᵒ → ⊥
+⊥ᵒ⇒⊥ ⊢⊥ = ⊢ᵒE ⊢⊥ 1 tt
+\end{code}
+
 The introduction and elimination rules for conjunction are the
 standard ones.
 
@@ -2397,8 +2421,8 @@ abstract
   →ᵒI : ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
   →ᵒI {𝒫 = 𝒫} ϕ∷𝒫⊢ψ n ⊨𝒫n j j≤n ϕj = ϕ∷𝒫⊢ψ j (ϕj , downClosed-Πᵒ 𝒫 n ⊨𝒫n j j≤n)
 
-  appᵒ : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
-  appᵒ {𝒫} 𝒫⊢ϕ→ψ 𝒫⊢ϕ n ⊨𝒫n = let ϕn = 𝒫⊢ϕ n ⊨𝒫n in 𝒫⊢ϕ→ψ n ⊨𝒫n n ≤-refl ϕn
+  →ᵒE : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
+  →ᵒE {𝒫} 𝒫⊢ϕ→ψ 𝒫⊢ϕ n ⊨𝒫n = let ϕn = 𝒫⊢ϕ n ⊨𝒫n in 𝒫⊢ϕ→ψ n ⊨𝒫n n ≤-refl ϕn
 \end{code}
 
 Next we define a derived rule that caters to a common reasoning
@@ -2406,9 +2430,10 @@ pattern in which we know that ϕ implies ψ, but you have ▷ᵒ ϕ and need
 to prove ▷ᵒ ψ.
 
 \begin{code}
+abstract
   ▷→▷ : 𝒫 ⊢ᵒ ▷ᵒ ϕ  →  ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ▷ᵒ ψ
   ▷→▷ {𝒫}{ϕ}{ψ} ▷ϕ ϕ⊢ψ n ⊨𝒫n =
-    let ▷ψ = appᵒ{𝒫}{▷ᵒ ϕ}{▷ᵒ ψ} (▷→{𝒫}{ϕ}{ψ} (monoᵒ{𝒫}{ϕ →ᵒ ψ} (→ᵒI{ϕ}{𝒫}{ψ} ϕ⊢ψ))) ▷ϕ in
+    let ▷ψ = →ᵒE{𝒫}{▷ᵒ ϕ}{▷ᵒ ψ} (▷→{𝒫}{ϕ}{ψ} (monoᵒ{𝒫}{ϕ →ᵒ ψ} (→ᵒI{ϕ}{𝒫}{ψ} ϕ⊢ψ))) ▷ϕ in
     ▷ψ n ⊨𝒫n
 \end{code}
 
@@ -2421,17 +2446,32 @@ of $a$ in $A$.
 
 \begin{code}
 abstract
-  ⊢ᵒ-∀-intro : {ϕᵃ : A → Setᵒ} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
-  ⊢ᵒ-∀-intro ∀ϕᵃa n ⊨𝒫n a = ∀ϕᵃa a n ⊨𝒫n
+  Λᵒ : {ϕᵃ : A → Setᵒ} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
+  Λᵒ ∀ϕᵃa n ⊨𝒫n a = ∀ϕᵃa a n ⊨𝒫n
 
-Λᵒ-syntax = ⊢ᵒ-∀-intro
+Λᵒ-syntax = Λᵒ
 infix 1 Λᵒ-syntax
 syntax Λᵒ-syntax (λ a → ⊢ϕᵃa) = Λᵒ[ a ] ⊢ϕᵃa
 
 abstract
-  instᵒ : ∀{ϕᵃ : A → Setᵒ} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
-  instᵒ ⊢∀ϕᵃ a n ⊨𝒫n = ⊢∀ϕᵃ n ⊨𝒫n a
+  ∀ᵒE : ∀{ϕᵃ : A → Setᵒ} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
+  ∀ᵒE ⊢∀ϕᵃ a n ⊨𝒫n = ⊢∀ϕᵃ n ⊨𝒫n a
 \end{code}
+
+\begin{comment}
+\noindent In some situations Agda has difficulty infering the ϕᵃ
+parameter, so we also provide the following version of ∀ᵒE with an
+explicit annotation.
+
+\begin{code}
+∀ᵒE-annot : ∀(ϕᵃ : A → Setᵒ) → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
+∀ᵒE-annot ϕᵃ = ∀ᵒE{ϕᵃ = ϕᵃ}
+
+∀ᵒE-annot-syntax = ∀ᵒE-annot
+infix 1 ∀ᵒE-annot-syntax
+syntax ∀ᵒE-annot-syntax (λ a → ϕᵃ) ∀ϕ b = instᵒ ∀ϕ ⦂∀[ a ] ϕᵃ at b
+\end{code}
+\end{comment}
 
 The introduction rule for the existential quantifier requires witness $a ∈ A$ and
 a proof of $ϕᵃ \, a$ to show that $∃ᵒ ϕᵃ$. The elimination rule says that
@@ -2440,13 +2480,13 @@ suffies to prove that $ϕᵃ \, a$ entails $þ$ for an arbitrary $a ∈ A$.
 
 \begin{code}
 abstract
-  ⊢ᵒ-∃-intro : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} → (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
-  ⊢ᵒ-∃-intro a ⊢ϕᵃa n ⊨𝒫n = a , (⊢ϕᵃa n ⊨𝒫n)
+  ∃ᵒI : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} → (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
+  ∃ᵒI a ⊢ϕᵃa n ⊨𝒫n = a , (⊢ϕᵃa n ⊨𝒫n)
 
-  ⊢ᵒ-∃-elim : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
+  ∃ᵒE : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
      → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
-  ⊢ᵒ-∃-elim{þ = þ} ⊢∃ϕᵃ cont zero ⊨𝒫n = tz þ
-  ⊢ᵒ-∃-elim ⊢∃ϕᵃ cont (suc n) ⊨𝒫n
+  ∃ᵒE {þ = þ} ⊢∃ϕᵃ cont zero ⊨𝒫n = tz þ
+  ∃ᵒE ⊢∃ϕᵃ cont (suc n) ⊨𝒫n
       with ⊢∃ϕᵃ (suc n) ⊨𝒫n
   ... | (a , ϕᵃasn) = cont a (suc n) (ϕᵃasn , ⊨𝒫n)
 \end{code}
@@ -2465,6 +2505,10 @@ abstract
   pureᵒE : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
   pureᵒE {𝒫} {p} {R} ⊢p p→⊢R zero 𝒫n = tz R
   pureᵒE {𝒫} {p} {R} ⊢p p→⊢R (suc n) 𝒫n = p→⊢R (⊢p (suc n) 𝒫n) (suc n) 𝒫n
+
+pureᵒE-syntax = pureᵒE
+infix 1 pureᵒE-syntax
+syntax pureᵒE-syntax pᵒ (λ p → ⊢þ) = let-pureᵒ[ p ] pᵒ within ⊢þ
 \end{code}
 
 The next two rules provide ways to make use of premises to the left of
@@ -2486,6 +2530,16 @@ abstract
   Sᵒ 𝒫⊢ψ n (ϕn , ⊨𝒫n) = 𝒫⊢ψ n ⊨𝒫n
 \end{code}
 
+TODO: explain this
+\begin{code}
+λᵒ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
+λᵒ ϕ f = →ᵒI{ϕ = ϕ} (f Zᵒ)
+
+λᵒ-syntax = λᵒ
+infix 1 λᵒ-syntax
+syntax λᵒ-syntax ϕ (λ ⊢ϕ → ⊢ψ) = λᵒ[ ⊢ϕ ⦂ ϕ ] ⊢ψ
+\end{code}
+
 Finally, we provide a rule that lets one export a proof of $ϕ$
 from SIL into Agda. That is, given a proof of ϕ in SIL, to prove
 some other arbitrary proposition ψ, it suffices to provide
@@ -2493,12 +2547,18 @@ a function that is parameterized over $ϕ$ at a non-zero index
 and that produces a proof of ψ.
 
 \begin{code}
-⊢ᵒ-sucP : 𝒫 ⊢ᵒ ϕ  →  (∀{n} → # ϕ (suc n) → 𝒫 ⊢ᵒ ψ)  →  𝒫 ⊢ᵒ ψ
-⊢ᵒ-sucP {𝒫}{ϕ}{ψ} ⊢ϕ ϕsn⊢ψ =
-    ⊢ᵒ-intro λ { zero x → tz ψ
-               ; (suc n) 𝒫sn → let ⊢ψ = ϕsn⊢ψ (⊢ᵒ-elim ⊢ϕ (suc n) 𝒫sn) in ⊢ᵒ-elim ⊢ψ (suc n) 𝒫sn }
+let-sucᵒ : 𝒫 ⊢ᵒ ϕ  →  (∀{n} → # ϕ (suc n) → 𝒫 ⊢ᵒ ψ)  →  𝒫 ⊢ᵒ ψ
+let-sucᵒ {𝒫}{ϕ}{ψ} ⊢ϕ ϕsn⊢ψ =
+    ⊢ᵒI λ { zero x → tz ψ
+               ; (suc n) 𝒫sn → let ⊢ψ = ϕsn⊢ψ (⊢ᵒE ⊢ϕ (suc n) 𝒫sn) in ⊢ᵒE ⊢ψ (suc n) 𝒫sn }
+
+let-sucᵒ-syntax = let-sucᵒ
+infix 1 let-sucᵒ-syntax
+syntax let-sucᵒ-syntax ϕ (λ ϕsuc → ⊢ψ) = let-sucᵒ[ ϕsuc ] ϕ within ⊢ψ
 \end{code}
 
+
+TODO: move the following to an appropriate location -Jeremy
 
 \begin{code}
 foldᵒ : ∀{𝒫} (P : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ letᵒ (μᵒ P) (P a)  →  𝒫 ⊢ᵒ μᵒ P a

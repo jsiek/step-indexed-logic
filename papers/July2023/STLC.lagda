@@ -11,7 +11,6 @@ open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List using (map)
 open import Data.Nat.Properties
 open import Data.Product using (_,_;_×_; proj₁; proj₂; Σ-syntax; ∃-syntax)
---open import Data.Unit.Polymorphic using (⊤; tt)
 open import Data.Unit using (⊤; tt)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 open import Data.Vec using (Vec) renaming ([] to []̌; _∷_ to _∷̌_)
@@ -24,7 +23,6 @@ open import Data.Product.Relation.Binary.Lex.Strict
 open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality as Eq
   using (_≡_; _≢_; refl; sym; cong; cong₂; subst; trans)
---open Eq.≡-Reasoning
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
@@ -611,7 +609,7 @@ then it must either be a lambda abstraction or a fixpoint value.
 𝒱-fun-case : ∀{𝒫}{A}{B}{V}{R} → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
   → (∀ N → V ≡ ƛ N → 𝒫 ⊢ᵒ R)  →  (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ R)  →  𝒫 ⊢ᵒ R
 𝒱-fun-case {𝒫}{A}{B}{V}{R} ⊢𝒱V contλ contμ =
-  ⊢ᵒ-sucP ⊢𝒱V λ { 𝒱Vsn → aux{V} 𝒱Vsn contλ contμ }
+  let-sucᵒ ⊢𝒱V λ { 𝒱Vsn → aux{V} 𝒱Vsn contλ contμ }
   where aux : ∀{V n} → # (𝒱⟦ A ⇒ B ⟧ V) (suc n)  →  (∀ N → V ≡ ƛ N → 𝒫 ⊢ᵒ R)
             →  (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ R)  →  𝒫 ⊢ᵒ R
         aux {ƛ N} 𝒱sn contλ contμ = contλ N refl
@@ -635,7 +633,7 @@ then it must either be a lambda abstraction or a fixpoint value.
 𝒱⇒ℰ {A}{𝒫}{V} 𝒫⊢𝒱V = ℰ-intro prog pres
     where prog = inj₁ᵒ 𝒫⊢𝒱V
           pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ V—→N →
-                   ⊢ᵒ-sucP (Sᵒ 𝒫⊢𝒱V) λ 𝒱V →
+                   let-sucᵒ (Sᵒ 𝒫⊢𝒱V) λ 𝒱V →
                       ⊥-elim (value-irreducible (𝒱⇒Value A V 𝒱V ) V—→N))
 \end{code}
 

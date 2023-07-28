@@ -11,7 +11,6 @@ open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List using (map)
 open import Data.Nat.Properties
 open import Data.Product using (_,_;_×_; proj₁; proj₂; Σ-syntax; ∃-syntax)
---open import Data.Unit.Polymorphic using (⊤; tt)
 open import Data.Unit using (⊤; tt)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 open import Data.Vec using (Vec) renaming ([] to []̌; _∷_ to _∷̌_)
@@ -24,7 +23,6 @@ open import Data.Product.Relation.Binary.Lex.Strict
 open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality as Eq
   using (_≡_; _≢_; refl; sym; cong; cong₂; subst; trans)
---open Eq.≡-Reasoning
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
@@ -55,7 +53,7 @@ well-typed values. The literal for zero is trivially well behaved.
 
 \begin{code}
 compatible-zero : ∀{Γ} → Γ ⊨ⱽ `zero ⦂ `ℕ
-compatible-zero {Γ} γ = ⊢ᵒ-intro λ {zero x → tt; (suc i) x → ttᵖ}
+compatible-zero {Γ} γ = ⊢ᵒI λ {zero x → tt; (suc i) x → ttᵖ}
 \end{code}
 
 The successor of a value is well-behaved as a direct result of the
@@ -77,7 +75,7 @@ compatible-λ : ∀{Γ}{A}{B}{N} → (A ∷ Γ) ⊨ N ⦂ B  →  Γ ⊨ⱽ (ƛ 
 compatible-λ {Γ}{A}{B}{N} ⊨N γ = substᵒ (≡ᵒ-sym 𝒱-fun) (Λᵒ[ W ] →ᵒI ▷𝓔N[W])
   where
   ▷𝓔N[W] : ∀{W} → ▷ᵒ 𝒱⟦ A ⟧ W ∷ 𝓖⟦ Γ ⟧ γ  ⊢ᵒ  ▷ᵒ ℰ⟦ B ⟧ ((⟪ ext γ ⟫ N) [ W ])
-  ▷𝓔N[W] {W} = appᵒ (Sᵒ (▷→ (monoᵒ (→ᵒI (⊨N (W • γ)))))) Zᵒ
+  ▷𝓔N[W] {W} = →ᵒE (Sᵒ (▷→ (monoᵒ (→ᵒI (⊨N (W • γ)))))) Zᵒ
 \end{code}
 
 A fixpoint value is well-behaved if the underlying value is well-behaved.
@@ -98,7 +96,7 @@ compatible-μ {Γ}{A}{B}{V} v ⊨V γ =
   where
   V' = ⟪ ext γ ⟫ V
   ▷𝒱V : ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (μ V')) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (⟪ μ V' • γ ⟫ V))
-  ▷𝒱V = ▷→▷ Zᵒ (⊢ᵒ-intro λ {n (𝒱μγVn , _ , 𝓖γn) → ⊢ᵒ-elim (⊨V (μ V' • γ)) n (𝒱μγVn , 𝓖γn)})
+  ▷𝒱V = ▷→▷ Zᵒ (⊢ᵒI λ {n (𝒱μγVn , _ , 𝓖γn) → ⊢ᵒE (⊨V (μ V' • γ)) n (𝒱μγVn , 𝓖γn)})
 \end{code}
 
 That completes the compatibility lemmas for well-typed values, so we
@@ -159,7 +157,7 @@ compatible-case {Γ}{L}{M}{N}{A} ⊨L ⊨M ⊨N γ =
    where
    𝒫₁ = λ V → 𝒱⟦ `ℕ ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
    ⊢ℰcaseVMN : ∀{V} → 𝒫₁ V ⊢ᵒ ℰ⟦ A ⟧ (case V (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
-   ⊢ℰcaseVMN {V} = ⊢ᵒ-sucP Zᵒ λ {n} 𝒱Vsn →
+   ⊢ℰcaseVMN {V} = let-sucᵒ Zᵒ λ {n} 𝒱Vsn →
      𝒱ℕ-inv{V}{n = n}{𝒫₁ V ⊢ᵒ ℰ⟦ A ⟧ (case V (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))} 𝒱Vsn
      (λ { refl → {- Case V = zero -}
        let prog : 𝒫₁ `zero ⊢ᵒ progress A (case `zero (⟪ γ ⟫ M) (⟪ ext γ ⟫ N))
@@ -177,7 +175,7 @@ compatible-case {Γ}{L}{M}{N}{A} ⊨L ⊨M ⊨N γ =
            pres = Λᵒ[ L ] (→ᵒI (pureᵒE Zᵒ λ {r →
              let L≡⟪γ⟫N[V] = deterministic r (β-suc v) in
              let ▷ℰN[V′] : 𝒫₁ (`suc V′) ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ (⟪ V′ • γ ⟫ N)
-                 ▷ℰN[V′] = monoᵒ (⊢ᵒ-intro λ {k (a , b , c) → ⊢ᵒ-elim (⊨N (V′ • γ)) k (a , c)}) in
+                 ▷ℰN[V′] = monoᵒ (⊢ᵒI λ {k (a , b , c) → ⊢ᵒE (⊨N (V′ • γ)) k (a , c)}) in
              Sᵒ (subst (λ L → 𝒫₁ (`suc V′) ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ L)) (sym L≡⟪γ⟫N[V]) ▷ℰN[V′])})) in
        ℰ-intro prog pres})
 \end{code}
@@ -206,7 +204,7 @@ apply-λ {A}{B}{W}{N′}{𝒫} ⊢𝒱V ⊢𝒱W w =
   let pres : 𝒫 ⊢ᵒ preservation B (ƛ N′ · W)
       pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ {r →
                let ⊢▷ℰN′W : 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ (N′ [ W ]))
-                   ⊢▷ℰN′W = appᵒ (instᵒ (substᵒ 𝒱-fun ⊢𝒱V) W) (monoᵒ ⊢𝒱W) in
+                   ⊢▷ℰN′W = →ᵒE (∀ᵒE (substᵒ 𝒱-fun ⊢𝒱V) W) (monoᵒ ⊢𝒱W) in
                Sᵒ (subst (λ N → 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)) (sym (deterministic r (β-ƛ w))) ⊢▷ℰN′W)}) in
   ℰ-intro prog pres
 \end{code}
@@ -244,11 +242,12 @@ apply-μ {A = A}{B}{W}{V′}{𝒫} IH ⊢𝒱V v ⊢𝒱W w =
       ▷ℰV[μV]·W =
         let ▷𝒱V[μV] = proj₂ᵒ (substᵒ 𝒱-μ (Sᵒ ⊢𝒱V)) in
         let P = (λ V → ▷ᵒ (∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W)))) in
-        appᵒ (▷→ (appᵒ (▷→ (instᵒ (▷∀ (instᵒ{ϕᵃ = P} (▷∀ (Sᵒ IH)) (V′ [ μ V′ ]))) W)) ▷𝒱V[μV]))
+        →ᵒE (▷→ (→ᵒE (▷→ (∀ᵒE (▷∀ (∀ᵒE{ϕᵃ = P} (▷∀ (Sᵒ IH)) (V′ [ μ V′ ]))) W)) ▷𝒱V[μV]))
              (monoᵒ (Sᵒ ⊢𝒱W)) in
   let ▷ℰN : ∀ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)
-      ▷ℰN N = ⊢ᵒ-sucP Zᵒ λ r → subst (λ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N))
-                                     (sym (β-μ-inv (Value-μ-inv v) w r)) ▷ℰV[μV]·W in
+      ▷ℰN N = let-pureᵒ[ r ] Zᵒ within
+               subst (λ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N))
+                     (sym (β-μ-inv (Value-μ-inv v) w r)) ▷ℰV[μV]·W in
   let pres : 𝒫 ⊢ᵒ preservation B (μ V′ · W)
       pres = Λᵒ[ N ] →ᵒI (▷ℰN N) in
   ℰ-intro prog pres
@@ -275,7 +274,7 @@ compatible-app : ∀{Γ}{A}{B}{L}{M} →  Γ ⊨ L ⦂ (A ⇒ B)  →  Γ ⊨ M 
 compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ℰ-bind {F = □· (⟪ γ ⟫ M)} (⊨L γ) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVM))
   where
   ⊢ℰVM : ∀{V} → 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ B ⟧ (V · ⟪ γ ⟫ M)
-  ⊢ℰVM {V} = ⊢ᵒ-sucP Zᵒ λ 𝒱Vsn → let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
+  ⊢ℰVM {V} = let-sucᵒ Zᵒ λ 𝒱Vsn → let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
     ℰ-bind {F = v ·□} (Sᵒ (Sᵒ (⊨M γ))) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW))
     where
     𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
@@ -284,12 +283,12 @@ compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ℰ-bind {F = □· (⟪ γ ⟫ M
       aux : ∀{V}{W} → 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ ▷ᵒ WBApp A B ∷ 𝒫₂ V′ W′ ⊢ᵒ ℰ⟦ B ⟧ (V · W)
       aux {V}{W} =
         let ⊢𝒱V = Sᵒ Zᵒ in let ⊢𝒱W = Zᵒ in
-        ⊢ᵒ-sucP ⊢𝒱V λ 𝒱Vsn → ⊢ᵒ-sucP ⊢𝒱W λ 𝒱Wsn →
+        let-sucᵒ ⊢𝒱V λ 𝒱Vsn → let-sucᵒ ⊢𝒱W λ 𝒱Wsn →
         let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in let w = 𝒱⇒Value A W 𝒱Wsn in
         𝒱-fun-case ⊢𝒱V (λ { N′ refl → apply-λ ⊢𝒱V ⊢𝒱W w })
                         (λ { V′ refl → apply-μ (Sᵒ (Sᵒ Zᵒ)) ⊢𝒱V v ⊢𝒱W w })
     ⊢ℰVW : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
-    ⊢ℰVW {V}{W} = appᵒ (appᵒ (instᵒ (instᵒ (lobᵒ Gen-ℰVW) V) W) (Sᵒ (Sᵒ Zᵒ))) Zᵒ
+    ⊢ℰVW {V}{W} = →ᵒE (→ᵒE (∀ᵒE (∀ᵒE (lobᵒ Gen-ℰVW) V) W) (Sᵒ (Sᵒ Zᵒ))) Zᵒ
 \end{code}
 \caption{Compatibility lemma for application.}
 \label{fig:compatible-app}
@@ -359,7 +358,7 @@ followed by \textsf{ℰ-multi-preserve}.
 
 \begin{code}
 type-safety {A = A} ⊢M M—↠N
-    with ⊢ᵒ-elim (fundamental ⊢M id) (suc (len M—↠N)) tt
+    with ⊢ᵒE (fundamental ⊢M id) (suc (len M—↠N)) tt
 ... | ℰM
     with ℰ-multi-preserve M—↠N ℰM
 ... | (inj₁ 𝒱N , _) = inj₁ (𝒱⇒Value A _ 𝒱N)

@@ -11,7 +11,6 @@ open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List using (map)
 open import Data.Nat.Properties
 open import Data.Product using (_,_;_×_; proj₁; proj₂; Σ-syntax; ∃-syntax)
---open import Data.Unit.Polymorphic using (⊤; tt)
 open import Data.Unit using (⊤; tt)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 open import Data.Vec using (Vec) renaming ([] to []̌; _∷_ to _∷̌_)
@@ -24,7 +23,6 @@ open import Data.Product.Relation.Binary.Lex.Strict
 open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality as Eq
   using (_≡_; _≢_; refl; sym; cong; cong₂; subst; trans)
---open Eq.≡-Reasoning
 open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
@@ -70,12 +68,11 @@ Prem2 A B F M = ∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦
 Prem2-reduction : ∀{𝒫}{A}{B}{F}{M}{M′} →  M —→ M′  →  𝒫 ⊢ᵒ Prem2 A B F M
    → 𝒫 ⊢ᵒ Prem2 A B F M′
 Prem2-reduction {𝒫}{A}{B}{F}{M}{M′} M→M′ Prem2[M] =
-   Λᵒ[ V ] →ᵒI (→ᵒI M′→V→ℰFV) where
-   M′→V→ℰFV : ∀{V} → 𝒱⟦ B ⟧ V ∷ (M′ —↠ V)ᵒ ∷ 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
-   M′→V→ℰFV {V} = ⊢ᵒ-sucP (Sᵒ Zᵒ) λ M′→V → 
-                  let M—↠V = pureᵒI (M —→⟨ M→M′ ⟩ M′→V) in
-                  let M→V→ℰFV = Sᵒ (Sᵒ (instᵒ Prem2[M] V)) in
-                  appᵒ (appᵒ M→V→ℰFV M—↠V) Zᵒ
+   Λᵒ[ V ] λᵒ[ ⊢M′→V ⦂ (M′ —↠ V)ᵒ  ] λᵒ[ ⊢𝒱V ⦂ 𝒱⟦ B ⟧ V ]
+     let-pureᵒ[ M′→V ] (Sᵒ ⊢M′→V) within
+     let M—↠V = pureᵒI (M —→⟨ M→M′ ⟩ M′→V) in
+     let M→V→ℰFV = ∀ᵒE (Sᵒ (Sᵒ Prem2[M])) V in
+     →ᵒE (→ᵒE M→V→ℰFV M—↠V) ⊢𝒱V     
 \end{code}
 
 The \textsf{ℰ-bind} lemma is proved by \textsf{lobᵒ} induction which
@@ -128,7 +125,7 @@ other logical connectives.
 
    Mval : 𝒱⟦ B ⟧ M ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mval = let Prem2[M] = λ V → (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧) in
-          appᵒ (appᵒ (instᵒ{ϕᵃ = Prem2[M]} (Sᵒ Zᵒ) M) (pureᵒI (M END))) Zᵒ
+          →ᵒE (→ᵒE (∀ᵒE{ϕᵃ = Prem2[M]} (Sᵒ Zᵒ) M) (pureᵒI (M END))) Zᵒ
 
    Mred : (reducible M)ᵒ ∷ 𝒫′ ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
    Mred = ℰ-intro progressMred preservationMred
@@ -145,7 +142,7 @@ other logical connectives.
          with frame-inv{M}{N}{F} rM FM→N
      ... | M′ , M→M′ , N≡F[M′] =
       let ▷ℰM′ : 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ M′
-          ▷ℰM′ = appᵒ (instᵒ{ϕᵃ = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
+          ▷ℰM′ = →ᵒE (∀ᵒE{ϕᵃ = λ N → (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)}
                         (proj₂ᵒ (substᵒ ℰ-stmt (Sᵒ Zᵒ))) M′) (pureᵒI M→M′) in
       let ▷M′→V→𝒱V→ℰFV : 𝒫′ ⊢ᵒ ▷ᵒ (Prem2 A B F M′)
           ▷M′→V→𝒱V→ℰFV = monoᵒ (Prem2-reduction{𝒫′}{A}{B} M→M′ Zᵒ) in
@@ -153,13 +150,13 @@ other logical connectives.
           IH = Sᵒ (Sᵒ Zᵒ) in
       let ▷ℰFM′ : 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ (F ⟦ M′ ⟧))
           ▷ℰFM′ = let ϕᵃ = λ M → ℰ-bind-M A B F M in
-                  appᵒ(▷→ (appᵒ(▷→ (instᵒ(▷∀{ϕᵃ = ϕᵃ} IH) M′)) ▷ℰM′)) ▷M′→V→𝒱V→ℰFV in
+                  →ᵒE(▷→ (→ᵒE(▷→ (∀ᵒE(▷∀{ϕᵃ = ϕᵃ} IH) M′)) ▷ℰM′)) ▷M′→V→𝒱V→ℰFV in
       subst (λ N → 𝒫′ ⊢ᵒ ▷ᵒ ℰ⟦ A ⟧ N) (sym N≡F[M′]) ▷ℰFM′
 \end{code}
 
 \begin{code}
 ℰ-bind {𝒫}{A}{B}{F}{M} ⊢ℰM ⊢𝒱V→ℰFV =
-  appᵒ (appᵒ (instᵒ{ϕᵃ = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
+  →ᵒE (→ᵒE (∀ᵒE{ϕᵃ = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
 \end{code}
 \caption{Proof of the \textsf{ℰ-bind} lemma.}
 \label{fig:bind-lemma}
