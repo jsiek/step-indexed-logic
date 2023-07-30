@@ -1,6 +1,6 @@
 \begin{comment}
 \begin{code}
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --rewriting --without-K --allow-unsolved-metas #-}
 module July2023.SILIntro where
 
 open import Data.Empty using (⊥; ⊥-elim)
@@ -38,6 +38,14 @@ Agda, we add a superscript ``o'' to most names.
 \begin{code}
 _ : Set₁
 _ = Setᵒ
+\end{code}
+
+\begin{code}
+variable ϕ ϕ′ ψ ψ′ þ : Setᵒ
+\end{code}
+
+\begin{code}
+variable 𝒫 : List Setᵒ
 \end{code}
 
 \noindent The representation, or meaning, of a SIL formula is an Agda
@@ -137,6 +145,10 @@ _ = (λ ϕ×ψ → (proj₁ᵒ ϕ×ψ , proj₂ᵒ ϕ×ψ)) , λ {(ϕ , ψ) → 
 \end{code}
 
 \subsection{SIL is a first-order logic}
+
+\begin{code}
+variable A B C : Set
+\end{code}
 
 SIL is a first-order logic, so it includes the universal and
 existential quantifiers. SIL uses Agda functions to handle the
@@ -288,6 +300,13 @@ and all the other variables in $Γ$ the time \textsf{Later},
 which is accomplished by the \textsf{var-now} function.
 
 \begin{code}
+variable Γ : Context
+\end{code}
+\begin{code}
+variable Δ Δ₁ Δ₂ : Times Γ
+\end{code}
+
+\begin{code}
 _ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
 _ = _∈_
 \end{code}
@@ -409,6 +428,10 @@ $(pureᵒE ϕ F)$ is a proof of þ if ϕ is a proof of pᵒ and $F$ is a
 function from $p$ to a proof of þ.
 
 \begin{code}
+variable p q r : Set
+\end{code}
+
+\begin{code}
 _ : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
 _ = pureᵒE
 \end{code}
@@ -526,45 +549,121 @@ _ : [] ⊢ᵒ (1 ≡ 1)ᵒ
 _ = ∀ᵒE{ϕᵃ = λ x → (x ≡ x)ᵒ} ∀x,x=x 1
 \end{code}
 
-\begin{comment}
-\begin{code}
-_ : [] ⊢ᵒ (1 ≡ 1)ᵒ
-_ = instᵒ ∀x,x=x ⦂∀[ x ] (x ≡ x)ᵒ at 1
-\end{code}
-\end{comment}
-
 The existential quantifier of SIL is introduced by the rule ∃ᵒI and
-eliminated by the rule ∃ᵒE.
+eliminated by the rule unpackᵒ.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} → (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
+_ : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
 _ = ∃ᵒI
 
 _ : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
-     → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
-_ = ∃ᵒE
+     → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a  →  ϕᵃ a ∷ 𝒫 ⊢ᵒ ϕᵃ a  →  ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+_ = unpackᵒ
+\end{code}
+
+\noindent The following example proves that doubling an even number
+yields an even number.
+
+\begin{code}
+private variable i j k m n : ℕ
 \end{code}
 
 \begin{code}
 _ : ([] ⊢ᵒ ∃ᵒ[ x ] (n ≡ 2 * x)ᵒ) → ([] ⊢ᵒ ∃ᵒ[ x ] (2 * n ≡ 2 * x)ᵒ)
-_ = λ ⊢n-even → ∃ᵒE ⊢n-even λ x → pureᵒE Zᵒ λ {refl → ∃ᵒI (2 * x) (pureᵒI refl)}
+_ = λ n-even → unpackᵒ n-even λ x n=2xᵒ →
+               pureᵒE n=2xᵒ λ {refl → ∃ᵒI (2 * x) (pureᵒI refl)}
 \end{code}
 
-
-For example, we can change our previous definition of the even
-numbers, \textsf{Even}′, to instead use entailment.
+Finally, regarding recursive predicates, the introduction rule is
+\textsf{fold}ᵒ. The rule uses a new operator named \textsf{let}ᵒ that
+we discuss below.
 
 \begin{code}
-Even″ : ℕ → Set
-Even″ n = [] ⊢ᵒ μᵒ Evenˢ n
+_ : ∀{𝒫} (Sᵃ : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)  →  𝒫 ⊢ᵒ μᵒ Sᵃ a
+_ = foldᵒ
 \end{code}
 
+The following two proofs use \textsf{fold}ᵒ to show that zero is
+even. The first proof is short but Agda's powerful notion of equality
+is doing a lot of work behind the scenes.
+
 \begin{code}
-even-zero : [] ⊢ᵒ μᵒ Evenˢ 0
+even-zero : Even′ 0
 even-zero = foldᵒ Evenˢ 0 (inj₁ᵒ (pureᵒI refl))
 \end{code}
 
+\noindent To better see what's going on, let's take it slower. The
+proof starts with the use of the \textsf{fold}ᵒ rule, after which it
+remains to prove
+\[
+   \text{even-0 : letᵒ (μᵒ Evenˢ) (Evenˢ 0)}
+\]
+This \textsf{let}ᵒ operator substitutes the predicate \textsf{(μᵒ Evenˢ)} for the
+\textsf{zero}ˢ de Bruijn index inside \textsf{Even}ˢ. Recall the definition
+of \textsf{Even}ˢ:
+\[
+  \text{Evenˢ n = (n ≡ zero)ˢ ⊎ˢ (∃ˢ[ m ] (n ≡ 2 + m)ˢ ×ˢ ▷ˢ (m ∈ zeroˢ))}
+\]
+So \textsf{even-0} above is equivalent to the following, where
+\textsf{m ∈ zeroˢ} has been replaced by \textsf{μᵒ Evenˢ m}.
+\[
+  \text{(0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m))}
+\]
+Finally, we conclude the proof by choosing the first branch of the disjunction
+with \textsf{inj₁ᵒ} and then proving \textsf{(0 ≡ zero)ᵒ} by \textsf{pureᵒI refl}.
+
+\begin{code}
+_ : Even′ 0
+_ = foldᵒ Evenˢ 0 even-0
+ where
+ even-0 : [] ⊢ᵒ letᵒ (μᵒ Evenˢ) (Evenˢ 0)
+ even-0 = subst (λ X → [] ⊢ᵒ X) (sym let-eq) even-body-0
+  where
+  let-eq : letᵒ (μᵒ Evenˢ) (Evenˢ 0)  ≡  (0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m))
+  let-eq = refl
+  even-body-0 : [] ⊢ᵒ (0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m))
+  even-body-0 = inj₁ᵒ (pureᵒI refl)
+\end{code}
+
+TODO: keep this or delete?
 \begin{code}
 even-two : [] ⊢ᵒ μᵒ Evenˢ 2
 even-two = foldᵒ Evenˢ 2 (inj₂ᵒ (∃ᵒI 0 (pureᵒI refl ,ᵒ monoᵒ even-zero)))
+\end{code}
+
+The eleminiation rule for μᵒ is \textsf{unfold}ᵒ.
+
+\begin{code}
+_ : ∀{𝒫} (Sᵃ : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ μᵒ Sᵃ a  →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
+_ = unfoldᵒ
+\end{code}
+
+\noindent For example, if we unfold $μᵒ Evenˢ 1$, we obtain that either
+$1 = 0$ or $1 = 2 + m$ for some $m$. Either case is impossible, so it must
+be that $1$ is not even.
+
+\begin{code}
+not-even-one : ¬ ([] ⊢ᵒ μᵒ Evenˢ 1)
+not-even-one even-one = ⊥ᵒ⇒⊥ (caseᵒ (unfoldᵒ Evenˢ 1 even-one)
+                               (pureᵒE Zᵒ λ{()})
+                               (unpackᵒ Zᵒ λ m [0=2+m]×[even-m] → pureᵒE (proj₁ᵒ [0=2+m]×[even-m]) λ{()}))
+\end{code}
+
+
+\begin{code}
+even-implies-div2 : Setᵒ
+even-implies-div2 = ∀ᵒ[ n ⦂ ℕ ] μᵒ Evenˢ n →ᵒ (∃ᵒ[ m ] (n ≡ 2 * m)ᵒ)
+
+even-div2-proof : [] ⊢ᵒ even-implies-div2
+even-div2-proof =
+  lobᵒ (Λᵒ[ n ] λᵒ[ even-n ⦂ μᵒ Evenˢ n ]
+        caseᵒ (unfoldᵒ Evenˢ n even-n)
+          (pureᵒE Zᵒ λ{ refl → ∃ᵒI 0 (pureᵒI refl)})
+          (unpackᵒ Zᵒ λ m [n=2+m]×[even-m] →
+            pureᵒE (proj₁ᵒ [n=2+m]×[even-m]) λ{ refl →
+              let 𝒫 = (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m) ∷ μᵒ Evenˢ n ∷ ▷ᵒ even-implies-div2 ∷ [] in
+              let  IH : 𝒫 ⊢ᵒ ▷ᵒ even-implies-div2
+                   IH = Sᵒ (Sᵒ Zᵒ) in
+              --unpackᵒ IH λ m′ m=2*m′ →
+              {!!}}))
 \end{code}

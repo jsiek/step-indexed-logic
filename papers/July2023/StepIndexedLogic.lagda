@@ -55,15 +55,15 @@ open Setᵒ public
 \end{code}
 Let $ϕ, ψ, þ$ range over step-indexed propositions.
 \begin{code}
-variable ϕ ϕ′ ψ ψ′ þ : Setᵒ
+private variable ϕ ϕ′ ψ ψ′ þ : Setᵒ
 \end{code}
 Let $p, q, r$ range over (regular) propositions.
 \begin{code}
-variable p q r : Set
+private variable p q r : Set
 \end{code}
 Let $i, j, k, m , n$ range over natural numbers.
 \begin{code}
-variable i j k m n : ℕ
+private variable i j k m n : ℕ
 \end{code}
 
 The ``true'' formula of SIL is embedded in Agda by constructing an
@@ -131,13 +131,13 @@ Predᵒ A = A → Setᵒ
 \noindent Let $A,B,C$ range over Agda types (element of \textsf{Set})
 
 \begin{code}
-variable A B C : Set
+private variable A B C : Set
 \end{code}
 
 \noindent and let $P, Q$ range over step-indexed predicates.
 
 \begin{code}
-variable P Q R : Predᵒ A
+private variable P Q R : Predᵒ A
 \end{code}
 
 We define the constantly true predicate as follows.
@@ -173,7 +173,7 @@ In our setting, a \emph{functional} is a function over step-indexed
 predicates.  Let $f,g,h$ range over functionals.
 
 \begin{code}
-variable f g h : Predᵒ A → Predᵒ B
+private variable f g h : Predᵒ A → Predᵒ B
 \end{code}
 
 We say that a functional is congruent if it maps equivalent predicates
@@ -388,7 +388,7 @@ is a list of types. The metavariable $Γ$ ranges over contexts.
 \begin{code}
 Context : Set₁
 Context = List Set
-variable Γ : Context
+private variable Γ : Context
 \end{code}
 
 \noindent The following data type defines well-typed de Bruijn indices.
@@ -397,7 +397,7 @@ variable Γ : Context
 data _∋_ : Context → Set → Set₁ where
   zeroˢ : (A ∷ Γ) ∋ A
   sucˢ : Γ ∋ B → (A ∷ Γ) ∋ B
-variable x y z : Γ ∋ A
+private variable x y z : Γ ∋ A
 \end{code}
 
 These de Bruijn indices are used to access elements in the
@@ -414,13 +414,13 @@ RecEnv (A ∷ Γ) = (Predᵒ A) × RecEnv Γ
 
 \noindent Let $δ$ range over environments.
 \begin{code}
-variable δ : RecEnv Γ
+private variable δ : RecEnv Γ
 \end{code}
 
 \noindent We refer to a function of type $\mathsf{RecEnv}\app Γ → \mathsf{Set}ᵒ$ as a
 \emph{environment functional}. Let $F, G, H$ range over environment functionals.
 \begin{code}
-variable F G H : RecEnv Γ → Setᵒ
+private variable F G H : RecEnv Γ → Setᵒ
 \end{code}
 
 To keep track of whether a variable has been used underneath a later
@@ -439,7 +439,7 @@ data Times : Context → Set₁ where
 \end{code}
 Let $Δ$ range over these lists of times.
 \begin{code}
-variable Δ Δ₁ Δ₂ : Times Γ
+private variable Δ Δ₁ Δ₂ : Times Γ
 \end{code}
 
 We declare another record type, $\mathsf{Set}ˢ$ for open step-indexed
@@ -449,7 +449,7 @@ record Setˢ (Γ : Context) (Δ : Times Γ) : Set₁
 \end{code}
 Let $S,T,R$ range over $\mathsf{Set}ˢ$.
 \begin{code}
-variable S T U : Setˢ Γ Δ
+private variable S T U : Setˢ Γ Δ
 \end{code}
 
 We explain the type system for \textsf{Set}$^s$ in
@@ -2240,7 +2240,7 @@ propositions as the conjunction of its elements.
 \noindent Let 𝒫 range over lists of set-indexed propositions.
 
 \begin{code}
-variable 𝒫 : List Setᵒ
+private variable 𝒫 : List Setᵒ
 \end{code}
 
 \noindent The meaning of a list of step-indexed propositions is
@@ -2538,6 +2538,12 @@ TODO: explain this
 λᵒ-syntax = λᵒ
 infix 1 λᵒ-syntax
 syntax λᵒ-syntax ϕ (λ ⊢ϕ → ⊢ψ) = λᵒ[ ⊢ϕ ⦂ ϕ ] ⊢ψ
+\end{code}
+
+\begin{code}
+unpackᵒ : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
+     → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ ϕᵃ a → ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+unpackᵒ ∃ϕ cont = ∃ᵒE ∃ϕ λ a → cont a Zᵒ
 \end{code}
 
 Finally, we provide a rule that lets one export a proof of $ϕ$
