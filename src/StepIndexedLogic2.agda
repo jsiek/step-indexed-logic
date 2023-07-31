@@ -272,12 +272,15 @@ module _ where
 
 {---------------------- Recursive Predicate -----------------------------------}
 
+mu : ∀ {Γ}{Δ : Times Γ}{A} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → (A → RecEnv Γ → Setₒ)
+mu Sᵃ a δ k = ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a k
 
+abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
   μᵒ {Γ}{Δ}{A} Sᵃ a =
-    record { # = λ δ k → ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a k }
+    record { # = mu Sᵃ a }
 {-    
            ; down = {!!}
            ; tz = {!!}
@@ -286,10 +289,9 @@ module _ where
            }
 -}
 
-  #μᵒ≡ : ∀{Γ}{Δ : Times Γ}{A}{Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)}{a : A}{δ}{k}
-     → # (μᵒ Sᵃ a) δ k ≡ ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a k
-  #μᵒ≡ = refl
-
+  #μᵒ≡ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) → ∀ δ k
+     → # (μᵒ Sᵃ a) δ k ≡ mu Sᵃ a δ k
+  #μᵒ≡ Sᵃ a δ k = refl
 
 {---------------------- Forall -----------------------------------------}
 
@@ -437,7 +439,10 @@ module _ where
                      ; congr = {!!}
                      }
 -}
-
+  #letᵒ≡ : ∀{A}{Γ}{Δ}{t} (P : A → Setᵒ Γ Δ) (ϕ : Setᵒ (A ∷ Γ) (t ∷ Δ)) → ∀ δ k
+     → (# (letᵒ P ϕ) δ k) ≡ (# ϕ ((λ a k → # (P a) δ k) , δ) k)
+  #letᵒ≡ {A}{Γ}{Δ}{t} P ϕ d k = refl
+  
   let-▷ᵒ : ∀{A}{t}{P : A → Setᵒ [] []}{ϕ : Setᵒ (A ∷ []) (t ∷ [])}
      → letᵒ P (▷ᵒ ϕ) ≡ ▷ᵒ (letᵒ P ϕ)
   let-▷ᵒ {A} {t} {P} {ϕ} = refl
@@ -492,6 +497,12 @@ module _ where
   _≡ᵒ_ : ∀{Γ}{Δ : Times Γ} → Setᵒ Γ Δ → Setᵒ Γ Δ → Set₁
   S ≡ᵒ T = ∀ δ → # S δ ≡ₒ # T δ
 
+  ≡ₒ⇒≡ᵒ : ∀{ϕ ψ : Setᵒ Γ Δ} → (∀ δ → # ϕ δ ≡ₒ # ψ δ) → ϕ ≡ᵒ ψ
+  ≡ₒ⇒≡ᵒ P≡ₒQ = P≡ₒQ
+
+  ≡ᵒ⇒≡ₒ : ∀{S T : Setᵒ Γ Δ}{δ} → S ≡ᵒ T → # S δ ≡ₒ # T δ
+  ≡ᵒ⇒≡ₒ {S}{T}{δ}{k} {δ′} eq = eq δ′
+
   ≡ᵒ-intro : ∀{ϕ ψ : Setᵒ Γ Δ} → (∀ δ k → # ϕ δ k ⇔ # ψ δ k) → ϕ ≡ᵒ ψ
   ≡ᵒ-intro P⇔Q k = P⇔Q k
   
@@ -511,10 +522,30 @@ module _ where
       with PQ ttᵖ k | QR ttᵖ k
   ... | (ϕ⇒ψ , ψ⇒ϕ) | (ψ⇒þ , þ⇒ψ) = (λ z → ψ⇒þ (ϕ⇒ψ z)) , (λ z → ψ⇒ϕ (þ⇒ψ z))
 
+equiv-downₒ : ∀{ϕ ψ : Setₒ} → (∀ k → ϕ ≡ₒ[ k ] ψ) → ϕ ≡ₒ ψ
+equiv-downₒ k = {!!}
 
-fixpointᵒ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
-   → μᵒ F a ≡ᵒ letᵒ (μᵒ F) (F a)
-fixpointᵒ F a = {!!}
+lemma19a : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ) (k : ℕ)
+  → mu F a δ ≡ₒ[ k ] # (F a) ((λ a k → mu F a δ k) , δ)
+lemma19a = {!!}
+
+abstract
+  fixpointᵒ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
+     → μᵒ F a ≡ᵒ letᵒ (μᵒ F) (F a)
+  fixpointᵒ{Γ}{Δ}{A} F a = ≡ₒ⇒≡ᵒ{Γ}{Δ} aux
+    where
+    aux : ∀ δ → # (μᵒ F a) δ ≡ₒ # (letᵒ (μᵒ F) (F a)) δ
+    aux δ =
+        # (μᵒ F a) δ 
+      ⩦⟨ ≡ₒ-refl refl ⟩
+        mu F a δ 
+      ⩦⟨ equiv-downₒ (lemma19a F a δ) ⟩
+        # (F a) ((λ a k → mu F a δ k) , δ) 
+      ⩦⟨ ≡ₒ-refl refl ⟩
+        # (F a) ((λ a k → # (μᵒ F a) δ k) , δ)
+      ⩦⟨ ≡ₒ-refl refl ⟩
+        # (letᵒ (μᵒ F) (F a)) δ
+      ∎
 
 {---------------------- Proof Theory for Step Indexed Logic -------------------}
 

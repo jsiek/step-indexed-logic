@@ -17,3 +17,4 @@ iter-subtract : ∀{ℓ}{A : Set ℓ}{a : A} (F : A → A) (j k : ℕ) → j ≤
 iter-subtract {A = A} {a} F .zero k z≤n = refl
 iter-subtract {A = A} {a} F (suc j) (suc k) (s≤s j≤k)
   rewrite iter-subtract{A = A}{a} F j k j≤k = refl
+

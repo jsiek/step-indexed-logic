@@ -68,11 +68,21 @@ P ⇔ Q = (P → Q) × (Q → P)
   → (Q → P)
 ⇔-fro PQ = proj₂ PQ
 
+⇔-refl : ∀{ℓ}{P Q : Set ℓ}
+  → P ≡ Q
+  → P ⇔ Q
+⇔-refl refl = (λ x → x) , (λ x → x)
+
+⇔-sym : ∀{ℓ}{P Q : Set ℓ}
+  → P ⇔ Q
+  → Q ⇔ P
+⇔-sym = λ {(ab , ba) → ba , ab}
+
 instance
   IffEq : EquivalenceRelation Set
   IffEq = record { _⩦_ = λ P Q → P ⇔ Q
-                 ; ⩦-refl = λ {refl → (λ x → x) , λ x → x}
-                 ; ⩦-sym = λ {(ab , ba) → ba , ab}
+                 ; ⩦-refl = ⇔-refl
+                 ; ⩦-sym = ⇔-sym
                  ; ⩦-trans = λ {(ab , ba) (bc , cb) →
                                (λ x → bc (ab x)) , (λ x → ba (cb x))}
                  }
