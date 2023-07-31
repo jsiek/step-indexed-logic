@@ -43,65 +43,14 @@ open import Agda.Builtin.Equality.Rewrite
 
 open import EquivalenceRelation public
 
-
-strong-induction : ∀{P : ℕ → Set} → (∀ (n : ℕ) → (∀ k → k < n → P k) → P n) → (∀ n → P n)
-strong-induction {P} step n = aux step (suc n) n ≤-refl
-  where
-  aux : ∀{P : ℕ → Set} → (∀ (n : ℕ) → (∀ k → k < n → P k) → P n) → (∀ j k → k < j → P k)
-  aux {P} step zero k ()
-  aux {P} step (suc j) zero k<j = step 0 λ {k ()}
-  aux {P} step (suc j) (suc k) k<j =
-    step (suc k) (λ i i<sk → aux step j i (≤-trans i<sk (≤-pred k<j)))
-
-Setₒ : Set₁
-Setₒ = ℕ → Set
-
-Predₒ : Set → Set₁
-Predₒ A = A → Setₒ
+open import StrongInduction
+open import Variables
+open import SetO
+open import Approx
+open import Iteration
 
 downClosed : Setₒ → Set
 downClosed S = ∀ n → S n → ∀ k → k ≤ n → S k
-
-infix 2 _≡ₒ_
-_≡ₒ_ : Setₒ → Setₒ → Set
-S ≡ₒ T = ∀ k → S k ⇔ T k
-
-≡ₒ-refl : ∀{S T : Setₒ}
-  → S ≡ T
-  → S ≡ₒ T
-≡ₒ-refl refl i = ⩦-refl refl
-
-≡ₒ-sym : ∀{S T : Setₒ}
-  → S ≡ₒ T
-  → T ≡ₒ S
-≡ₒ-sym ST i = ⩦-sym (ST i)
-
-≡ₒ-trans : ∀{S T R : Setₒ}
-  → S ≡ₒ T
-  → T ≡ₒ R
-  → S ≡ₒ R
-≡ₒ-trans ST TR i = ⩦-trans (ST i) (TR i)
-
-instance
-  SIL-Eqₒ : EquivalenceRelation Setₒ
-  SIL-Eqₒ = record { _⩦_ = _≡ₒ_ ; ⩦-refl = ≡ₒ-refl
-                   ; ⩦-sym = ≡ₒ-sym ; ⩦-trans = ≡ₒ-trans }
-
-Context : Set₁
-Context = List Set
-
-data _∋_ : Context → Set → Set₁ where
-  zeroᵒ : ∀{Γ}{A} → (A ∷ Γ) ∋ A
-  sucᵒ : ∀{Γ}{A}{B} → Γ ∋ B → (A ∷ Γ) ∋ B
-
-data Time : Set where
-  Now : Time
-  Later : Time
-
--- Phil: would prefer if this were a list
-data Times : Context → Set₁ where
-  [] : Times []
-  _∷_ : ∀{Γ}{A} → Time → Times Γ → Times (A ∷ Γ)
 
 RecEnv : Context → Set₁
 RecEnv [] = topᵖ 
@@ -115,27 +64,9 @@ tzᵈ : ∀{Γ} → RecEnv Γ → Set
 tzᵈ {[]} δ = ⊤
 tzᵈ {A ∷ Γ} (P , δ) = (∀ a → (P a) 0) × tzᵈ δ
 
-↓ : ℕ → Setₒ → Setₒ
-↓ k S zero = ⊤
-↓ k S (suc j) = suc j < k × (S (suc j))
-
-↓ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
-↓ᵖ j P a = ↓ j (P a)
-
 ↓ᵈ : ℕ → ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → RecEnv Γ
 ↓ᵈ k {A ∷ Γ} {.A} zeroᵒ (P , δ) = ↓ᵖ k P , δ
 ↓ᵈ k {A ∷ Γ} {B} (sucᵒ x) (P , δ) = P , ↓ᵈ k x δ
-
-congᵖ : ∀{A}{B} (F : Predₒ A → Predₒ B) → Set₁
-congᵖ F = ∀ {P Q} → (∀ a → P a ≡ₒ Q a) → ∀ b → (F P b) ≡ₒ (F Q b)
-
-cong-↓ : ∀{A}{k : ℕ} → congᵖ{A}{A} (↓ᵖ k)
-cong-↓ {A} {k} {P} {Q} eq a zero =
-   (λ _ → tt) , λ _ → tt
-cong-↓ {A} {k} {P} {Q} eq a (suc i) =
-   (λ {(si≤k , Pasi) → si≤k , (proj₁ (eq a (suc i)) Pasi)})
-   ,
-   λ {(si≤k , Qasi) → si≤k , (proj₂ (eq a (suc i)) Qasi)}
 
 good-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Set₁
 good-var {Γ}{A} x Now S =
@@ -165,68 +96,27 @@ var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
 var-now (B ∷ Γ) zeroᵒ = Now ∷ (laters Γ)
 var-now (B ∷ Γ) (sucᵒ x) = Later ∷ (var-now Γ x)
 
-module Lemma17 where
-
-  lemma17 : ∀{A}{P : Predₒ A}{k}{a : A} →  ↓ᵖ k (↓ᵖ (suc k) P) a ≡ₒ ↓ᵖ k P a
-  lemma17 {A} {P} {k} {a} zero = (λ _ → tt) , (λ _ → tt)
-  lemma17 {A} {P} {k} {a} (suc i) =
-    (λ {(x , (y , z)) → x , z}) , (λ {(x , y) → x , ((s≤s (<⇒≤ x)) , y)})
-
-  lemma17b : ∀{A}{P : Predₒ A}{j}{k}{a : A}
-     → suc j ≤′ k
-     → ↓ᵖ j (↓ᵖ k P) a ≡ₒ ↓ᵖ j P a
-  lemma17b {A} {P} {j} {.(suc j)} {a} _≤′_.≤′-refl = lemma17{A}{P}{j}{a}
-  lemma17b {A} {P} {j} {suc k} {a} (≤′-step j≤k) =
-      ↓ᵖ j (↓ᵖ (suc k) P) a           ⩦⟨ ≡ₒ-sym (lemma17b{A}{↓ᵖ (suc k) P} j≤k) ⟩
-      ↓ᵖ j (↓ᵖ k (↓ᵖ (suc k) P)) a      ⩦⟨ E1 ⟩
-      ↓ᵖ j (↓ᵖ k P) a                   ⩦⟨ lemma17b{A}{P}{j}{k}{a} j≤k ⟩ 
-      ↓ᵖ j P a   ∎
-      where
-      E1 = cong-↓{A}{j}{(↓ᵖ k (↓ᵖ (suc k) P))}{(↓ᵖ k P)}
-           (λ a → lemma17{A}{P}{k}{a}) a 
-
-  lemma17c : ∀{A}{P : Predₒ A}{j}{k}{a : A}
-     → j < k
-     → ↓ᵖ j (↓ᵖ k P) a ≡ₒ ↓ᵖ j P a
-  lemma17c {A} {P} {j} {k} {a} j<k = lemma17b{A}{P}{j}{k}{a} (≤⇒≤′ j<k)
-
-  lemma17f : ∀{S : Setₒ}{k}
-       → ↓ k (↓ k S) ≡ₒ ↓ k S
-  lemma17f {S} {k} zero = (λ x → tt) , (λ x → tt)
-  lemma17f {S} {k} (suc i) = (λ {(x , (y , z)) → y , z}) , λ {(x , y) → x , (x , y)}
-
-  lemma17d : ∀{A}{P : Predₒ A}{k}{a : A}
-       → ↓ᵖ k (↓ᵖ k P) a ≡ₒ ↓ᵖ k P a
-  lemma17d {A} {P} {k} {a} zero = (λ x → tt) , (λ x → tt)
-  lemma17d {A} {P} {k} {a} (suc i) = (λ {(x , (y , z)) → y , z}) , λ {(x , y) → x , (x , y)}
-
-  lemma17e : ∀{A}{P : Predₒ A}{j}{k}{a : A}
-     → j ≤ k
-     → ↓ᵖ j (↓ᵖ k P) a ≡ₒ ↓ᵖ j P a
-  lemma17e {A} {P} {j} {k} {a} j≤k
-      with ≤⇒≤′ j≤k
-  ... | _≤′_.≤′-refl = lemma17d{A}{P}
-  ... | ≤′-step j≤n = lemma17c{A}{P} (s≤s (≤′⇒≤ j≤n))
-
 module Member where
-
-  open Lemma17 using (lemma17e)
 
   lookup : ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → Predₒ A
   lookup {B ∷ Γ} {.B} zeroᵒ (P , δ) = P
   lookup {B ∷ Γ} {A} (sucᵒ x) (P , δ) = lookup{Γ}{A} x δ
 
-{-
+  down-lookup : ∀{Γ}{A}{x}{a : A} → (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (lookup x δ a)
+  down-lookup {x = zeroᵒ}{a} (P , δ) (dcP , dcδ) = dcP a
+  down-lookup {x = sucᵒ x} (P , δ) (dcP , dcδ) = down-lookup δ dcδ
+
   ↓-lookup : ∀{Γ}{A}{B}{a}{k}{j}{δ : RecEnv Γ}
      → (x : Γ ∋ A)
      → (y : Γ ∋ B)
      → k ≤ j
      → ↓ k (lookup{Γ}{A} x δ a) ≡ₒ ↓ k (lookup{Γ}{A} x (↓ᵈ j y δ) a)
-  ↓-lookup {δ = P , δ} zeroᵒ zeroᵒ k≤j = ≡ₒ-sym (lemma17e{P = P} k≤j)
+  ↓-lookup {a = a}{δ = P , δ} zeroᵒ zeroᵒ k≤j = ≡ₒ-sym (j≤k⇒↓kϕ≡[j]ϕ (P a) k≤j)
   ↓-lookup zeroᵒ (sucᵒ y) k≤j = ≡ₒ-refl refl
   ↓-lookup (sucᵒ x) zeroᵒ k≤j = ≡ₒ-refl refl
   ↓-lookup (sucᵒ x) (sucᵒ y) k≤j = ↓-lookup x y k≤j
 
+{-
   lookup-diff : ∀{Γ}{Δ : Times Γ}{A}{B}{δ : RecEnv Γ}{j}
      → (x : Γ ∋ A)
      → (y : Γ ∋ B)
@@ -286,10 +176,6 @@ module Member where
   tz-lookup {x = zeroᵒ} {a} (P , δ) (tzP , tzδ) = tzP a
   tz-lookup {x = sucᵒ x} (P , δ) (tzP , tzδ) = tz-lookup δ tzδ
 
-  down-lookup : ∀{Γ}{A}{x}{a : A} → (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (lookup x δ a)
-  down-lookup {x = zeroᵒ}{a} (P , δ) (dcP , dcδ) = dcP a
-  down-lookup {x = sucᵒ x} (P , δ) (dcP , dcδ) = down-lookup δ dcδ
-
   congruent-lookup : ∀{Γ}{A}
      → (x : Γ ∋ A)
      → (a : A)
@@ -311,11 +197,6 @@ postulate down : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → ∀ δ → downClosedᵈ δ
 
 {---------------------- Membership in Recursive Predicate ---------------------}
 
-
-infixr 8 _^_
-_^_ : ∀ {ℓ} {A : Set ℓ} → (A → A) → ℕ → (A → A)
-f ^ zero     =  id
-f ^ (suc n)  =  f ∘ (f ^ n)
 
 ⟅_⟆ : ∀{A}{Γ}{Δ} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → RecEnv Γ → (Predₒ A → Predₒ A)
 ⟅ Sᵃ ⟆  δ μS = λ a → # (Sᵃ a) (μS , δ)
@@ -339,6 +220,13 @@ combine : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
 combine {[]} Δ₁ Δ₂ = []
 combine {A ∷ Γ} (x ∷ Δ₁) (y ∷ Δ₂) = (choose x y) ∷ (combine Δ₁ Δ₂)
 
+▷ : ∀{Γ} → (RecEnv Γ → ℕ → Set) → (RecEnv Γ → ℕ → Set)
+▷ ϕ δ k = ∀ j → j < k → ϕ δ j
+
+down-▷ : ∀{Γ}{Δ : Times Γ}{ϕ : Setᵒ Γ Δ}
+  → ∀ δ → downClosedᵈ δ → downClosed (▷ (# ϕ) δ)
+down-▷ {Γ}{Δ}{ϕ} δ down-δ n ▷ϕn k k≤n j j<k = ▷ϕn j (≤-trans j<k k≤n)
+
 
 module _ where
  abstract
@@ -355,9 +243,6 @@ module _ where
     where open Member using (lookup)
 
 {---------------------- Later Operator ---------------------}
-
-  ▷ : ∀{Γ} → (RecEnv Γ → ℕ → Set) → (RecEnv Γ → ℕ → Set)
-  ▷ ϕ δ k = ∀ j → j < k → ϕ δ j
 
   ▷ᵒ : ∀{Γ}{Δ : Times Γ}
      → Setᵒ Γ Δ
