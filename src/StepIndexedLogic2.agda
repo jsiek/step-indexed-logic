@@ -68,22 +68,17 @@ tzᵈ {A ∷ Γ} (P , δ) = (∀ a → (P a) 0) × tzᵈ δ
 ↓ᵈ k {A ∷ Γ} {.A} zeroᵒ (P , δ) = ↓ᵖ k P , δ
 ↓ᵈ k {A ∷ Γ} {B} (sucᵒ x) (P , δ) = P , ↓ᵈ k x δ
 
-good-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Set₁
-good-var {Γ}{A} x Now S =
-    ∀ δ j k → k ≤ j → ↓ k (S δ) ≡ₒ ↓ k (S (↓ᵈ j x δ))
-good-var {Γ}{A} x Later S =
-    ∀ δ j k → k ≤ j → ↓ (suc k) (S δ) ≡ₒ ↓ (suc k) (S (↓ᵈ j x δ))
-
 timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
 timeof {B ∷ Γ} zeroᵒ (t ∷ Δ) = t
 timeof {B ∷ Γ} (sucᵒ x) (t ∷ Δ) = timeof x Δ
 
-good-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Set₁
-good-fun {Γ} Δ S = ∀{A} (x : Γ ∋ A) → good-var x (timeof x Δ) S
-
 _≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
 _≡ᵈ_ {[]} δ δ′ = ⊤
 _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ₒ Q a) × δ ≡ᵈ δ′
+
+≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ} → δ ≡ᵈ δ
+≡ᵈ-refl {[]} {δ} = tt
+≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ₒ-refl refl) , ≡ᵈ-refl
 
 congruent : ∀{Γ : Context} → (RecEnv Γ → Setₒ) → Set₁
 congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ₒ (S δ′)
@@ -183,17 +178,32 @@ module Member where
   congruent-lookup {Γ}{A} x a d=d′ = cong-lookup x a d=d′
 -}
 
+strongly-nonexpansive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Set₁
+strongly-nonexpansive x F = ∀ δ j k → k ≤ j → F δ ≡ₒ[ k ] F (↓ᵈ j x δ)
+
+strongly-contractive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Set₁
+strongly-contractive x F = ∀ δ j k → k ≤ j → F δ ≡ₒ[ suc k ] F (↓ᵈ j x δ)
+
+strong-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Set₁
+strong-var x Now F = strongly-nonexpansive x F
+strong-var x Later F = strongly-contractive x F
+
+strong-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Set₁
+strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
+
 record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setₒ
 {-    
     down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
-    good : good-fun Δ #
+    strong : strong-fun Δ #
     congr : congruent #
 -}    
 open Setᵒ public
 
 postulate down : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → ∀ δ → downClosedᵈ δ → downClosed (# ϕ δ)
+postulate strong : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → strong-fun Δ (# ϕ)
+postulate congr : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → congruent (# ϕ)
 
 {---------------------- Membership in Recursive Predicate ---------------------}
 
@@ -272,15 +282,15 @@ module _ where
 
 {---------------------- Recursive Predicate -----------------------------------}
 
-mu : ∀ {Γ}{Δ : Times Γ}{A} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → (A → RecEnv Γ → Setₒ)
-mu Sᵃ a δ k = ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a k
+mu : ∀ {Γ}{Δ : Times Γ}{A} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → (RecEnv Γ → A → Setₒ)
+mu Sᵃ δ a k = ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a k
 
 abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
   μᵒ {Γ}{Δ}{A} Sᵃ a =
-    record { # = mu Sᵃ a }
+    record { # = λ δ → mu Sᵃ δ a }
 {-    
            ; down = {!!}
            ; tz = {!!}
@@ -290,7 +300,7 @@ abstract
 -}
 
   #μᵒ≡ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) → ∀ δ k
-     → # (μᵒ Sᵃ a) δ k ≡ mu Sᵃ a δ k
+     → # (μᵒ Sᵃ a) δ k ≡ mu Sᵃ δ a k
   #μᵒ≡ Sᵃ a δ k = refl
 
 {---------------------- Forall -----------------------------------------}
@@ -522,29 +532,62 @@ module _ where
       with PQ ttᵖ k | QR ttᵖ k
   ... | (ϕ⇒ψ , ψ⇒ϕ) | (ψ⇒þ , þ⇒ψ) = (λ z → ψ⇒þ (ϕ⇒ψ z)) , (λ z → ψ⇒ϕ (þ⇒ψ z))
 
-equiv-downₒ : ∀{ϕ ψ : Setₒ} → (∀ k → ϕ ≡ₒ[ k ] ψ) → ϕ ≡ₒ ψ
-equiv-downₒ k = {!!}
+lemma15b-env-fun : ∀{Γ}{Δ}{A}{δ : RecEnv Γ}{P : Predₒ A}
+  (k j : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
+  → j ≤ k → ((⟅ Sᵃ ⟆ δ) ^ j) P a ≡ₒ[ j ] ((⟅ Sᵃ ⟆ δ) ^ k) P a
+lemma15b-env-fun = {!!}
 
-lemma19a : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ) (k : ℕ)
-  → mu F a δ ≡ₒ[ k ] # (F a) ((λ a k → mu F a δ k) , δ)
-lemma19a = {!!}
+lemma18a : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
+  → mu Sᵃ δ a ≡ₒ[ k ] ((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤) a
+lemma18a = {!!}
+
+lemma18b : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
+     → # (Sᵃ a) (mu Sᵃ δ , δ) ≡ₒ[ 1 + k ] ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a
+lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
+       # (Sᵃ a) (mu Sᵃ δ , δ)
+   ⩦⟨ strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , δ) k k ≤-refl ⟩
+       # (Sᵃ a) (↓ᵖ k (mu Sᵃ δ) , δ)
+   ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
+       # (Sᵃ a) (↓ᵖ k (((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤)) , δ)
+   ⩦⟨ ≡ₒ-sym (strong (Sᵃ a) zeroᵒ ((((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤)) , δ) k k ≤-refl) ⟩
+       # (Sᵃ a) (((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤) , δ)
+   ⩦⟨ ≡ₒ-refl refl ⟩
+       ((⟅ Sᵃ ⟆ δ) ^ (suc k)) (λ a k → ⊤) a
+   ∎
+
+lemma19a : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ) (k : ℕ)
+  → mu Sᵃ δ a ≡ₒ[ k ] # (Sᵃ a) ((λ a k → mu Sᵃ δ a k) , δ)
+lemma19a Sᵃ a δ k =
+    let f = (⟅ Sᵃ ⟆ δ) in
+      mu Sᵃ δ a
+  ⩦⟨ lemma18a k Sᵃ a δ  ⟩
+      (f ^ k) (λ a k → ⊤) a
+  ⩦⟨ lemma15b-env-fun (suc k) k Sᵃ a (n≤1+n k) ⟩
+      (f ^ (suc k)) (λ a k → ⊤) a
+  ⩦⟨ ≡ₒ-sym (lemma17{((f ^ (suc k)) (λ a k → ⊤)) a} k) ⟩
+      ↓ (suc k) ((f ^ (suc k)) (λ a k → ⊤) a)
+   ⩦⟨ cong-↓ (λ a → ≡ₒ-sym (lemma18b k Sᵃ a δ)) a ⟩
+      ↓ (suc k) (# (Sᵃ a) (mu Sᵃ δ , δ))
+   ⩦⟨ lemma17{(# (Sᵃ a) (mu Sᵃ δ , δ))} k ⟩
+      # (Sᵃ a) (mu Sᵃ δ , δ)
+   ∎
 
 abstract
-  fixpointᵒ : ∀{Γ}{Δ : Times Γ}{A} (F : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
-     → μᵒ F a ≡ᵒ letᵒ (μᵒ F) (F a)
-  fixpointᵒ{Γ}{Δ}{A} F a = ≡ₒ⇒≡ᵒ{Γ}{Δ} aux
+  fixpointᵒ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
+     → μᵒ Sᵃ a ≡ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
+  fixpointᵒ{Γ}{Δ}{A} Sᵃ a = ≡ₒ⇒≡ᵒ{Γ}{Δ} aux
     where
-    aux : ∀ δ → # (μᵒ F a) δ ≡ₒ # (letᵒ (μᵒ F) (F a)) δ
+    aux : ∀ δ → # (μᵒ Sᵃ a) δ ≡ₒ # (letᵒ (μᵒ Sᵃ) (Sᵃ a)) δ
     aux δ =
-        # (μᵒ F a) δ 
+        # (μᵒ Sᵃ a) δ 
       ⩦⟨ ≡ₒ-refl refl ⟩
-        mu F a δ 
-      ⩦⟨ equiv-downₒ (lemma19a F a δ) ⟩
-        # (F a) ((λ a k → mu F a δ k) , δ) 
+        mu Sᵃ δ a
+      ⩦⟨ equiv-approx (lemma19a Sᵃ a δ) ⟩
+        # (Sᵃ a) ((λ a k → mu Sᵃ δ a k) , δ) 
       ⩦⟨ ≡ₒ-refl refl ⟩
-        # (F a) ((λ a k → # (μᵒ F a) δ k) , δ)
+        # (Sᵃ a) ((λ a k → # (μᵒ Sᵃ a) δ k) , δ)
       ⩦⟨ ≡ₒ-refl refl ⟩
-        # (letᵒ (μᵒ F) (F a)) δ
+        # (letᵒ (μᵒ Sᵃ) (Sᵃ a)) δ
       ∎
 
 {---------------------- Proof Theory for Step Indexed Logic -------------------}
