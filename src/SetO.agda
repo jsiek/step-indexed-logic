@@ -80,7 +80,7 @@ postulate congr : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → congruent (# ϕ)
 
 private variable Γ : Context
 private variable Δ : Times Γ
-private variable ϕ ψ þ : Setᵒ [] []
+private variable ϕ ψ þ : Setᵒ Γ Δ
 
 abstract
   infix 2 _≡ᵒ_
@@ -112,3 +112,7 @@ abstract
       with PQ ttᵖ k | QR ttᵖ k
   ... | (ϕ⇒ψ , ψ⇒ϕ) | (ψ⇒þ , þ⇒ψ) = (λ z → ψ⇒þ (ϕ⇒ψ z)) , (λ z → ψ⇒ϕ (þ⇒ψ z))
 
+instance
+  SIL-Eqᵒ : ∀{Γ}{Δ} → EquivalenceRelation (Setᵒ Γ Δ)
+  SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl
+                   ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }

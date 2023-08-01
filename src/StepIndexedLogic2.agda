@@ -264,6 +264,15 @@ abstract
        → (# (ϕ ×ᵒ ψ) δ k) ≡ (# ϕ δ k × # ψ δ k)
   #×ᵒ≡ {Γ}{Δ₁}{Δ₂}{ϕ}{ψ}{δ}{k} = refl
 
+  cong-×ᵒ : ∀{Γ}{Δ}{ϕ ϕ′ ψ ψ′ : Setᵒ Γ Δ} → ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ ×ᵒ ψ ≡ᵒ ϕ′ ×ᵒ ψ′
+  cong-×ᵒ {Γ}{Δ}{ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ δ k → ⇔-intro to fro)
+    where
+    to : ∀{δ}{k} → # (ϕ ×ᵒ ψ) δ k → # (ϕ′ ×ᵒ ψ′) δ k
+    to {δ}{k} (ϕk , ψk) = (⇔-to (≡ᵒ-elim ϕ=ϕ′) ϕk) , (⇔-to (≡ᵒ-elim ψ=ψ′) ψk)
+    fro  : ∀{k}{δ} → # (ϕ′ ×ᵒ ψ′) δ k → #(ϕ ×ᵒ ψ) δ k
+    fro {δ}{k} (ϕ′k , ψ′k) = (⇔-fro (≡ᵒ-elim ϕ=ϕ′) ϕ′k) , (⇔-fro (≡ᵒ-elim ψ=ψ′) ψ′k)
+
+
 {---------------------- Disjunction -----------------------------------------}
 
   infixr 7 _⊎ᵒ_
@@ -284,7 +293,17 @@ abstract
   #⊎ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
        → (# (ϕ ⊎ᵒ ψ) δ k) ≡ (# ϕ δ k ⊎ # ψ δ k)
   #⊎ᵒ≡ {Γ}{Δ₁}{Δ₂}{ϕ}{ψ}{δ}{k} = refl
-  
+
+  cong-⊎ᵒ : ∀{Γ}{Δ}{ϕ ϕ′ ψ ψ′ : Setᵒ Γ Δ} → ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ ⊎ᵒ ψ ≡ᵒ ϕ′ ⊎ᵒ ψ′
+  cong-⊎ᵒ {Γ}{Δ}{ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ δ k → ⇔-intro to fro)
+    where
+    to : ∀{δ}{k} → # (ϕ ⊎ᵒ ψ) δ k → # (ϕ′ ⊎ᵒ ψ′) δ k
+    to (inj₁ x) = inj₁ (proj₁ (≡ᵒ-elim ϕ=ϕ′) x)
+    to (inj₂ y) = inj₂ (proj₁ (≡ᵒ-elim ψ=ψ′) y)
+    fro  : ∀{δ}{k} → #(ϕ′ ⊎ᵒ ψ′) δ k → #(ϕ ⊎ᵒ ψ) δ k
+    fro (inj₁ x) = inj₁ (proj₂ (≡ᵒ-elim ϕ=ϕ′) x)
+    fro (inj₂ y) = inj₂ (proj₂ (≡ᵒ-elim ψ=ψ′) y)
+
 {---------------------- Implication -----------------------------------------}
 
   infixr 6 _→ᵒ_
@@ -332,6 +351,14 @@ abstract
      → letᵒ P (p ᵒ) ≡ p ᵒ
   let-pureᵒ = refl
 
+  let-⊥ᵒ : ∀{A}{P : A → Setᵒ [] []}
+     → letᵒ P ⊥ᵒ ≡ ⊥ᵒ
+  let-⊥ᵒ = refl
+
+  let-⊤ᵒ : ∀{A}{P : A → Setᵒ [] []}
+     → letᵒ P ⊤ᵒ ≡ ⊤ᵒ
+  let-⊤ᵒ = refl
+
   let-×ᵒ : ∀{A}{P : A → Setᵒ [] []}{ϕ ψ : Setᵒ (A ∷ []) (Later ∷ [])}
      → letᵒ P (ϕ ×ᵒ ψ) ≡ (letᵒ P ϕ) ×ᵒ (letᵒ P ψ)
   let-×ᵒ = refl
@@ -339,6 +366,10 @@ abstract
   let-⊎ᵒ : ∀{A}{P : A → Setᵒ [] []}{ϕ ψ : Setᵒ (A ∷ []) (Later ∷ [])}
      → letᵒ P (ϕ ⊎ᵒ ψ) ≡ (letᵒ P ϕ) ⊎ᵒ (letᵒ P ψ)
   let-⊎ᵒ {A}{P}{ϕ}{ψ} = refl
+
+  let-→ᵒ : ∀{A}{P : A → Setᵒ [] []}{ϕ ψ : Setᵒ (A ∷ []) (Later ∷ [])}
+     → letᵒ P (ϕ →ᵒ ψ) ≡ (letᵒ P ϕ) →ᵒ (letᵒ P ψ)
+  let-→ᵒ = refl
 
   let-∀ᵒ : ∀{A}{B}{P : A → Setᵒ [] []}{ϕᵇ  : B → Setᵒ (A ∷ []) (Later ∷ [])}
      → letᵒ P (∀ᵒ ϕᵇ) ≡ ∀ᵒ λ b →  (letᵒ P (ϕᵇ b))
@@ -348,11 +379,14 @@ abstract
      → letᵒ P (∃ᵒ ϕᵇ) ≡ ∃ᵒ λ b →  (letᵒ P (ϕᵇ b))
   let-∃ᵒ {A}{B}{P}{ϕᵇ} = refl
 
+  {-# REWRITE let-⊥ᵒ #-}
+  {-# REWRITE let-⊤ᵒ #-}
   {-# REWRITE let-▷ᵒ #-}
   {-# REWRITE let-∈ #-}
   {-# REWRITE let-pureᵒ #-}
   {-# REWRITE let-×ᵒ #-}
   {-# REWRITE let-⊎ᵒ #-}
+  {-# REWRITE let-→ᵒ #-}
   {-# REWRITE let-∀ᵒ #-}
   {-# REWRITE let-∃ᵒ #-}
 
@@ -368,7 +402,6 @@ private variable p : Set
 private variable A B C : Set
 private variable Γ : Context
 private variable Δ Δ₁ Δ₂ : Times Γ
-
 
 abstract
   fixpointᵒ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
