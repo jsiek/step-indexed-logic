@@ -535,11 +535,22 @@ module _ where
 lemma15b-env-fun : ∀{Γ}{Δ}{A}{δ : RecEnv Γ}{P : Predₒ A}
   (k j : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
   → j ≤ k → ((⟅ Sᵃ ⟆ δ) ^ j) P a ≡ₒ[ j ] ((⟅ Sᵃ ⟆ δ) ^ k) P a
-lemma15b-env-fun = {!!}
+lemma15b-env-fun {Γ}{Δ}{A}{δ}{P} k j Sᵃ a j≤k =
+    ((⟅ Sᵃ ⟆ δ) ^ j) P a
+  ⩦⟨ {!!} ⟩
+    ((⟅ Sᵃ ⟆ δ) ^ k) P a
+  ∎
 
 lemma18a : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
   → mu Sᵃ δ a ≡ₒ[ k ] ((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤) a
-lemma18a = {!!}
+lemma18a {Γ}{Δ}{A} k Sᵃ a δ j = to k j , fro k j
+  where
+  to : ∀ k j → ↓ k (mu Sᵃ δ a) j → ↓ k ((⟅ Sᵃ ⟆ δ ^ k) (λ a₁ k₁ → ⊤) a) j
+  to k j (j<k , mu-j) = j<k ,
+     proj₂ (proj₁ (lemma15b-env-fun k (suc j) Sᵃ a j<k j) (≤-refl , mu-j))
+  fro : ∀ k j → ↓ k ((⟅ Sᵃ ⟆ δ ^ k) (λ a₁ k₁ → ⊤) a) j → ↓ k (mu Sᵃ δ a) j
+  fro k j (j<k , Sᵏj) =
+     j<k , (proj₂ (proj₂ (lemma15b-env-fun k (suc j) Sᵃ a j<k j) (≤-refl , Sᵏj)))
 
 lemma18b : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
      → # (Sᵃ a) (mu Sᵃ δ , δ) ≡ₒ[ 1 + k ] ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a
