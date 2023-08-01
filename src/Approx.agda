@@ -5,7 +5,7 @@ open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; s≤s; _≤′_; ≤′-
 open import Data.Nat.Properties using (<⇒≤; ≤⇒≤′; ≤′⇒≤; ≤-trans; n≤1+n; ≤-refl)
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-open import SetO
+open import RawSetO
 open import EquivalenceRelation
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans)
@@ -37,10 +37,13 @@ instance
   SIL-Eq[] : ∀{k} → EquivalenceRelation Setₒ
   SIL-Eq[] {k} = record { _⩦_ = λ ϕ ψ → ϕ ≡ₒ[ k ] ψ ; ⩦-refl = ≡ₒ[]-refl ; ⩦-sym = ≡ₒ[]-sym ; ⩦-trans = ≡ₒ[]-trans }
 
+≡ₒ[0] : ∀{ϕ ψ : Setₒ} → ϕ ≡ₒ[ 0 ] ψ
+≡ₒ[0] k = (λ {()}) , (λ {()})
+
 ↓ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
 ↓ᵖ j P a = ↓ j (P a)
 
-cong-↓ : ∀{A}{k : ℕ} → congᵖ{A}{A} (↓ᵖ k)
+cong-↓ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
 cong-↓ {A} {k} {P} {Q} eq a i =
   (λ {(i<k , Pa) → i<k , proj₁ (eq a i) Pa}) , λ {(i<k , Qa) → i<k , proj₂ (eq a i) Qa}
 {-
@@ -68,3 +71,4 @@ equiv-approx ∀k,ϕ=[k]ψ i =
   let ↓ϕ⇔↓ψ = ∀k,ϕ=[k]ψ (suc i) i in
   (λ ϕi → let ↓siψi = proj₁ ↓ϕ⇔↓ψ ((s≤s ≤-refl) , ϕi) in proj₂ ↓siψi)
   , (λ ψi → let ↓siϕi = proj₂ ↓ϕ⇔↓ψ ((s≤s ≤-refl) , ψi) in proj₂ ↓siϕi)
+
