@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --rewriting --irrelevant-projections #-}
+{-# OPTIONS --without-K --rewriting --prop #-}
 
 {-
 
@@ -24,13 +24,19 @@ module StepIndexedLogic2 where
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat
-   using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
+   using (ℕ; zero; suc; _+_; _∸_)
+{-
 open import Data.Nat.Properties
    using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; ≤-pred)
+   -}
+{-
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
+   -}
 open import Data.Sum using (_⊎_; inj₁; inj₂)
+{-
 open import Data.Unit using (tt; ⊤)
+-}
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
@@ -43,6 +49,7 @@ open import Agda.Builtin.Equality.Rewrite
 
 open import EquivalenceRelation public
 
+open import PropLib
 open import StrongInduction
 open import Variables public
 open import RawSetO
