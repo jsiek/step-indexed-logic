@@ -31,7 +31,7 @@ lemma15a {A} {P} {Q} (suc j) f a contr-f congr-f =
     f ((f ^ j) P) a
   ⩦⟨ contr-f a ((f ^ j) P) j ⟩ 
       f (↓ᵖ j ((f ^ j) P)) a
-  ⩦⟨ cong-↓ (congr-f λ a → lemma15a j f a contr-f congr-f) a ⟩
+  ⩦⟨ cong-approx (congr-f λ a → lemma15a j f a contr-f congr-f) a ⟩
       f (↓ᵖ j ((f ^ j) Q)) a
   ⩦⟨ ≡ₒ-sym (contr-f a ((f ^ j) Q) j) ⟩ 
     f ((f ^ j) Q) a
@@ -43,6 +43,7 @@ lemma15b {A}{P} k j f a j≤k wf-f cong-f =
     (f ^ j) P a
   ⩦⟨ lemma15a j f a wf-f cong-f ⟩
     (f ^ j) ((f ^ (k ∸ j)) P) a
-  ⩦⟨ cong-↓{A}{j}{(f ^ j) ((f ^ (k ∸ j)) P)}{(f ^ k) P} (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
+  ⩦⟨ cong-approx{A}{j}{(f ^ j) ((f ^ (k ∸ j)) P)}{(f ^ k) P} (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
     (f ^ k) P a
   ∎
+

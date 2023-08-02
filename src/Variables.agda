@@ -19,3 +19,11 @@ data Times : Context → Set₁ where
   [] : Times []
   _∷_ : ∀{Γ}{A} → Time → Times Γ → Times (A ∷ Γ)
 
+laters : ∀ (Γ : Context) → Times Γ
+laters [] = []
+laters (A ∷ Γ) = Later ∷ (laters Γ)
+
+var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
+var-now (B ∷ Γ) zeroᵒ = Now ∷ (laters Γ)
+var-now (B ∷ Γ) (sucᵒ x) = Later ∷ (var-now Γ x)
+

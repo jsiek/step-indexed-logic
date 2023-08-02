@@ -50,36 +50,7 @@ open import Approx
 open import Iteration
 open import SetO public
 open import Fixpoint
-
-laters : ∀ (Γ : Context) → Times Γ
-laters [] = []
-laters (A ∷ Γ) = Later ∷ (laters Γ)
-
-var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
-var-now (B ∷ Γ) zeroᵒ = Now ∷ (laters Γ)
-var-now (B ∷ Γ) (sucᵒ x) = Later ∷ (var-now Γ x)
-
-{---------------------- Membership in Recursive Predicate ---------------------}
-
-module Member where
-
-  lookup : ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → Predₒ A
-  lookup {B ∷ Γ} {.B} zeroᵒ (P , δ) = P
-  lookup {B ∷ Γ} {A} (sucᵒ x) (P , δ) = lookup{Γ}{A} x δ
-
-  down-lookup : ∀{Γ}{A}{x}{a : A} → (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (lookup x δ a)
-  down-lookup {x = zeroᵒ}{a} (P , δ) (dcP , dcδ) = dcP a
-  down-lookup {x = sucᵒ x} (P , δ) (dcP , dcδ) = down-lookup δ dcδ
-
-  ↓-lookup : ∀{Γ}{A}{B}{a}{k}{j}{δ : RecEnv Γ}
-     → (x : Γ ∋ A)
-     → (y : Γ ∋ B)
-     → k ≤ j
-     → (lookup{Γ}{A} x δ a) ≡ₒ[ k ] (lookup{Γ}{A} x (↓ᵈ j y δ) a)
-  ↓-lookup {a = a}{δ = P , δ} zeroᵒ zeroᵒ k≤j = ≡ₒ-sym (j≤k⇒↓kϕ≡[j]ϕ (P a) k≤j)
-  ↓-lookup zeroᵒ (sucᵒ y) k≤j = ≡ₒ-refl refl
-  ↓-lookup (sucᵒ x) zeroᵒ k≤j = ≡ₒ-refl refl
-  ↓-lookup (sucᵒ x) (sucᵒ y) k≤j = ↓-lookup x y k≤j
+open import Membership
 
 record Inhabited (A : Set) : Set where
   field
@@ -100,39 +71,60 @@ combine : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
 combine {[]} Δ₁ Δ₂ = []
 combine {A ∷ Γ} (x ∷ Δ₁) (y ∷ Δ₂) = (choose x y) ∷ (combine Δ₁ Δ₂)
 
-▷ : ∀{Γ} → (RecEnv Γ → ℕ → Set) → (RecEnv Γ → ℕ → Set)
-▷ ϕ δ k = ∀ j → j < k → ϕ δ j
+module Later where
+  ▷ : ∀{Γ} → (RecEnv Γ → ℕ → Set) → (RecEnv Γ → ℕ → Set)
+  ▷ ϕ δ k = ∀ j → j < k → ϕ δ j
 
-down-▷ : ∀{Γ}{Δ : Times Γ}{ϕ : Setᵒ Γ Δ}
-  → ∀ δ → downClosedᵈ δ → downClosed (▷ (# ϕ) δ)
-down-▷ {Γ}{Δ}{ϕ} δ down-δ n ▷ϕn k k≤n j j<k = ▷ϕn j (≤-trans j<k k≤n)
+  down-▷ : ∀{Γ}{Δ : Times Γ} (ϕ : Setᵒ Γ Δ)
+    → ∀ δ → downClosedᵈ δ → downClosed (▷ (# ϕ) δ)
+  down-▷ {Γ}{Δ} ϕ δ down-δ n ▷ϕn k k≤n j j<k = ▷ϕn j (≤-trans j<k k≤n)
+
+open Later
+
+module RecPred where
+
+  down-mu : ∀{Γ}{Δ}{A}(Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (mu Sᵃ δ a)
+  down-mu Sᵃ a δ dc-δ = {!!}
+
+open RecPred
 
 
 module _ where
  abstract
 
+ {---------------------- Membership in Recursive Predicate ---------------------}
+
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
-  a ∈ x = record { # = λ δ → (lookup x δ) a }
+  a ∈ x = record { # = λ δ → (lookup x δ) a 
+                 ; down = down-lookup }
 {-
-; down = down-lookup
            ; tz = tz-lookup
            ; good = good-lookup x
            ; congr = congruent-lookup x a
            }
            -}
-    where open Member using (lookup)
 
+  #∈≡ : ∀{Γ}{A} → (a : A) → (x : Γ ∋ A) → # (a ∈ x) ≡ λ δ → (lookup x δ) a
+  #∈≡ a x = refl
+  
 {---------------------- Later Operator ---------------------}
 
   ▷ᵒ : ∀{Γ}{Δ : Times Γ}
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ S = record { # = λ δ k → ▷ (# S) δ k }
+  ▷ᵒ {Γ}{Δ} S = record { # = λ δ k → ▷ (# S) δ k 
+                ; down = down-▷ S
+                }
+{-
+                ; tz = {!!}
+                ; good = {!!}
+                ; congr = {!!}
+                }
+                -}
 
-  ▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}
-    → ▷ᵒ ϕ ≡ record { # = (λ δ k → ▷ (# ϕ) δ k) }
-  ▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
+  #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ ▷ (# ϕ)
+  #▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
 
   ▷sk : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}{δ : RecEnv Γ}{k}
      → downClosedᵈ δ
@@ -142,13 +134,6 @@ module _ where
 
 
 
-{-
-; down = {!!}
-                ; tz = {!!}
-                ; good = {!!}
-                ; congr = {!!}
-                }
-                -}
 
 {---------------------- Recursive Predicate -----------------------------------}
 
@@ -157,9 +142,10 @@ abstract
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
   μᵒ {Γ}{Δ}{A} Sᵃ a =
-    record { # = λ δ → mu Sᵃ δ a }
+    record { # = λ δ → mu Sᵃ δ a 
+           ; down = down-mu Sᵃ a
+           }
 {-    
-           ; down = {!!}
            ; tz = {!!}
            ; good = {!!}
            ; congr = {!!}
@@ -176,9 +162,10 @@ abstract
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
   ∀ᵒ{Γ}{Δ}{A} P =
-    record { # = λ δ k → ∀ (a : A) → # (P a) δ k }
-{-    
+    record { # = λ δ k → ∀ (a : A) → # (P a) δ k 
            ; down = {!!}
+           }
+{-    
            ; tz = {!!}
            ; good = {!!}
            ; congr = {!!}
@@ -195,13 +182,13 @@ abstract
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
   ∃ᵒ{Γ}{Δ}{A} P =
-    record { # = λ δ k → Σ[ a ∈ A ] # (P a) δ k }
-{-    
+    record { # = λ δ k → Σ[ a ∈ A ] # (P a) δ k 
            ; down = {!!}
+           }
+{-    
            ; tz = {!!}
            ; good = {!!}
            ; congr = {!!}
-           }
            -}
 
   #∃ᵒ≡ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}{Sᵃ : A → Setᵒ Γ Δ}{δ}{k}
@@ -213,13 +200,13 @@ abstract
 {---------------------- Pure -----------------------------------------}
 
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
-  p ᵒ = record { # = λ δ k → p }
-{-  
+  p ᵒ = record { # = λ δ k → p 
                ; down = {!!}
+               }
+{-  
                ; tz = {!!}
                ; good = {!!}
                ; congr = {!!}
-               }
 -}               
   #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ (suc k) ≡ p
   #pureᵒ≡ = refl
@@ -232,13 +219,13 @@ abstract
 {---------------------- True -----------------------------------------}
 
   ⊤ᵒ : ∀{Γ} → Setᵒ Γ (laters Γ)
-  ⊤ᵒ = record { # = λ δ k → ⊤ }
-{-  
+  ⊤ᵒ = record { # = λ δ k → ⊤
                ; down = {!!}
+               }
+{-  
                ; tz = {!!}
                ; good = {!!}
                ; congr = {!!}
-               }
  -}
 
   #⊤ᵒ≡⊤ : ∀{Γ}{δ : RecEnv Γ}{k} → # ⊤ᵒ δ k ≡ ⊤
@@ -252,13 +239,13 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S ×ᵒ T = record { # = λ δ k → # S δ k × # T δ k }
-{-  
+  S ×ᵒ T = record { # = λ δ k → # S δ k × # T δ k 
                   ; down = {!!}
+                  }
+{-  
                   ; tz = {!!}
                   ; good = {!!}
                   ; congr = {!!}
-                  }
 -}                  
   #×ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
        → (# (ϕ ×ᵒ ψ) δ k) ≡ (# ϕ δ k × # ψ δ k)
@@ -281,13 +268,13 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S ⊎ᵒ T = record { # = λ δ k → # S δ k ⊎ # T δ k }
-{-  
+  S ⊎ᵒ T = record { # = λ δ k → # S δ k ⊎ # T δ k
                   ; down = {!!}
+                  }
+{-  
                   ; tz = {!!}
                   ; good = {!!}
                   ; congr = {!!}
-                  }
                   -}
 
   #⊎ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
@@ -312,13 +299,13 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S →ᵒ T = record { # = λ δ k → ∀ j → j ≤ k → # S δ j → # T δ j }
-{-  
+  S →ᵒ T = record { # = λ δ k → ∀ j → j ≤ k → # S δ j → # T δ j 
                   ; down = {!!}
+                  }
+{-  
                   ; tz = {!!}
                   ; good = {!!}
                   ; congr = {!!}
-                  }
 -}                  
   #→ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
        → (# (ϕ →ᵒ ψ) δ k) ≡ (∀ j → j ≤ k → # ϕ δ j → # ψ δ j)
@@ -327,13 +314,13 @@ abstract
 {---------------------- Let for Predicates -----------------------------------------}
 
   letᵒ : ∀{A}{Γ}{t}{Δ} → (A → Setᵒ Γ Δ) → Setᵒ (A ∷ Γ) (t ∷ Δ) → Setᵒ Γ Δ   
-  letᵒ Sᵃ T = record { # = λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) , δ) k }
-{-  
+  letᵒ Sᵃ T = record { # = λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) , δ) k
                      ; down = {!!}
+                     }
+{-  
                      ; tz = {!!}
                      ; good = {!!}
                      ; congr = {!!}
-                     }
 -}
   #letᵒ≡ : ∀{A}{Γ}{Δ}{t} (P : A → Setᵒ Γ Δ) (ϕ : Setᵒ (A ∷ Γ) (t ∷ Δ)) → ∀ δ k
      → (# (letᵒ P ϕ) δ k) ≡ (# ϕ ((λ a k → # (P a) δ k) , δ) k)

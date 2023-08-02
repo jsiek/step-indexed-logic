@@ -12,11 +12,6 @@ open Eq using (_≡_; refl; sym; trans)
 
 module Approx where
 
-{-
-↓ : ℕ → Setₒ → Setₒ
-↓ k S zero = ⊤
-↓ k S (suc j) = suc j < k × (S (suc j))
--}
 ↓ : ℕ → Setₒ → Setₒ
 ↓ k S j = j < k × (S j)
 
@@ -43,25 +38,13 @@ instance
 ↓ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
 ↓ᵖ j P a = ↓ j (P a)
 
-cong-↓ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
-cong-↓ {A} {k} {P} {Q} eq a i =
+cong-approx : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
+cong-approx {A} {k} {P} {Q} eq a i =
   (λ {(i<k , Pa) → i<k , proj₁ (eq a i) Pa}) , λ {(i<k , Qa) → i<k , proj₂ (eq a i) Qa}
-{-
-cong-↓ {A} {k} {P} {Q} eq a zero = (λ _ → tt) , λ _ → tt
-cong-↓ {A} {k} {P} {Q} eq a (suc i) =
-   (λ {(si≤k , Pasi) → si≤k , (proj₁ (eq a (suc i)) Pasi)})
-   ,
-   λ {(si≤k , Qasi) → si≤k , (proj₂ (eq a (suc i)) Qasi)}
--}
 
 j≤k⇒↓kϕ≡[j]ϕ : ∀{j k} (ϕ : Setₒ) → j ≤ k → ↓ k ϕ ≡ₒ[ j ] ϕ
 j≤k⇒↓kϕ≡[j]ϕ {j} {k} ϕ j≤k i =
   (λ {(i<j , (i<k , ϕi)) → i<j , ϕi}) , (λ {(i<j , ϕi) → i<j , (≤-trans i<j j≤k , ϕi)})
-
-{-
-j≤k⇒↓kϕ≡[j]ϕ {j} {k} ϕ j≤k zero = (λ _ → tt) , (λ _ → tt)
-j≤k⇒↓kϕ≡[j]ϕ {j} {k} ϕ j≤k (suc i) = (λ {(a , b , c) → a , c}) , λ {(a , b) → a , ≤-trans a j≤k , b}
--}
 
 lemma17 : ∀ {ϕ} k → ↓ (suc k) ϕ ≡ₒ[ k ] ϕ
 lemma17 {ϕ} k = j≤k⇒↓kϕ≡[j]ϕ {k}{suc k} ϕ (n≤1+n k)

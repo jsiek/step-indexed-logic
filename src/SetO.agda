@@ -17,9 +17,6 @@ open import Variables
 
 module SetO where
 
-downClosed : Setₒ → Set
-downClosed S = ∀ n → S n → ∀ k → k ≤ n → S k
-
 RecEnv : Context → Set₁
 RecEnv [] = topᵖ 
 RecEnv (A ∷ Γ) = (Predₒ A) × RecEnv Γ
@@ -67,14 +64,14 @@ strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
 record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setₒ
-{-    
     down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
+{-    
     strong : strong-fun Δ #
     congr : congruent #
 -}    
 open Setᵒ public
 
-postulate down : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → ∀ δ → downClosedᵈ δ → downClosed (# ϕ δ)
+--postulate down : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → ∀ δ → downClosedᵈ δ → downClosed (# ϕ δ)
 postulate strong : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → strong-fun Δ (# ϕ)
 postulate congr : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → congruent (# ϕ)
 

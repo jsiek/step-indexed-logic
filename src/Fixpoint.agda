@@ -51,7 +51,7 @@ lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
        # (Sᵃ a) (mu Sᵃ δ , δ)
    ⩦⟨ strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , δ) k k ≤-refl ⟩
        # (Sᵃ a) (↓ᵖ k (mu Sᵃ δ) , δ)
-   ⩦⟨ cong-↓ (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
+   ⩦⟨ cong-approx (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) , ≡ᵈ-refl)) a ⟩
        # (Sᵃ a) (↓ᵖ k (((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤)) , δ)
    ⩦⟨ ≡ₒ-sym (strong (Sᵃ a) zeroᵒ ((((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤)) , δ) k k ≤-refl) ⟩
        # (Sᵃ a) (((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤) , δ)
@@ -70,7 +70,7 @@ lemma19a Sᵃ a δ k =
       (f ^ (suc k)) (λ a k → ⊤) a
   ⩦⟨ ≡ₒ-sym (lemma17{((f ^ (suc k)) (λ a k → ⊤)) a} k) ⟩
       ↓ (suc k) ((f ^ (suc k)) (λ a k → ⊤) a)
-   ⩦⟨ cong-↓ (λ a → ≡ₒ-sym (lemma18b k Sᵃ a δ)) a ⟩
+   ⩦⟨ cong-approx (λ a → ≡ₒ-sym (lemma18b k Sᵃ a δ)) a ⟩
       ↓ (suc k) (# (Sᵃ a) (mu Sᵃ δ , δ))
    ⩦⟨ lemma17{(# (Sᵃ a) (mu Sᵃ δ , δ))} k ⟩
       # (Sᵃ a) (mu Sᵃ δ , δ)

@@ -619,29 +619,30 @@ then it must either be a lambda abstraction or a fixpoint value.
 \begin{code}
 𝒱-fun-case : ∀{𝒫}{A}{B}{V}{R} → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ V
   → (∀ N → V ≡ ƛ N → 𝒫 ⊢ᵒ R)  →  (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ R)  →  𝒫 ⊢ᵒ R
-𝒱-fun-case {𝒫}{A}{B}{V}{R} ⊢𝒱V contλ contμ = {!!}
-{-
-  let-sucᵒ ⊢𝒱V λ { 𝒱Vsn → aux{V} 𝒱Vsn contλ contμ }
-  where aux : ∀{V n} → # (𝒱⟦ A ⇒ B ⟧ V) (suc n)  →  (∀ N → V ≡ ƛ N → 𝒫 ⊢ᵒ R)
-            →  (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ R)  →  𝒫 ⊢ᵒ R
-        aux {ƛ N} 𝒱sn contλ contμ = contλ N refl
-        aux {μ V′} 𝒱sn contλ contμ = contμ V′ refl
--}
+𝒱-fun-case {𝒫}{A}{B}{V}{R} ⊢𝒱V caseλ caseμ =
+  aux A B V (unfoldᵒ pre-𝒱⊎ℰ (inj₁ (A ⇒ B , V)) ⊢𝒱V) caseλ caseμ
+  where
+  aux : ∀ {𝒫} A B V → 𝒫 ⊢ᵒ letᵒ (μᵒ pre-𝒱⊎ℰ) (pre-𝒱 (A ⇒ B) V)
+    → (∀ N → V ≡ ƛ N → 𝒫 ⊢ᵒ R)  →  (∀ V′ → V ≡ μ V′ → 𝒫 ⊢ᵒ R) → 𝒫 ⊢ᵒ R
+  aux {𝒫} A B (ƛ N) 𝒱V caseλ caseμ = caseλ N refl
+  aux {𝒫} A B (μ N) 𝒱V caseλ caseμ = caseμ N refl
+  aux {𝒫} A B (L · M) 𝒱V caseλ caseμ = ⊥-elimᵒ 𝒱V _
+  aux {𝒫} A B (case L M N) 𝒱V caseλ caseμ = ⊥-elimᵒ 𝒱V _
+  aux {𝒫} A B (` x) 𝒱V caseλ caseμ = ⊥-elimᵒ 𝒱V _
+  aux {𝒫} A B `zero 𝒱V caseλ caseμ = ⊥-elimᵒ 𝒱V _
+  aux {𝒫} A B (`suc V) 𝒱V caseλ caseμ = ⊥-elimᵒ 𝒱V _
 \end{code}
 
 \noindent A well-behaved value is of course a value.
 
 \begin{code}
 𝒱⇒Value : ∀ {𝒫} A M → 𝒫 ⊢ᵒ 𝒱⟦ A ⟧ M → 𝒫 ⊢ᵒ (Value M)ᵒ
-𝒱⇒Value {𝒫} A M ⊢𝒱M =
-  let 𝒱M-def : 𝒫 ⊢ᵒ letᵒ (μᵒ pre-𝒱⊎ℰ) (pre-𝒱 A M)
-      𝒱M-def = substᵒ (fixpointᵒ pre-𝒱⊎ℰ (inj₁ (A , M))) ⊢𝒱M in
-  aux A M 𝒱M-def 
+𝒱⇒Value {𝒫} A M ⊢𝒱M = aux A M (unfoldᵒ pre-𝒱⊎ℰ (inj₁ (A , M)) ⊢𝒱M)
   where
   aux : ∀ {𝒫} A M → 𝒫 ⊢ᵒ letᵒ (μᵒ pre-𝒱⊎ℰ) (pre-𝒱 A M) → 𝒫 ⊢ᵒ (Value M)ᵒ
   aux `ℕ `zero ⊢𝒱M = pureᵒI V-zero
   aux `ℕ (`suc M) ⊢𝒱M =
-     let IH = 𝒱⇒Value `ℕ M (substᵒ (≡ᵒ-sym (fixpointᵒ pre-𝒱⊎ℰ (inj₁ (`ℕ , M)))) ⊢𝒱M) in
+     let IH = 𝒱⇒Value `ℕ M (foldᵒ pre-𝒱⊎ℰ (inj₁ (`ℕ , M)) ⊢𝒱M) in
      pureᵒE IH λ vM → pureᵒI (V-suc vM)
   aux `ℕ (L · N) ⊢𝒱M = ⊥-elimᵒ ⊢𝒱M _
   aux `ℕ (` x) ⊢𝒱M = ⊥-elimᵒ ⊢𝒱M _

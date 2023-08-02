@@ -1,19 +1,33 @@
 digraph G {
   0 [label="fixpoint"];
-  1 [label="Lemma 19a"];
   
-  2 [label="lemma-18a"];
-  3 [label="lemma-18b"];
-  4 [label="lemma-17"];
-  5 [label="lemma-15b-env-fun"];
+  subgraph cluster_1 {
+    label="Approx";
+    13 [label="cong-approx"]
+    4 [label="lemma-17"];
+    21 [label="equiv-approx"];    
+  }
+
+  subgraph cluster_2 {
+    label="Iteration";
+    12 [label="iter-subtract"];
+    11 [label="lemma-15a"];
+    10 [label="lemma-15b"];
+  }
+
+
+  subgraph cluster_0 {
+    label="Fixpoint";
+    5 [label="lemma-15b-env-fun"];
+    2 [label="lemma-18a"];
+    3 [label="lemma-18b"];
+    1 [label="Lemma 19a"];
+  }
+  
   6 [label="down-mu"]
   7 [label="down-iter"];
   8 [label="Strongly C & NE"];
   9 [label="down"];
-  10 [label="lemma-15b"];
-  11 [label="lemma-15a"];
-  12 [label="iter-subtract"];
-  13 [label="cong-approx"]
   14 [label="NE lookup"];
   15 [label="Strongly C & NE lookup"];
   16 [label="Strongly C & NE later"];
@@ -21,7 +35,6 @@ digraph G {
   18 [label="Strongly C & NE approx"];
   19 [label="Strongly C & NE let"];
   20 [label="Strongly C & NE mu"];
-  21 [label="equiv-approx"];
   22 [label="Strongly C & NE pure"];
   23 [label="Strongly C & NE all"];
   24 [label="Strongly C & NE exists"];
@@ -57,14 +70,13 @@ digraph G {
   // NE lookup
   4 -> 14;  
 
-  // 15a
-  8 -> 11;
+  // Lemma 15a
+  13 -> 11;  
 
-  // 15b
+  // Lemma 15b
   13 -> 10;
   12 -> 10;
   11 -> 10;
-  8 -> 10;
 
   // 15b-env-fun
   8 -> 5;

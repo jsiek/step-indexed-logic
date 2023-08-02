@@ -1,6 +1,6 @@
 {-# OPTIONS --without-K #-}
 
-open import Data.Nat using (ℕ)
+open import Data.Nat using (ℕ; _≤_)
 open import EquivalenceRelation using (EquivalenceRelation; _⇔_; ⩦-refl; ⩦-sym; ⩦-trans)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
@@ -43,3 +43,6 @@ instance
 
 congruentᵖ : ∀{A}{B} (F : Predₒ A → Predₒ B) → Set₁
 congruentᵖ F = ∀ {P Q} → (∀ a → P a ≡ₒ Q a) → ∀ b → (F P b) ≡ₒ (F Q b)
+
+downClosed : Setₒ → Set
+downClosed S = ∀ n → S n → ∀ k → k ≤ n → S k
