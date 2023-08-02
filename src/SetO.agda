@@ -1,16 +1,17 @@
 {-# OPTIONS --without-K --prop #-}
 
 open import Data.List using (List; []; _∷_)
-open import Data.Nat using (ℕ; zero; suc; _≤_)
-{-
+open import Data.Nat using (ℕ; zero; suc)
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
+{-
 open import Data.Unit using (tt; ⊤)
-open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 -}
+open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
+open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
 open import EquivalenceRelation using (EquivalenceRelation; _⇔_; ⩦-refl; ⩦-sym; ⩦-trans)
 open import RawSetO
 open import Approx
@@ -19,17 +20,17 @@ open import Variables
 
 module SetO where
 
-RecEnv : Context → Set₁
+RecEnv : Context → Set₂
 RecEnv [] = topᵖ 
 RecEnv (A ∷ Γ) = (Predₒ A) × RecEnv Γ
 
 downClosedᵈ : ∀{Γ} → RecEnv Γ → Prop₁
 downClosedᵈ {[]} δ = ⊤
-downClosedᵈ {A ∷ Γ} (P , δ) = (∀ a → downClosed (P a)) × downClosedᵈ δ
+downClosedᵈ {A ∷ Γ} (P , δ) = (∀ a → downClosed (P a)) ×ₚ downClosedᵈ δ
 
-tzᵈ : ∀{Γ} → RecEnv Γ → Set
+tzᵈ : ∀{Γ} → RecEnv Γ → Prop₁
 tzᵈ {[]} δ = ⊤
-tzᵈ {A ∷ Γ} (P , δ) = (∀ a → (P a) 0) × tzᵈ δ
+tzᵈ {A ∷ Γ} (P , δ) = (∀ a → (P a) 0) ×ₚ tzᵈ δ
 
 ↓ᵈ : ℕ → ∀{Γ}{A} → Γ ∋ A → RecEnv Γ → RecEnv Γ
 ↓ᵈ k {A ∷ Γ} {.A} zeroᵒ (P , δ) = ↓ᵖ k P , δ
@@ -39,28 +40,28 @@ timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
 timeof {B ∷ Γ} zeroᵒ (t ∷ Δ) = t
 timeof {B ∷ Γ} (sucᵒ x) (t ∷ Δ) = timeof x Δ
 
-_≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Set
+_≡ᵈ_ : ∀{Γ} → RecEnv Γ → RecEnv Γ → Prop₁
 _≡ᵈ_ {[]} δ δ′ = ⊤
-_≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ₒ Q a) × δ ≡ᵈ δ′
+_≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ₒ Q a) ×ₚ δ ≡ᵈ δ′
 
 ≡ᵈ-refl : ∀{Γ}{δ : RecEnv Γ} → δ ≡ᵈ δ
 ≡ᵈ-refl {[]} {δ} = tt
-≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ₒ-refl refl) , ≡ᵈ-refl
+≡ᵈ-refl {A ∷ Γ} {(P , δ)} = (λ a → ≡ₒ-refl refl) ,ₚ ≡ᵈ-refl
 
-congruent : ∀{Γ : Context} → (RecEnv Γ → Setₒ) → Set₁
+congruent : ∀{Γ : Context} → (RecEnv Γ → Setₒ) → Prop₂
 congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ₒ (S δ′)
 
-strongly-nonexpansive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Set₁
+strongly-nonexpansive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Prop₂
 strongly-nonexpansive x F = ∀ δ j k → k ≤ j → F δ ≡ₒ[ k ] F (↓ᵈ j x δ)
 
-strongly-contractive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Set₁
+strongly-contractive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Prop₂
 strongly-contractive x F = ∀ δ j k → k ≤ j → F δ ≡ₒ[ suc k ] F (↓ᵈ j x δ)
 
-strong-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Set₁
+strong-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Prop₂
 strong-var x Now F = strongly-nonexpansive x F
 strong-var x Later F = strongly-contractive x F
 
-strong-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Set₁
+strong-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Prop₂
 strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
 
 {-
@@ -74,19 +75,19 @@ data Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
 down (make-Setᵒ sem dc) = dc -- not allowed
 -}
 
-record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
+record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₂ where
   field
     # : RecEnv Γ → Setₒ
-    .down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
-    .strong : strong-fun Δ #
+    down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
+    strong : strong-fun Δ #
 {-    
     congr : congruent #
 -}    
 open Setᵒ public
 
 make-Setᵒ : ∀{Γ}{Δ} → (sem : RecEnv Γ → Setₒ)
-  → .(∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ))
-  → .(strong-fun Δ sem)
+  → (∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ))
+  → (strong-fun Δ sem)
   → Setᵒ Γ Δ
 make-Setᵒ sem dc s = record { # = sem ; down = dc ; strong = s}
 
@@ -100,7 +101,7 @@ private variable ϕ ψ þ : Setᵒ Γ Δ
 
 abstract
   infix 2 _≡ᵒ_
-  _≡ᵒ_ : ∀{Γ}{Δ : Times Γ} → Setᵒ Γ Δ → Setᵒ Γ Δ → Set₁
+  _≡ᵒ_ : ∀{Γ}{Δ : Times Γ} → Setᵒ Γ Δ → Setᵒ Γ Δ → Prop₂
   S ≡ᵒ T = ∀ δ → # S δ ≡ₒ # T δ
 
   ≡ₒ⇒≡ᵒ : ∀{ϕ ψ : Setᵒ Γ Δ} → (∀ δ → # ϕ δ ≡ₒ # ψ δ) → ϕ ≡ᵒ ψ
@@ -116,17 +117,17 @@ abstract
   ≡ᵒ-elim {S}{T}{δ}{k} {δ′}{k′} eq = eq δ′ k′
 
   ≡ᵒ-refl : ϕ ≡ ψ → ϕ ≡ᵒ ψ
-  ≡ᵒ-refl {ϕ} refl ttᵖ k = (λ z → z) , (λ z → z)
+  ≡ᵒ-refl {ϕ} refl ttᵖ k = (λ z → z) ,ₚ (λ z → z)
 
   ≡ᵒ-sym : ϕ ≡ᵒ ψ → ψ ≡ᵒ ϕ
   ≡ᵒ-sym {ϕ}{ψ} PQ ttᵖ k
       with PQ ttᵖ k
-  ... | (ϕ⇒ψ , ψ⇒ϕ) = ψ⇒ϕ , ϕ⇒ψ
+  ... | (ϕ⇒ψ ,ₚ ψ⇒ϕ) = ψ⇒ϕ ,ₚ ϕ⇒ψ
 
   ≡ᵒ-trans : ϕ ≡ᵒ ψ → ψ ≡ᵒ þ → ϕ ≡ᵒ þ
   ≡ᵒ-trans PQ QR ttᵖ k
       with PQ ttᵖ k | QR ttᵖ k
-  ... | (ϕ⇒ψ , ψ⇒ϕ) | (ψ⇒þ , þ⇒ψ) = (λ z → ψ⇒þ (ϕ⇒ψ z)) , (λ z → ψ⇒ϕ (þ⇒ψ z))
+  ... | (ϕ⇒ψ ,ₚ ψ⇒ϕ) | (ψ⇒þ ,ₚ þ⇒ψ) = (λ z → ψ⇒þ (ϕ⇒ψ z)) ,ₚ (λ z → ψ⇒ϕ (þ⇒ψ z))
 
 instance
   SIL-Eqᵒ : ∀{Γ}{Δ} → EquivalenceRelation (Setᵒ Γ Δ)
