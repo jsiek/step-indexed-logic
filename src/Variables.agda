@@ -27,3 +27,12 @@ var-now : ∀ (Γ : Context) → ∀{A} → (x : Γ ∋ A) → Times Γ
 var-now (B ∷ Γ) zeroᵒ = Now ∷ (laters Γ)
 var-now (B ∷ Γ) (sucᵒ x) = Later ∷ (var-now Γ x)
 
+choose : Time → Time → Time
+choose Now Now = Now
+choose Now Later = Now
+choose Later Now = Now
+choose Later Later = Later
+
+combine : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
+combine {[]} Δ₁ Δ₂ = []
+combine {A ∷ Γ} (x ∷ Δ₁) (y ∷ Δ₂) = (choose x y) ∷ (combine Δ₁ Δ₂)

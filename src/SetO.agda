@@ -1,11 +1,13 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --prop #-}
 
 open import Data.List using (List; []; _∷_)
 open import Data.Nat using (ℕ; zero; suc; _≤_)
+{-
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
 open import Data.Unit using (tt; ⊤)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
+-}
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
@@ -21,7 +23,7 @@ RecEnv : Context → Set₁
 RecEnv [] = topᵖ 
 RecEnv (A ∷ Γ) = (Predₒ A) × RecEnv Γ
 
-downClosedᵈ : ∀{Γ} → RecEnv Γ → Set
+downClosedᵈ : ∀{Γ} → RecEnv Γ → Prop₁
 downClosedᵈ {[]} δ = ⊤
 downClosedᵈ {A ∷ Γ} (P , δ) = (∀ a → downClosed (P a)) × downClosedᵈ δ
 
@@ -61,18 +63,35 @@ strong-var x Later F = strongly-contractive x F
 strong-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Set₁
 strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
 
+{-
+data Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
+  make-Setᵒ : (sem : RecEnv Γ → Setₒ) → .(∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ)) → Setᵒ Γ Δ
+
+# : ∀{Γ}{Δ} → Setᵒ Γ Δ → (RecEnv Γ → Setₒ)
+# (make-Setᵒ sem dc) = sem
+
+.down : ∀{Γ}{Δ} → (S : Setᵒ Γ Δ) → (∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (# S δ))
+down (make-Setᵒ sem dc) = dc -- not allowed
+-}
+
 record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setₒ
-    down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
+    .down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
+    .strong : strong-fun Δ #
 {-    
-    strong : strong-fun Δ #
     congr : congruent #
 -}    
 open Setᵒ public
 
+make-Setᵒ : ∀{Γ}{Δ} → (sem : RecEnv Γ → Setₒ)
+  → .(∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ))
+  → .(strong-fun Δ sem)
+  → Setᵒ Γ Δ
+make-Setᵒ sem dc s = record { # = sem ; down = dc ; strong = s}
+
 --postulate down : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → ∀ δ → downClosedᵈ δ → downClosed (# ϕ δ)
-postulate strong : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → strong-fun Δ (# ϕ)
+--postulate strong : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → strong-fun Δ (# ϕ)
 postulate congr : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → congruent (# ϕ)
 
 private variable Γ : Context

@@ -661,7 +661,7 @@ then it must either be a lambda abstraction or a fixpoint value.
 \noindent A well-behaved value is also a well-behaved term.
 
 \begin{code}
-𝒱⇒ℰ : ∀{A}{𝒫}{V} →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ V  →  𝒫 ⊢ᵒ ℰ⟦ A ⟧ V
+.𝒱⇒ℰ : ∀{A}{𝒫}{V} →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ V  →  𝒫 ⊢ᵒ ℰ⟦ A ⟧ V
 𝒱⇒ℰ {A}{𝒫}{V} 𝒫⊢𝒱V = ℰ-intro prog pres
     where prog = inj₁ᵒ 𝒫⊢𝒱V
           pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ V—→N →

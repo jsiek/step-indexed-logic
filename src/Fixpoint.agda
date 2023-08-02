@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K #-}
+{-# OPTIONS --without-K --irrelevant-projections #-}
 
 open import Data.Nat
    using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
@@ -21,12 +21,12 @@ open import Variables
 open import SetO
 
 ⟅_⟆ : ∀{A : Set}{Γ : Context}{Δ : Times Γ} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → RecEnv Γ → (Predₒ A → Predₒ A)
-⟅ Sᵃ ⟆  δ μS = λ a → # (Sᵃ a) (μS , δ)
+⟅ Sᵃ ⟆ δ P = λ a → # (Sᵃ a) (P , δ)
 
 mu : ∀ {Γ}{Δ : Times Γ}{A} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → (RecEnv Γ → A → Setₒ)
-mu Sᵃ δ a k = ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a k
+mu Sᵃ δ a k = ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) ⊤ᵖ a k
 
-lemma15b-env-fun : ∀{Γ}{Δ}{A}{δ : RecEnv Γ}{P : Predₒ A}
+.lemma15b-env-fun : ∀{Γ}{Δ}{A}{δ : RecEnv Γ}{P : Predₒ A}
   (k j : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
   → j ≤ k → ((⟅ Sᵃ ⟆ δ) ^ j) P a ≡ₒ[ j ] ((⟅ Sᵃ ⟆ δ) ^ k) P a
 lemma15b-env-fun {Γ}{Δ}{A}{δ}{P} k j Sᵃ a j≤k =
@@ -34,7 +34,7 @@ lemma15b-env-fun {Γ}{Δ}{A}{δ}{P} k j Sᵃ a j≤k =
   (λ a P k → strong (Sᵃ a) zeroᵒ (P , δ) k k ≤-refl)
   (λ P=Q a → congr (Sᵃ a) (P=Q , ≡ᵈ-refl{_}{δ}))
 
-lemma18a : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
+.lemma18a : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
   → mu Sᵃ δ a ≡ₒ[ k ] ((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤) a
 lemma18a {Γ}{Δ}{A} k Sᵃ a δ j = to k j , fro k j
   where
@@ -45,7 +45,7 @@ lemma18a {Γ}{Δ}{A} k Sᵃ a δ j = to k j , fro k j
   fro k j (j<k , Sᵏj) =
      j<k , (proj₂ (proj₂ (lemma15b-env-fun k (suc j) Sᵃ a j<k j) (≤-refl , Sᵏj)))
 
-lemma18b : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
+.lemma18b : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
      → # (Sᵃ a) (mu Sᵃ δ , δ) ≡ₒ[ 1 + k ] ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤) a
 lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
        # (Sᵃ a) (mu Sᵃ δ , δ)

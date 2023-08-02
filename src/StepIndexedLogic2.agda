@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --rewriting --allow-unsolved-metas #-}
+{-# OPTIONS --without-K --rewriting --irrelevant-projections #-}
 
 {-
 
@@ -51,6 +51,8 @@ open import Iteration
 open import SetO public
 open import Fixpoint
 open import Membership
+open import Later
+open import RecPred
 
 record Inhabited (A : Set) : Set where
   field
@@ -61,42 +63,13 @@ instance
   ℕ-Inhabited : Inhabited ℕ
   ℕ-Inhabited = record { elt = zero }
 
-choose : Time → Time → Time
-choose Now Now = Now
-choose Now Later = Now
-choose Later Now = Now
-choose Later Later = Later
-
-combine : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
-combine {[]} Δ₁ Δ₂ = []
-combine {A ∷ Γ} (x ∷ Δ₁) (y ∷ Δ₂) = (choose x y) ∷ (combine Δ₁ Δ₂)
-
-module Later where
-  ▷ : ∀{Γ} → (RecEnv Γ → ℕ → Set) → (RecEnv Γ → ℕ → Set)
-  ▷ ϕ δ k = ∀ j → j < k → ϕ δ j
-
-  down-▷ : ∀{Γ}{Δ : Times Γ} (ϕ : Setᵒ Γ Δ)
-    → ∀ δ → downClosedᵈ δ → downClosed (▷ (# ϕ) δ)
-  down-▷ {Γ}{Δ} ϕ δ down-δ n ▷ϕn k k≤n j j<k = ▷ϕn j (≤-trans j<k k≤n)
-
-open Later
-
-module RecPred where
-
-  down-mu : ∀{Γ}{Δ}{A}(Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (mu Sᵃ δ a)
-  down-mu Sᵃ a δ dc-δ = {!!}
-
-open RecPred
-
-
 module _ where
  abstract
 
  {---------------------- Membership in Recursive Predicate ---------------------}
 
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
-  a ∈ x = record { # = λ δ → (lookup x δ) a 
-                 ; down = down-lookup }
+  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup ?
 {-
            ; tz = tz-lookup
            ; good = good-lookup x
@@ -113,9 +86,7 @@ module _ where
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ {Γ}{Δ} S = record { # = λ δ k → ▷ (# S) δ k 
-                ; down = down-▷ S
-                }
+  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ k → ▷ (# S) δ k) (down-later S) ?
 {-
                 ; tz = {!!}
                 ; good = {!!}
@@ -126,7 +97,7 @@ module _ where
   #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ ▷ (# ϕ)
   #▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
 
-  ▷sk : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}{δ : RecEnv Γ}{k}
+  .▷sk : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}{δ : RecEnv Γ}{k}
      → downClosedᵈ δ
      → ▷ (# ϕ) δ (suc k) ⇔ (# ϕ) δ k
   ▷sk {Γ}{Δ}{ϕ}{δ}{k} down-δ =
@@ -141,10 +112,8 @@ abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
-  μᵒ {Γ}{Δ}{A} Sᵃ a =
-    record { # = λ δ → mu Sᵃ δ a 
-           ; down = down-mu Sᵃ a
-           }
+  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) ?
+
 {-    
            ; tz = {!!}
            ; good = {!!}
@@ -161,10 +130,10 @@ abstract
   ∀ᵒ : ∀{Γ}{Δ : Times Γ}{A : Set}
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
-  ∀ᵒ{Γ}{Δ}{A} P =
-    record { # = λ δ k → ∀ (a : A) → # (P a) δ k 
-           ; down = {!!}
-           }
+  ∀ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ k → ∀ (a : A) → # (P a) δ k)
+                            (λ δ dc-δ n Pδn k k≤n a → down (P a) δ dc-δ n (Pδn a) k k≤n)
+                            ?
+
 {-    
            ; tz = {!!}
            ; good = {!!}
@@ -181,10 +150,9 @@ abstract
   ∃ᵒ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
-  ∃ᵒ{Γ}{Δ}{A} P =
-    record { # = λ δ k → Σ[ a ∈ A ] # (P a) δ k 
-           ; down = {!!}
-           }
+  ∃ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ k → Σ[ a ∈ A ] # (P a) δ k)
+                            (λ δ dc-δ n (a , Paδn) k k≤n → a , (down (P a) δ dc-δ n Paδn k k≤n))
+                            ?
 {-    
            ; tz = {!!}
            ; good = {!!}
@@ -200,9 +168,8 @@ abstract
 {---------------------- Pure -----------------------------------------}
 
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
-  p ᵒ = record { # = λ δ k → p 
-               ; down = {!!}
-               }
+  p ᵒ = make-Setᵒ (λ δ k → p ) (λ δ dc-δ n p k k≤n → p) ?
+
 {-  
                ; tz = {!!}
                ; good = {!!}
@@ -219,9 +186,8 @@ abstract
 {---------------------- True -----------------------------------------}
 
   ⊤ᵒ : ∀{Γ} → Setᵒ Γ (laters Γ)
-  ⊤ᵒ = record { # = λ δ k → ⊤
-               ; down = {!!}
-               }
+  ⊤ᵒ = make-Setᵒ (λ δ k → ⊤) (λ δ _ n _ k _ → tt) ?
+
 {-  
                ; tz = {!!}
                ; good = {!!}
@@ -239,9 +205,11 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S ×ᵒ T = record { # = λ δ k → # S δ k × # T δ k 
-                  ; down = {!!}
-                  }
+  S ×ᵒ T = make-Setᵒ (λ δ k → # S δ k × # T δ k)
+                     (λ δ dc-δ n (Sδn , Tδn) k k≤n →
+                       (down S δ dc-δ n Sδn k k≤n) , (down T δ dc-δ n Tδn k k≤n))
+                     ?
+
 {-  
                   ; tz = {!!}
                   ; good = {!!}
@@ -268,9 +236,10 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S ⊎ᵒ T = record { # = λ δ k → # S δ k ⊎ # T δ k
-                  ; down = {!!}
-                  }
+  S ⊎ᵒ T = make-Setᵒ (λ δ k → # S δ k ⊎ # T δ k)
+                     (λ {δ dc-δ n (inj₁ Sn) k k≤n → inj₁ (down S δ dc-δ n Sn k k≤n);
+                         δ dc-δ n (inj₂ Tn) k k≤n → inj₂ (down T δ dc-δ n Tn k k≤n)})
+                     ?
 {-  
                   ; tz = {!!}
                   ; good = {!!}
@@ -299,9 +268,9 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S →ᵒ T = record { # = λ δ k → ∀ j → j ≤ k → # S δ j → # T δ j 
-                  ; down = {!!}
-                  }
+  S →ᵒ T = make-Setᵒ (λ δ k → ∀ j → j ≤ k → # S δ j → # T δ j)
+                     (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj → ∀j<n,Sj→Tj j (≤-trans j≤k k≤n) Sj)
+                     ?
 {-  
                   ; tz = {!!}
                   ; good = {!!}
@@ -314,9 +283,10 @@ abstract
 {---------------------- Let for Predicates -----------------------------------------}
 
   letᵒ : ∀{A}{Γ}{t}{Δ} → (A → Setᵒ Γ Δ) → Setᵒ (A ∷ Γ) (t ∷ Δ) → Setᵒ Γ Δ   
-  letᵒ Sᵃ T = record { # = λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) , δ) k
-                     ; down = {!!}
-                     }
+  letᵒ Sᵃ T = make-Setᵒ (λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) , δ) k)
+                        (λ δ dc-δ n Tn k k≤n → down T ((λ a k → # (Sᵃ a) δ k) , δ) ((λ a → down (Sᵃ a) δ dc-δ) , dc-δ) n Tn k k≤n)
+                        ?
+
 {-  
                      ; tz = {!!}
                      ; good = {!!}
@@ -352,7 +322,7 @@ abstract
 
   let-⊎ᵒ : ∀{A}{P : A → Setᵒ [] []}{ϕ ψ : Setᵒ (A ∷ []) (Later ∷ [])}
      → letᵒ P (ϕ ⊎ᵒ ψ) ≡ (letᵒ P ϕ) ⊎ᵒ (letᵒ P ψ)
-  let-⊎ᵒ {A}{P}{ϕ}{ψ} = refl
+  let-⊎ᵒ = refl
 
   let-→ᵒ : ∀{A}{P : A → Setᵒ [] []}{ϕ ψ : Setᵒ (A ∷ []) (Later ∷ [])}
      → letᵒ P (ϕ →ᵒ ψ) ≡ (letᵒ P ϕ) →ᵒ (letᵒ P ψ)
@@ -483,20 +453,20 @@ abstract
   ... | inj₂ ψn = ψ∷𝒫⊢þ n (ψn , ⊨𝒫n)
 
 abstract
-  downClosed-Πᵏ : (𝒫 : List Setᵏ) → downClosed (# (Πᵏ 𝒫) ttᵖ)
+  .downClosed-Πᵏ : (𝒫 : List Setᵏ) → downClosed (# (Πᵏ 𝒫) ttᵖ)
   downClosed-Πᵏ [] = λ n _ k _ → tt
   downClosed-Πᵏ (ϕ ∷ 𝒫) n (ϕn , ⊨𝒫n) k k≤n =
     down ϕ ttᵖ tt n ϕn k k≤n , (downClosed-Πᵏ 𝒫 n ⊨𝒫n k k≤n) -- 
 
 abstract
-  →ᵒI : ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
+  .→ᵒI : ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
   →ᵒI {𝒫 = 𝒫} ϕ∷𝒫⊢ψ n ⊨𝒫n j j≤n ϕj = ϕ∷𝒫⊢ψ j (ϕj , downClosed-Πᵏ 𝒫 n ⊨𝒫n j j≤n)
 
   →ᵒE : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
   →ᵒE {𝒫} 𝒫⊢ϕ→ψ 𝒫⊢ϕ n ⊨𝒫n = let ϕn = 𝒫⊢ϕ n ⊨𝒫n in 𝒫⊢ϕ→ψ n ⊨𝒫n n ≤-refl ϕn
 
 abstract
-  monoᵒ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
+  .monoᵒ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
   monoᵒ {𝒫} ⊢ϕ k ⊨𝒫k j j<k =
         ⊢ϕ j (downClosed-Πᵏ 𝒫 k ⊨𝒫k j (≤-trans (n≤1+n j) j<k)) 
 
@@ -506,7 +476,7 @@ abstract
 -}
 
 abstract
-  lobᵒ : (▷ᵒ ϕ) ∷ 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ϕ
+  .lobᵒ : (▷ᵒ ϕ) ∷ 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ϕ
   lobᵒ {ϕ}{𝒫} step k ⊨𝒫k = aux k step ⊨𝒫k
     where
     aux : ∀ k → ▷ᵒ ϕ ∷ 𝒫 ⊢ᵒ ϕ → # (Πᵏ 𝒫) ttᵖ k → # ϕ ttᵖ k
@@ -552,9 +522,10 @@ abstract
   Sᵒ 𝒫⊢ψ n (ϕn , ⊨𝒫n) = 𝒫⊢ψ n ⊨𝒫n
 
 
-λᵒ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
+.λᵒ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
 λᵒ ϕ f = →ᵒI{ϕ = ϕ} (f Zᵒ)
 
+.λᵒ-syntax : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
 λᵒ-syntax = λᵒ
 infix 1 λᵒ-syntax
 syntax λᵒ-syntax ϕ (λ ⊢ϕ → ⊢ψ) = λᵒ[ ⊢ϕ ⦂ ϕ ] ⊢ψ
@@ -574,7 +545,7 @@ abstract
   ▷× ▷ϕ×ψ n 𝒫n = (λ j j<n → proj₁ (▷ϕ×ψ n 𝒫n j j<n))
                 , (λ j j<n → proj₂ (▷ϕ×ψ n 𝒫n j j<n))
 
-  ▷⊎ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ ⊎ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ⊎ᵒ (▷ᵒ ψ)
+  .▷⊎ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ ⊎ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ⊎ᵒ (▷ᵒ ψ)
   ▷⊎ ▷ϕ⊎ψ zero 𝒫n = inj₁ λ j ()
   ▷⊎ {𝒫}{ϕ}{ψ} ▷ϕ⊎ψ (suc n) 𝒫n 
       with ▷ϕ⊎ψ (suc n) 𝒫n n ≤-refl
@@ -590,7 +561,7 @@ abstract
   ▷∀ : ∀{ϕᵃ : A → Setᵏ} → 𝒫 ⊢ᵒ ▷ᵒ (∀ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∀ᵒ λ a → ▷ᵒ (ϕᵃ a))
   ▷∀ 𝒫⊢▷∀ϕᵃ n ⊨𝒫sn a j j< = 𝒫⊢▷∀ϕᵃ n ⊨𝒫sn j j< a
 
-  ▷∃ : ∀{ϕᵃ : A → Setᵏ}{{_ : Inhabited A}} → 𝒫 ⊢ᵒ ▷ᵒ (∃ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∃ᵒ λ a → ▷ᵒ (ϕᵃ a))
+  .▷∃ : ∀{ϕᵃ : A → Setᵏ}{{_ : Inhabited A}} → 𝒫 ⊢ᵒ ▷ᵒ (∃ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∃ᵒ λ a → ▷ᵒ (ϕᵃ a))
   ▷∃ 𝒫⊢▷∃ϕᵃ zero ⊨𝒫k = elt , (λ j ())
   ▷∃ {ϕᵃ = ϕᵃ} 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk 
       with 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk k ≤-refl
@@ -602,7 +573,7 @@ abstract
   ▷pureᵒ : [] ⊢ᵒ ▷ᵒ (p ᵒ) → [] ⊢ᵒ p ᵒ
   ▷pureᵒ ⊢▷ k ttᵖ = ⊢▷ (suc k) tt k (s≤s ≤-refl) 
 
-  ▷→▷ : ∀{𝒫}{P Q : Setᵏ}
+  .▷→▷ : ∀{𝒫}{P Q : Setᵏ}
      → 𝒫 ⊢ᵒ ▷ᵒ P
      → P ∷ 𝒫 ⊢ᵒ Q
        ------------
