@@ -21,7 +21,7 @@
 -}
 module StepIndexedLogic2 where
 
-open import Data.Empty using (⊥; ⊥-elim)
+--open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _+_; _∸_)
@@ -29,11 +29,13 @@ open import Data.Nat
 open import Data.Nat.Properties
    using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; ≤-pred)
    -}
+open import Data.Product
+   renaming (_,_ to _,ᵃ_) using ()
 {-
 open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
    -}
-open import Data.Sum using (_⊎_; inj₁; inj₂)
+--open import Data.Sum using (_⊎_; inj₁; inj₂)
 {-
 open import Data.Unit using (tt; ⊤)
 -}
@@ -76,7 +78,7 @@ module _ where
  {---------------------- Membership in Recursive Predicate ---------------------}
 
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
-  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup ?
+  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup {!!}
 {-
            ; tz = tz-lookup
            ; good = good-lookup x
@@ -93,7 +95,7 @@ module _ where
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ k → ▷ (# S) δ k) (down-later S) ?
+  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ k → ▷ (# S) δ k) (down-later S) {!!}
 {-
                 ; tz = {!!}
                 ; good = {!!}
@@ -119,7 +121,7 @@ abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
-  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) ?
+  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) {!!}
 
 {-    
            ; tz = {!!}
@@ -139,7 +141,7 @@ abstract
      → Setᵒ Γ Δ
   ∀ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ k → ∀ (a : A) → # (P a) δ k)
                             (λ δ dc-δ n Pδn k k≤n a → down (P a) δ dc-δ n (Pδn a) k k≤n)
-                            ?
+                            {!!}
 
 {-    
            ; tz = {!!}
@@ -158,10 +160,10 @@ abstract
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
   ∃ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ k → Σ[ a ∈ A ] # (P a) δ k)
-                            (λ δ dc-δ n (a , Paδn) k k≤n → a , (down (P a) δ dc-δ n Paδn k k≤n))
-                            ?
-{-    
-           ; tz = {!!}
+                            (λ δ dc-δ n a×Paδn k k≤n → match a×Paδn λ a Pa → a , (down (P a) δ dc-δ n Pa k k≤n))
+                            {!!}
+{-
+; tz = {!!}
            ; good = {!!}
            ; congr = {!!}
            -}
@@ -170,12 +172,11 @@ abstract
      → (# (∃ᵒ Sᵃ) δ k) ≡ (Σ[ a ∈ A ] (# (Sᵃ a) δ k))
   #∃ᵒ≡ = refl
   
-  
 
 {---------------------- Pure -----------------------------------------}
 
-  _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
-  p ᵒ = make-Setᵒ (λ δ k → p ) (λ δ dc-δ n p k k≤n → p) ?
+  _ᵒ : ∀{Γ} → Prop₁ → Setᵒ Γ (laters Γ)
+  p ᵒ = make-Setᵒ (λ δ k → p) (λ δ dc-δ n p k k≤n → p) ?
 
 {-  
                ; tz = {!!}
@@ -213,8 +214,8 @@ abstract
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
   S ×ᵒ T = make-Setᵒ (λ δ k → # S δ k × # T δ k)
-                     (λ δ dc-δ n (Sδn , Tδn) k k≤n →
-                       (down S δ dc-δ n Sδn k k≤n) , (down T δ dc-δ n Tδn k k≤n))
+                     (λ δ dc-δ n Sδn×Tδn k k≤n →
+                       (down S δ dc-δ n (proj₁ Sδn×Tδn) k k≤n) , (down T δ dc-δ n (proj₂ Sδn×Tδn) k k≤n))
                      ?
 
 {-  
@@ -556,8 +557,8 @@ abstract
   ▷⊎ ▷ϕ⊎ψ zero 𝒫n = inj₁ λ j ()
   ▷⊎ {𝒫}{ϕ}{ψ} ▷ϕ⊎ψ (suc n) 𝒫n 
       with ▷ϕ⊎ψ (suc n) 𝒫n n ≤-refl
-  ... | inj₁ ϕn = inj₁ λ { j (s≤s j≤n) → down ϕ ttᵖ tt n ϕn j j≤n }
-  ... | inj₂ ψn = inj₂ λ { j (s≤s j≤n) → down ψ ttᵖ tt n ψn j j≤n }
+  ... | inj₁ ϕn = inj₁ λ { j j≤n → down ϕ ttᵖ tt n ϕn j j≤n }
+  ... | inj₂ ψn = inj₂ λ { j j≤n → down ψ ttᵖ tt n ψn j j≤n }
 
   
   ▷→ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ →ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) →ᵒ (▷ᵒ ψ)
@@ -573,7 +574,7 @@ abstract
   ▷∃ {ϕᵃ = ϕᵃ} 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk 
       with 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk k ≤-refl
   ... | a , ϕk =
-      a , λ {j (s≤s j≤k) →
+      a , λ {j j≤k →
              let ϕj = down (ϕᵃ a) ttᵖ tt k ϕk j j≤k in
              down (ϕᵃ a) ttᵖ tt j ϕj j ≤-refl}
 
@@ -605,4 +606,5 @@ syntax ∀ᵒ-annot-syntax A (λ x → P) = ∀ᵒ[ x ⦂ A ] P
 ∃ᵒ-syntax = ∃ᵒ
 infix 2 ∃ᵒ-syntax
 syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
+
 
