@@ -2,19 +2,32 @@
 
 open import Agda.Primitive using (lzero; lsuc; _⊔_)
 open import Data.Nat using (ℕ; zero; suc)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
 
 module PropLib where
+
+data Squash {ℓ} (A : Set ℓ) : Prop ℓ where
+  squash : A → Squash A
+
+squash-elim : ∀ {ℓ₁ ℓ₂} (A : Set ℓ₁) (P : Prop ℓ₂) → (A → P) → Squash A → P
+squash-elim A P f (squash x) = f x
 
 data ⊥ {ℓ} : Prop ℓ where
 
 ⊥-elim : ∀{ℓ}{A : Prop ℓ} → ⊥{ℓ} → A
 ⊥-elim {A} ()
 
+data ⊤ {ℓ} : Prop ℓ where
+  tt : ⊤
+
+{-
 ⊤ : ∀{ℓ} → Prop (lsuc ℓ)
 ⊤ {ℓ} = ∀ (P : Prop ℓ) → P → P
 
 tt : ∀{ℓ} → ⊤{ℓ}
 tt = λ P x → x
+-}
 
 infixr 2 _×_
 infixr 4 _,_
@@ -50,13 +63,16 @@ _ = f where
   f ac bc (inj₁ a) = ac a
   f ac bc (inj₂ b) = bc b
 
-_≤_ : ℕ → ℕ → Prop₁
+_≤_ : ℕ → ℕ → Prop
 zero  ≤ y     = ⊤
 suc x ≤ zero  = ⊥
 suc x ≤ suc y = x ≤ y
 
-_<_ : ℕ → ℕ → Prop₁
+_<_ : ℕ → ℕ → Prop
 m < n = suc m ≤ n
+
+z≤s : ∀{m} → zero ≤ suc m
+z≤s {m} = tt
 
 s≤s : ∀{n m} → n ≤ m → suc n ≤ suc m
 s≤s {zero} {m} n≤m = tt
@@ -69,6 +85,9 @@ n≤1+n (suc n) = n≤1+n n
 ≤-refl : ∀{a} → a ≤ a
 ≤-refl {zero} = tt
 ≤-refl {suc a} = ≤-refl{a}
+
+≤-reflexive : ∀{a}{b} → a ≡ b → a ≤ b
+≤-reflexive {a}{b} refl = ≤-refl{a}
 
 ≤-trans : ∀{a b c : ℕ} → a ≤ b → b ≤ c → a ≤ c
 ≤-trans {zero} {b} {c} ab bc = tt

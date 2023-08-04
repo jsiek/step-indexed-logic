@@ -36,3 +36,8 @@ choose Later Later = Later
 combine : ∀{Γ} (Δ₁ Δ₂ : Times Γ) → Times Γ
 combine {[]} Δ₁ Δ₂ = []
 combine {A ∷ Γ} (x ∷ Δ₁) (y ∷ Δ₂) = (choose x y) ∷ (combine Δ₁ Δ₂)
+
+timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
+timeof {B ∷ Γ} zeroᵒ (t ∷ Δ) = t
+timeof {B ∷ Γ} (sucᵒ x) (t ∷ Δ) = timeof x Δ
+

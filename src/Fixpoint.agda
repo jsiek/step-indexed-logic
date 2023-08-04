@@ -14,11 +14,12 @@ open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
 module Fixpoint where
 
 open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
-open import EquivalenceRelation
+open import EquivalenceRelationProp
 open import RawSetO
 open import Approx
 open import Iteration
 open import Variables
+open import Env
 open import SetO
 
 ⟅_⟆ : ∀{A : Set}{Γ : Context}{Δ : Times Γ} → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → RecEnv Γ → (Predₒ A → Predₒ A)

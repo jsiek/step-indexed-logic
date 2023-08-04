@@ -3,7 +3,7 @@
 open import Data.Unit using (tt; ⊤)
 open import Data.Nat using (ℕ; zero; suc) --; _≤_; _<_; s≤s; _≤′_; ≤′-step)
 open import RawSetO
-open import EquivalenceRelation
+open import EquivalenceRelationProp
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans)
 open import PropLib
@@ -13,8 +13,11 @@ module Approx where
 ↓ : ℕ → Setₒ → Setₒ
 ↓ k S j = j < k × (S j)
 
+↑ : ℕ → Setₒ → Setₒ
+↑ k S j = k < j × (S j)
+
 infix 2 _≡ₒ[_]_
-_≡ₒ[_]_ : Setₒ → ℕ → Setₒ → Prop₁
+_≡ₒ[_]_ : Setₒ → ℕ → Setₒ → Prop
 ϕ ≡ₒ[ k ] ψ =  ↓ k ϕ  ≡ₒ  ↓ k ψ
 
 abstract
@@ -36,6 +39,9 @@ instance
 
 ↓ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
 ↓ᵖ j P a = ↓ j (P a)
+
+↑ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
+↑ᵖ j P a = ↑ j (P a)
 
 cong-approx : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
 cong-approx {A} {k} {P} {Q} eq a i =

@@ -6,6 +6,7 @@ open import PropLib
 open import RawSetO
 open import SetO
 open import Variables
+open import Env
 
 module Later where
 

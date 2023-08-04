@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --rewriting --prop #-}
+{-# OPTIONS --without-K --rewriting --prop --allow-unsolved-metas #-}
 
 {-
 
@@ -21,7 +21,8 @@
 -}
 module StepIndexedLogic2 where
 
---open import Data.Empty using (⊥; ⊥-elim)
+open import Agda.Primitive using (lzero; lsuc)
+open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _+_; _∸_)
@@ -49,11 +50,12 @@ open import Level using (Lift)
 open import Agda.Builtin.Equality
 open import Agda.Builtin.Equality.Rewrite
 
-open import EquivalenceRelation public
+open import EquivalenceRelationProp public
 
-open import PropLib
+open import PropLib renaming (⊥ to ⊥ₚ; ⊥-elim to ⊥-elimₚ)
 open import StrongInduction
 open import Variables public
+open import Env public
 open import RawSetO
 open import Approx
 open import Iteration
@@ -106,13 +108,21 @@ module _ where
   #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ ▷ (# ϕ)
   #▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
 
-  .▷sk : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}{δ : RecEnv Γ}{k}
+  ▷sk : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}{δ : RecEnv Γ}{k}
      → downClosedᵈ δ
      → ▷ (# ϕ) δ (suc k) ⇔ (# ϕ) δ k
   ▷sk {Γ}{Δ}{ϕ}{δ}{k} down-δ =
-     (λ ▷ϕsk → ▷ϕsk k ≤-refl) , λ ϕk j j<sk → down ϕ δ down-δ k ϕk j (≤-pred j<sk)
+     (λ ▷ϕsk → ▷ϕsk k (≤-refl{k})) , λ ϕk j j<sk → down ϕ δ down-δ k ϕk j (≤-pred{j}{k} j<sk)
 
+{---------------------- Eventually Operator ---------------------}
 
+  ◇ᵒ : ∀{Γ}{Δ : Times Γ}
+     → ℕ
+     → Setᵒ Γ Δ
+       -----------------
+     → Setᵒ Γ (laters Γ)
+  ◇ᵒ {Γ} {Δ} zero ϕ = ▷ᵒ ϕ
+  ◇ᵒ {Γ} {Δ} (suc i) ϕ = ◇ᵒ i (▷ᵒ ϕ)
 
 
 {---------------------- Recursive Predicate -----------------------------------}
@@ -175,15 +185,15 @@ abstract
 
 {---------------------- Pure -----------------------------------------}
 
-  _ᵒ : ∀{Γ} → Prop₁ → Setᵒ Γ (laters Γ)
-  p ᵒ = make-Setᵒ (λ δ k → p) (λ δ dc-δ n p k k≤n → p) ?
+  _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
+  p ᵒ = make-Setᵒ (λ δ k → Squash p) (λ δ dc-δ n p k k≤n → p) {!!}
 
 {-  
                ; tz = {!!}
                ; good = {!!}
                ; congr = {!!}
 -}               
-  #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ (suc k) ≡ p
+  #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ (suc k) ≡ Squash p
   #pureᵒ≡ = refl
 
 {---------------------- False -----------------------------------------}
@@ -194,7 +204,7 @@ abstract
 {---------------------- True -----------------------------------------}
 
   ⊤ᵒ : ∀{Γ} → Setᵒ Γ (laters Γ)
-  ⊤ᵒ = make-Setᵒ (λ δ k → ⊤) (λ δ _ n _ k _ → tt) ?
+  ⊤ᵒ = make-Setᵒ (λ δ k → ⊤) (λ δ _ n _ k _ → tt) {!!}
 
 {-  
                ; tz = {!!}
@@ -216,7 +226,7 @@ abstract
   S ×ᵒ T = make-Setᵒ (λ δ k → # S δ k × # T δ k)
                      (λ δ dc-δ n Sδn×Tδn k k≤n →
                        (down S δ dc-δ n (proj₁ Sδn×Tδn) k k≤n) , (down T δ dc-δ n (proj₂ Sδn×Tδn) k k≤n))
-                     ?
+                     {!!}
 
 {-  
                   ; tz = {!!}
@@ -247,7 +257,7 @@ abstract
   S ⊎ᵒ T = make-Setᵒ (λ δ k → # S δ k ⊎ # T δ k)
                      (λ {δ dc-δ n (inj₁ Sn) k k≤n → inj₁ (down S δ dc-δ n Sn k k≤n);
                          δ dc-δ n (inj₂ Tn) k k≤n → inj₂ (down T δ dc-δ n Tn k k≤n)})
-                     ?
+                     {!!}
 {-  
                   ; tz = {!!}
                   ; good = {!!}
@@ -277,8 +287,8 @@ abstract
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
   S →ᵒ T = make-Setᵒ (λ δ k → ∀ j → j ≤ k → # S δ j → # T δ j)
-                     (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj → ∀j<n,Sj→Tj j (≤-trans j≤k k≤n) Sj)
-                     ?
+                     (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj → ∀j<n,Sj→Tj j (≤-trans{j}{k}{n} j≤k k≤n) Sj)
+                     {!!}
 {-  
                   ; tz = {!!}
                   ; good = {!!}
@@ -291,9 +301,9 @@ abstract
 {---------------------- Let for Predicates -----------------------------------------}
 
   letᵒ : ∀{A}{Γ}{t}{Δ} → (A → Setᵒ Γ Δ) → Setᵒ (A ∷ Γ) (t ∷ Δ) → Setᵒ Γ Δ   
-  letᵒ Sᵃ T = make-Setᵒ (λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) , δ) k)
-                        (λ δ dc-δ n Tn k k≤n → down T ((λ a k → # (Sᵃ a) δ k) , δ) ((λ a → down (Sᵃ a) δ dc-δ) , dc-δ) n Tn k k≤n)
-                        ?
+  letᵒ Sᵃ T = make-Setᵒ (λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ) k)
+                        (λ δ dc-δ n Tn k k≤n → down T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ) ((λ a → down (Sᵃ a) δ dc-δ) , dc-δ) n Tn k k≤n)
+                        {!!}
 
 {-  
                      ; tz = {!!}
@@ -301,7 +311,7 @@ abstract
                      ; congr = {!!}
 -}
   #letᵒ≡ : ∀{A}{Γ}{Δ}{t} (P : A → Setᵒ Γ Δ) (ϕ : Setᵒ (A ∷ Γ) (t ∷ Δ)) → ∀ δ k
-     → (# (letᵒ P ϕ) δ k) ≡ (# ϕ ((λ a k → # (P a) δ k) , δ) k)
+     → (# (letᵒ P ϕ) δ k) ≡ (# ϕ ((λ a k → # (P a) δ k) ,ᵃ δ) k)
   #letᵒ≡ {A}{Γ}{Δ}{t} P ϕ d k = refl
   
   let-▷ᵒ : ∀{A}{t}{P : A → Setᵒ [] []}{ϕ : Setᵒ (A ∷ []) (t ∷ [])}
@@ -312,10 +322,10 @@ abstract
      → letᵒ P (a ∈ zeroᵒ) ≡ (P a)
   let-∈ {A}{P}{a} = refl
   
-  let-pureᵒ : ∀{A}{P : A → Setᵒ [] []}{p : Set}
+  let-pureᵒ : ∀{A : Set}{P : A → Setᵒ [] []}{p : Set}
      → letᵒ P (p ᵒ) ≡ p ᵒ
   let-pureᵒ = refl
-
+  
   let-⊥ᵒ : ∀{A}{P : A → Setᵒ [] []}
      → letᵒ P ⊥ᵒ ≡ ⊥ᵒ
   let-⊥ᵒ = refl
@@ -344,17 +354,16 @@ abstract
      → letᵒ P (∃ᵒ ϕᵇ) ≡ ∃ᵒ λ b →  (letᵒ P (ϕᵇ b))
   let-∃ᵒ {A}{B}{P}{ϕᵇ} = refl
 
-  {-# REWRITE let-⊥ᵒ #-}
-  {-# REWRITE let-⊤ᵒ #-}
-  {-# REWRITE let-▷ᵒ #-}
-  {-# REWRITE let-∈ #-}
-  {-# REWRITE let-pureᵒ #-}
-  {-# REWRITE let-×ᵒ #-}
-  {-# REWRITE let-⊎ᵒ #-}
-  {-# REWRITE let-→ᵒ #-}
-  {-# REWRITE let-∀ᵒ #-}
-  {-# REWRITE let-∃ᵒ #-}
-
+{-# REWRITE let-⊥ᵒ #-}
+{-# REWRITE let-⊤ᵒ #-}
+{-# REWRITE let-▷ᵒ #-}
+{-# REWRITE let-∈ #-}
+{-# REWRITE let-pureᵒ #-}
+{-# REWRITE let-×ᵒ #-}
+{-# REWRITE let-⊎ᵒ #-}
+{-# REWRITE let-→ᵒ #-}
+{-# REWRITE let-∀ᵒ #-}
+{-# REWRITE let-∃ᵒ #-}
 
 {---------------------- Fixpoint Theorem --------------------------------------}
 
@@ -370,7 +379,7 @@ private variable Δ Δ₁ Δ₂ : Times Γ
 
 abstract
   fixpointᵒ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
-     → μᵒ Sᵃ a ≡ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
+     → (μᵒ Sᵃ) a ≡ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
   fixpointᵒ{Γ}{Δ}{A} Sᵃ a = ≡ₒ⇒≡ᵒ{Γ}{Δ} aux
     where
     aux : ∀ δ → # (μᵒ Sᵃ a) δ ≡ₒ # (letᵒ (μᵒ Sᵃ) (Sᵃ a)) δ
@@ -379,16 +388,14 @@ abstract
       ⩦⟨ ≡ₒ-refl refl ⟩
         mu Sᵃ δ a
       ⩦⟨ equiv-approx (lemma19a Sᵃ a δ) ⟩
-        # (Sᵃ a) ((λ a k → mu Sᵃ δ a k) , δ) 
+        # (Sᵃ a) ((λ a k → mu Sᵃ δ a k) ,ᵃ δ) 
       ⩦⟨ ≡ₒ-refl refl ⟩
-        # (Sᵃ a) ((λ a k → # (μᵒ Sᵃ a) δ k) , δ)
+        # (Sᵃ a) ((λ a k → # (μᵒ Sᵃ a) δ k) ,ᵃ δ)
       ⩦⟨ ≡ₒ-refl refl ⟩
         # (letᵒ (μᵒ Sᵃ) (Sᵃ a)) δ
       ∎
 
 {---------------------- Proof Theory for Step Indexed Logic -------------------}
-
-
 
 Πᵏ : List Setᵏ → Setᵏ
 Πᵏ [] = ⊤ᵒ
@@ -396,7 +403,7 @@ abstract
 
 abstract
   infix 1 _⊢ᵒ_
-  _⊢ᵒ_ : List Setᵏ → Setᵏ → Set
+  _⊢ᵒ_ : List Setᵏ → Setᵏ → Prop
   𝒫 ⊢ᵒ P = ∀ n → # (Πᵏ 𝒫) ttᵖ n → # P ttᵖ n
 
   ⊢ᵒI : ∀{𝒫}{P}
@@ -415,20 +422,26 @@ abstract
 
 abstract
   ⊥-elimᵒ : 𝒫 ⊢ᵒ ⊥ᵒ → (ϕ : Setᵏ) → 𝒫 ⊢ᵒ ϕ
-  ⊥-elimᵒ ⊢⊥ ϕ n ⊨𝒫sn = ⊥-elim (⊢⊥ n ⊨𝒫sn)
+  ⊥-elimᵒ ⊢⊥ ϕ n ⊨𝒫sn 
+      with ⊢⊥ n ⊨𝒫sn
+  ... | squash ()
 
   ⊥⇒⊥ᵒ : ⊥ → 𝒫 ⊢ᵒ ⊥ᵒ
   ⊥⇒⊥ᵒ ()
 
-  ⊥ᵒ⇒⊥ : [] ⊢ᵒ ⊥ᵒ → ⊥
-  ⊥ᵒ⇒⊥ ⊢⊥ = ⊢ᵒE{[]}{⊥ᵒ} ⊢⊥ 1 tt
-
+  ⊥ᵒ⇒⊥ : [] ⊢ᵒ ⊥ᵒ → ⊥ₚ{lzero}
+  ⊥ᵒ⇒⊥ ⊢⊥ 
+      with ⊢⊥ 0 tt
+  ... | squash ()
+  
 abstract
   pureᵒI : ∀{p : Set} → p → 𝒫 ⊢ᵒ p ᵒ
-  pureᵒI s n ⊨𝒫n = s
+  pureᵒI s n ⊨𝒫n = squash s
 
   pureᵒE : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
-  pureᵒE {𝒫} {p} {R} ⊢p p→⊢R n 𝒫n = p→⊢R (⊢p n 𝒫n) n 𝒫n
+  pureᵒE {𝒫} {p} {R} ⊢p p→⊢R n 𝒫n 
+     with ⊢p n 𝒫n
+  ... | squash r = p→⊢R r n 𝒫n
 
 pureᵒE-syntax = pureᵒE
 infix 1 pureᵒE-syntax
@@ -461,30 +474,25 @@ abstract
   ... | inj₂ ψn = ψ∷𝒫⊢þ n (ψn , ⊨𝒫n)
 
 abstract
-  .downClosed-Πᵏ : (𝒫 : List Setᵏ) → downClosed (# (Πᵏ 𝒫) ttᵖ)
+  downClosed-Πᵏ : (𝒫 : List Setᵏ) → downClosed (# (Πᵏ 𝒫) ttᵖ)
   downClosed-Πᵏ [] = λ n _ k _ → tt
   downClosed-Πᵏ (ϕ ∷ 𝒫) n (ϕn , ⊨𝒫n) k k≤n =
     down ϕ ttᵖ tt n ϕn k k≤n , (downClosed-Πᵏ 𝒫 n ⊨𝒫n k k≤n) -- 
 
 abstract
-  .→ᵒI : ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
+  →ᵒI : ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
   →ᵒI {𝒫 = 𝒫} ϕ∷𝒫⊢ψ n ⊨𝒫n j j≤n ϕj = ϕ∷𝒫⊢ψ j (ϕj , downClosed-Πᵏ 𝒫 n ⊨𝒫n j j≤n)
 
   →ᵒE : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
-  →ᵒE {𝒫} 𝒫⊢ϕ→ψ 𝒫⊢ϕ n ⊨𝒫n = let ϕn = 𝒫⊢ϕ n ⊨𝒫n in 𝒫⊢ϕ→ψ n ⊨𝒫n n ≤-refl ϕn
+  →ᵒE {𝒫} 𝒫⊢ϕ→ψ 𝒫⊢ϕ n ⊨𝒫n = let ϕn = 𝒫⊢ϕ n ⊨𝒫n in 𝒫⊢ϕ→ψ n ⊨𝒫n n (≤-refl{n}) ϕn
 
 abstract
-  .monoᵒ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
+  monoᵒ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
   monoᵒ {𝒫} ⊢ϕ k ⊨𝒫k j j<k =
-        ⊢ϕ j (downClosed-Πᵏ 𝒫 k ⊨𝒫k j (≤-trans (n≤1+n j) j<k)) 
-
-{-
-  monoᵒ {𝒫}{ϕ} ⊢ϕ zero ⊨𝒫n = tt
-  monoᵒ {𝒫}{ϕ} ⊢ϕ (suc n) ⊨𝒫n = ⊢ϕ n (downClosed-Πᵏ 𝒫 (suc n) ⊨𝒫n n (n≤1+n n))
--}
+        ⊢ϕ j (downClosed-Πᵏ 𝒫 k ⊨𝒫k j (≤-trans{j}{suc j}{k} (n≤1+n j) j<k)) 
 
 abstract
-  .lobᵒ : (▷ᵒ ϕ) ∷ 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ϕ
+  lobᵒ : (▷ᵒ ϕ) ∷ 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ϕ
   lobᵒ {ϕ}{𝒫} step k ⊨𝒫k = aux k step ⊨𝒫k
     where
     aux : ∀ k → ▷ᵒ ϕ ∷ 𝒫 ⊢ᵒ ϕ → # (Πᵏ 𝒫) ttᵖ k → # ϕ ttᵖ k
@@ -493,8 +501,8 @@ abstract
       si : ∀ n → (∀ i → i < n → ▷ᵒ ϕ ∷ 𝒫 ⊢ᵒ ϕ → # (Πᵏ 𝒫) ttᵖ i → # ϕ ttᵖ i)
          →  ▷ᵒ ϕ ∷ 𝒫 ⊢ᵒ ϕ  →  # (Πᵏ 𝒫) ttᵖ n → # ϕ ttᵖ n
       si n IH step Pn =
-        let ⊨𝒫n = downClosed-Πᵏ 𝒫 n Pn n ≤-refl in
-        step n ((λ j j<sucn → IH j j<sucn step (downClosed-Πᵏ 𝒫 n Pn j (≤-trans (n≤1+n j) j<sucn))) , Pn)
+        let ⊨𝒫n = downClosed-Πᵏ 𝒫 n Pn n (≤-refl{n}) in
+        step n ((λ j j<sucn → IH j j<sucn step (downClosed-Πᵏ 𝒫 n Pn j (≤-trans{j}{suc j}{n} (n≤1+n j) j<sucn))) , Pn)
 
 abstract
   substᵒ : ϕ ≡ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
@@ -530,10 +538,10 @@ abstract
   Sᵒ 𝒫⊢ψ n (ϕn , ⊨𝒫n) = 𝒫⊢ψ n ⊨𝒫n
 
 
-.λᵒ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
+λᵒ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
 λᵒ ϕ f = →ᵒI{ϕ = ϕ} (f Zᵒ)
 
-.λᵒ-syntax : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
+λᵒ-syntax : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ) → 𝒫 ⊢ᵒ ϕ →ᵒ ψ
 λᵒ-syntax = λᵒ
 infix 1 λᵒ-syntax
 syntax λᵒ-syntax ϕ (λ ⊢ϕ → ⊢ψ) = λᵒ[ ⊢ϕ ⦂ ϕ ] ⊢ψ
@@ -553,35 +561,35 @@ abstract
   ▷× ▷ϕ×ψ n 𝒫n = (λ j j<n → proj₁ (▷ϕ×ψ n 𝒫n j j<n))
                 , (λ j j<n → proj₂ (▷ϕ×ψ n 𝒫n j j<n))
 
-  .▷⊎ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ ⊎ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ⊎ᵒ (▷ᵒ ψ)
+  ▷⊎ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ ⊎ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ⊎ᵒ (▷ᵒ ψ)
   ▷⊎ ▷ϕ⊎ψ zero 𝒫n = inj₁ λ j ()
   ▷⊎ {𝒫}{ϕ}{ψ} ▷ϕ⊎ψ (suc n) 𝒫n 
-      with ▷ϕ⊎ψ (suc n) 𝒫n n ≤-refl
+      with ▷ϕ⊎ψ (suc n) 𝒫n n (≤-refl{n})
   ... | inj₁ ϕn = inj₁ λ { j j≤n → down ϕ ttᵖ tt n ϕn j j≤n }
   ... | inj₂ ψn = inj₂ λ { j j≤n → down ψ ttᵖ tt n ψn j j≤n }
 
   
   ▷→ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ →ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) →ᵒ (▷ᵒ ψ)
   ▷→ ▷ϕ→ψ n ⊨𝒫n i i≤n ▷ϕi j j<si = 
-     let ϕj→ψj = ▷ϕ→ψ n ⊨𝒫n j (≤-trans j<si i≤n) j ≤-refl in
+     let ϕj→ψj = ▷ϕ→ψ n ⊨𝒫n j (≤-trans{suc j}{i}{n} j<si i≤n) j (≤-refl{j}) in
      ϕj→ψj (▷ϕi j j<si)
 
   ▷∀ : ∀{ϕᵃ : A → Setᵏ} → 𝒫 ⊢ᵒ ▷ᵒ (∀ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∀ᵒ λ a → ▷ᵒ (ϕᵃ a))
   ▷∀ 𝒫⊢▷∀ϕᵃ n ⊨𝒫sn a j j< = 𝒫⊢▷∀ϕᵃ n ⊨𝒫sn j j< a
 
-  .▷∃ : ∀{ϕᵃ : A → Setᵏ}{{_ : Inhabited A}} → 𝒫 ⊢ᵒ ▷ᵒ (∃ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∃ᵒ λ a → ▷ᵒ (ϕᵃ a))
+  ▷∃ : ∀{ϕᵃ : A → Setᵏ}{{_ : Inhabited A}} → 𝒫 ⊢ᵒ ▷ᵒ (∃ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∃ᵒ λ a → ▷ᵒ (ϕᵃ a))
   ▷∃ 𝒫⊢▷∃ϕᵃ zero ⊨𝒫k = elt , (λ j ())
   ▷∃ {ϕᵃ = ϕᵃ} 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk 
-      with 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk k ≤-refl
+      with 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk k (≤-refl{k})
   ... | a , ϕk =
       a , λ {j j≤k →
              let ϕj = down (ϕᵃ a) ttᵖ tt k ϕk j j≤k in
-             down (ϕᵃ a) ttᵖ tt j ϕj j ≤-refl}
+             down (ϕᵃ a) ttᵖ tt j ϕj j (≤-refl{j})}
 
   ▷pureᵒ : [] ⊢ᵒ ▷ᵒ (p ᵒ) → [] ⊢ᵒ p ᵒ
-  ▷pureᵒ ⊢▷ k ttᵖ = ⊢▷ (suc k) tt k (s≤s ≤-refl) 
+  ▷pureᵒ ⊢▷ k ttᵖ = ⊢▷ (suc k) tt k (s≤s{k} (≤-refl{k})) 
 
-  .▷→▷ : ∀{𝒫}{P Q : Setᵏ}
+  ▷→▷ : ∀{𝒫}{P Q : Setᵏ}
      → 𝒫 ⊢ᵒ ▷ᵒ P
      → P ∷ 𝒫 ⊢ᵒ Q
        ------------
@@ -606,5 +614,14 @@ syntax ∀ᵒ-annot-syntax A (λ x → P) = ∀ᵒ[ x ⦂ A ] P
 ∃ᵒ-syntax = ∃ᵒ
 infix 2 ∃ᵒ-syntax
 syntax ∃ᵒ-syntax (λ x → P) = ∃ᵒ[ x ] P
+
+abstract
+
+  ▷⇒◇ :  𝒫 ⊢ᵒ ▷ᵒ ϕ  →  𝒫 ⊢ᵒ ◇ᵒ 0 ϕ
+  ▷⇒◇ ▷ϕ n 𝒫n = ▷ϕ n 𝒫n
+  
+  ▷◇⇒◇ : ∀ i → 𝒫 ⊢ᵒ ▷ᵒ (◇ᵒ i ϕ) → 𝒫 ⊢ᵒ ◇ᵒ (suc i) ϕ
+  ▷◇⇒◇ zero ▷◇ϕ = ▷◇ϕ
+  ▷◇⇒◇ {𝒫} (suc i) ▷◇ϕ = ▷◇⇒◇ {𝒫} i ▷◇ϕ
 
 

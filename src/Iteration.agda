@@ -8,7 +8,7 @@ open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
 open import PropLib
 open import RawSetO
 open import Approx
-open import EquivalenceRelation
+open import EquivalenceRelationProp
 
 module Iteration where
 
@@ -23,7 +23,7 @@ iter-subtract {A = A} {a} F zero k z≤n = refl
 iter-subtract {A = A} {a} F (suc j) (suc k) j≤k
   rewrite iter-subtract{A = A}{a} F j k j≤k  = refl
 
-contractiveᵖ : ∀ {A} → (f : Predₒ A → Predₒ A) → Prop₂
+contractiveᵖ : ∀ {A} → (f : Predₒ A → Predₒ A) → Prop₁
 contractiveᵖ f = ∀ a P k → f P a ≡ₒ[ suc k ] f (↓ᵖ k P) a
 
 lemma15a : ∀ {A}{P Q : Predₒ A} j → (f : Predₒ A → Predₒ A) (a : A) → contractiveᵖ f → congruentᵖ f

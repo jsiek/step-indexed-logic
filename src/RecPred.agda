@@ -7,6 +7,7 @@ open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
 open import RawSetO
 open import SetO
 open import Variables
+open import Env
 open import Approx
 open import Iteration
 open import Fixpoint
