@@ -2,7 +2,8 @@
 
 {-
 
-  Experimenting with a flat organization.
+  Experimenting with abstract logical connectives and a flat
+  organization.
 
 -}
 
@@ -80,7 +81,7 @@ module _ where
  {---------------------- Membership in Recursive Predicate ---------------------}
 
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
-  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup {!!}
+  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup (strong-lookup x)
 {-
            ; tz = tz-lookup
            ; good = good-lookup x

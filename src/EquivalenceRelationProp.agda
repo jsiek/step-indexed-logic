@@ -37,6 +37,9 @@ data _≐_ {ℓ} {A : Set ℓ} (x : A) : A → Prop ℓ where
 ≐-refl : ∀{ℓ}{A : Set ℓ}{a b : A} → a ≡ b → a ≐ b
 ≐-refl {a}{b} refl = refl
 
+≐-sym : ∀{ℓ}{A : Set ℓ}{a b : A} → a ≐ b → b ≐ a
+≐-sym {a}{b} refl = refl
+
 subst : ∀ {ℓ}{ℓ′}{A : Set ℓ} {x y : A} (P : A → Prop ℓ′)
   → x ≐ y
     ---------
@@ -46,8 +49,8 @@ subst P refl px = px
 instance
   PropEq : ∀{A : Set} → EquivalenceRelation {lzero}{lzero} A
   PropEq {A} = record { _⩦_ = _≐_
-                      ; ⩦-refl = λ {refl → refl}
-                      ; ⩦-sym = λ {refl → refl}
+                      ; ⩦-refl = ≐-refl
+                      ; ⩦-sym = ≐-sym
                       ; ⩦-trans = λ {refl refl → refl}
                       }
 

@@ -1,5 +1,7 @@
 {-# OPTIONS --without-K #-}
 open import Data.List using (List; []; _∷_)
+import Relation.Binary.PropositionalEquality as Eq
+open Eq using (_≡_; refl)
 
 module Variables where
 
@@ -41,3 +43,6 @@ timeof : ∀{Γ}{A} → (x : Γ ∋ A) → Times Γ → Time
 timeof {B ∷ Γ} zeroᵒ (t ∷ Δ) = t
 timeof {B ∷ Γ} (sucᵒ x) (t ∷ Δ) = timeof x Δ
 
+timeof-later : ∀{Γ}{A} → (x : Γ ∋ A) → (timeof x (laters Γ)) ≡ Later
+timeof-later {B ∷ Γ} zeroᵒ = refl
+timeof-later {B ∷ Γ} (sucᵒ x) = timeof-later x
