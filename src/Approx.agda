@@ -37,14 +37,18 @@ instance
 ≡ₒ[0] : ∀{ϕ ψ : Setₒ} → ϕ ≡ₒ[ 0 ] ψ
 ≡ₒ[0] k = (λ ↓0ϕ → ⊥-elim (n≮0{k} (proj₁ ↓0ϕ))) , λ ↓0ψ → ⊥-elim (n≮0{k} (proj₁ ↓0ψ))
 
+cong-approx : ∀ {ϕ ψ : Setₒ} k → ϕ ≡ₒ ψ → ϕ ≡ₒ[ k ] ψ
+cong-approx {ϕ} {ψ} k ϕ=ψ i = (λ {(i<k , ϕi) → i<k , (proj₁ (ϕ=ψ i)) ϕi })
+                             , (λ {(i<k , ψi) → i<k , (proj₂ (ϕ=ψ i)) ψi })
+
 ↓ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
 ↓ᵖ j P a = ↓ j (P a)
 
 ↑ᵖ : ℕ → ∀{A} → Predₒ A → Predₒ A
 ↑ᵖ j P a = ↑ j (P a)
 
-cong-approx : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
-cong-approx {A} {k} {P} {Q} eq a i =
+cong-approxᵖ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
+cong-approxᵖ {A} {k} {P} {Q} eq a i =
   (λ {(i<k , Pa) → i<k , proj₁ (eq a i) Pa}) , λ {(i<k , Qa) → i<k , proj₂ (eq a i) Qa}
 
 j≤k⇒↓kϕ≡[j]ϕ : ∀{j k} (ϕ : Setₒ) → j ≤ k → ↓ k ϕ ≡ₒ[ j ] ϕ

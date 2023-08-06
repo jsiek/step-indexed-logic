@@ -33,21 +33,11 @@ lemma15a {A} {P} {Q} (suc j) f a contr-f congr-f =
     ↓ (suc j) (f ((f ^ j) P) a)
   ⩦⟨ contr-f a ((f ^ j) P) j ⟩
     ↓ (suc j) (f (↓ᵖ j ((f ^ j) P)) a)
-  ⩦⟨ cong-approx{k = suc j} (congr-f λ a → lemma15a j f a contr-f congr-f) a ⟩ 
+  ⩦⟨ cong-approxᵖ{k = suc j} (congr-f λ a → lemma15a j f a contr-f congr-f) a ⟩ 
     ↓ (suc j) (f (↓ᵖ j ((f ^ j) Q)) a)
   ⩦⟨ ≡ₒ-sym (contr-f a ((f ^ j) Q) j) ⟩ 
     ↓ (suc j) (f ((f ^ j) Q) a)
   ∎
-{-
-    f ((f ^ j) P) a
-  ⩦⟨ contr-f a ((f ^ j) P) j ⟩ 
-      f (↓ᵖ j ((f ^ j) P)) a
-  ⩦⟨ cong-approx (congr-f λ a → lemma15a j f a contr-f congr-f) a ⟩
-      f (↓ᵖ j ((f ^ j) Q)) a
-  ⩦⟨ ≡ₒ-sym (contr-f a ((f ^ j) Q) j) ⟩ 
-    f ((f ^ j) Q) a
-  ∎
-  -}
 
 lemma15b : ∀{A}{P : Predₒ A} (k j : ℕ) (f : Predₒ A → Predₒ A) (a : A) → j ≤ k → contractiveᵖ f → congruentᵖ f
    → (f ^ j) P a ≡ₒ[ j ] (f ^ k) P a
@@ -55,17 +45,9 @@ lemma15b {A}{P} k j f a j≤k wf-f cong-f =
     ↓ j ((f ^ j) P a)
   ⩦⟨ lemma15a j f a wf-f cong-f ⟩
     ↓ j ((f ^ j) ((f ^ (k ∸ j)) P) a)
-  ⩦⟨ cong-approx{A}{j}{(f ^ j) ((f ^ (k ∸ j)) P)}{(f ^ k) P} (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
+  ⩦⟨ cong-approxᵖ{A}{j}{(f ^ j) ((f ^ (k ∸ j)) P)}{(f ^ k) P} (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
     ↓ j ((f ^ k) P a)
   ∎
-{-
-    (f ^ j) P a
-  ⩦⟨ lemma15a j f a wf-f cong-f ⟩
-    (f ^ j) ((f ^ (k ∸ j)) P) a
-  ⩦⟨ cong-approx{A}{j}{(f ^ j) ((f ^ (k ∸ j)) P)}{(f ^ k) P} (λ a → ≡ᵖ-refl (iter-subtract f j k j≤k)) a ⟩
-    (f ^ k) P a
-  ∎
-  -}
 
 down-iter : ∀(i : ℕ){A} (F : Predₒ A → Predₒ A) → downClosed-fun F → ∀ a → downClosed ((F ^ i) (λ _ _ → ⊤) a)
 down-iter zero F dc-F = λ a n _ k _ → tt

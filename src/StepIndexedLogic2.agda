@@ -98,7 +98,7 @@ module _ where
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ k → ▷ (# S) δ k) (down-later S) {!!}
+  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ k → ▷ (# S) δ k) (down-later S) (strong-▷ S)
 {-
                 ; tz = {!!}
                 ; good = {!!}
