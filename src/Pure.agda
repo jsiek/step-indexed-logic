@@ -1,19 +1,11 @@
 {-# OPTIONS --without-K --prop #-}
-open import Data.List using (List; []; _∷_; length)
-open import Data.Product using (_,_;_×_) -- ; proj₁; proj₂; Σ-syntax; ∃-syntax)
-open import Data.Nat using (ℕ; zero; suc; _+_)
---open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; sym; trans)
+open import Relation.Binary.PropositionalEquality using (refl)
 
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
+open import PropLib
 open import RawSetO
-open import SetO
 open import Variables
 open import Env
-open import Approx
-open import EquivalenceRelationProp
 
 module Pure where
 

@@ -38,9 +38,7 @@ open import Data.Product
    using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
    -}
 --open import Data.Sum using (_⊎_; inj₁; inj₂)
-{-
 open import Data.Unit using (tt; ⊤)
--}
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
@@ -53,7 +51,7 @@ open import Agda.Builtin.Equality.Rewrite
 
 open import EquivalenceRelationProp public
 
-open import PropLib renaming (⊥ to ⊥ₚ; ⊥-elim to ⊥-elimₚ)
+open import PropLib renaming (⊥ to ⊥ₚ; ⊥-elim to ⊥-elimₚ; ⊤ to ⊤ₚ; tt to ttₚ)
 open import StrongInduction
 open import Variables public
 open import Env public
@@ -68,6 +66,7 @@ open import RecPred
 open import Forall
 open import Exists
 open import Pure
+open import Conjunction
 
 record Inhabited (A : Set) : Set where
   field
@@ -192,11 +191,6 @@ abstract
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
   p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (strong-pure p)
 
-{-  
-               ; tz = {!!}
-               ; good = {!!}
-               ; congr = {!!}
--}               
   #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ (suc k) ≡ Squash p
   #pureᵒ≡ = refl
 
@@ -208,15 +202,9 @@ abstract
 {---------------------- True -----------------------------------------}
 
   ⊤ᵒ : ∀{Γ} → Setᵒ Γ (laters Γ)
-  ⊤ᵒ = make-Setᵒ (λ δ k → ⊤) (λ δ _ n _ k _ → tt) {!!}
+  ⊤ᵒ = ⊤ ᵒ
 
-{-  
-               ; tz = {!!}
-               ; good = {!!}
-               ; congr = {!!}
- -}
-
-  #⊤ᵒ≡⊤ : ∀{Γ}{δ : RecEnv Γ}{k} → # ⊤ᵒ δ k ≡ ⊤
+  #⊤ᵒ≡⊤ : ∀{Γ}{δ : RecEnv Γ}{k} → # ⊤ᵒ δ k ≡ Squash ⊤
   #⊤ᵒ≡⊤ = refl
 
 {---------------------- Conjunction -----------------------------------------}
@@ -230,7 +218,7 @@ abstract
   S ×ᵒ T = make-Setᵒ (λ δ k → # S δ k × # T δ k)
                      (λ δ dc-δ n Sδn×Tδn k k≤n →
                        (down S δ dc-δ n (proj₁ Sδn×Tδn) k k≤n) , (down T δ dc-δ n (proj₂ Sδn×Tδn) k k≤n))
-                     {!!}
+                     (strong-conjunction S T)
 
 {-  
                   ; tz = {!!}
@@ -422,7 +410,7 @@ abstract
 
 abstract
   ttᵒ : 𝒫 ⊢ᵒ ⊤ᵒ
-  ttᵒ n _ = tt
+  ttᵒ n _ = squash tt
 
 abstract
   ⊥-elimᵒ : 𝒫 ⊢ᵒ ⊥ᵒ → (ϕ : Setᵏ) → 𝒫 ⊢ᵒ ϕ
@@ -435,7 +423,7 @@ abstract
 
   ⊥ᵒ⇒⊥ : [] ⊢ᵒ ⊥ᵒ → ⊥ₚ{lzero}
   ⊥ᵒ⇒⊥ ⊢⊥ 
-      with ⊢⊥ 0 tt
+      with ⊢⊥ 0 (squash tt)
   ... | squash ()
   
 abstract
@@ -479,9 +467,9 @@ abstract
 
 abstract
   downClosed-Πᵏ : (𝒫 : List Setᵏ) → downClosed (# (Πᵏ 𝒫) ttᵖ)
-  downClosed-Πᵏ [] = λ n _ k _ → tt
+  downClosed-Πᵏ [] = λ n _ k _ → (squash tt)
   downClosed-Πᵏ (ϕ ∷ 𝒫) n (ϕn , ⊨𝒫n) k k≤n =
-    down ϕ ttᵖ tt n ϕn k k≤n , (downClosed-Πᵏ 𝒫 n ⊨𝒫n k k≤n) -- 
+    down ϕ ttᵖ ttₚ n ϕn k k≤n , (downClosed-Πᵏ 𝒫 n ⊨𝒫n k k≤n) -- 
 
 abstract
   →ᵒI : ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
@@ -569,8 +557,8 @@ abstract
   ▷⊎ ▷ϕ⊎ψ zero 𝒫n = inj₁ λ j ()
   ▷⊎ {𝒫}{ϕ}{ψ} ▷ϕ⊎ψ (suc n) 𝒫n 
       with ▷ϕ⊎ψ (suc n) 𝒫n n (≤-refl{n})
-  ... | inj₁ ϕn = inj₁ λ { j j≤n → down ϕ ttᵖ tt n ϕn j j≤n }
-  ... | inj₂ ψn = inj₂ λ { j j≤n → down ψ ttᵖ tt n ψn j j≤n }
+  ... | inj₁ ϕn = inj₁ λ { j j≤n → down ϕ ttᵖ ttₚ n ϕn j j≤n }
+  ... | inj₂ ψn = inj₂ λ { j j≤n → down ψ ttᵖ ttₚ n ψn j j≤n }
 
   
   ▷→ : 𝒫 ⊢ᵒ (▷ᵒ (ϕ →ᵒ ψ))  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) →ᵒ (▷ᵒ ψ)
@@ -587,11 +575,11 @@ abstract
       with 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk k (≤-refl{k})
   ... | a , ϕk =
       a , λ {j j≤k →
-             let ϕj = down (ϕᵃ a) ttᵖ tt k ϕk j j≤k in
-             down (ϕᵃ a) ttᵖ tt j ϕj j (≤-refl{j})}
+             let ϕj = down (ϕᵃ a) ttᵖ ttₚ k ϕk j j≤k in
+             down (ϕᵃ a) ttᵖ ttₚ j ϕj j (≤-refl{j})}
 
   ▷pureᵒ : [] ⊢ᵒ ▷ᵒ (p ᵒ) → [] ⊢ᵒ p ᵒ
-  ▷pureᵒ ⊢▷ k ttᵖ = ⊢▷ (suc k) tt k (s≤s{k} (≤-refl{k})) 
+  ▷pureᵒ ⊢▷ k ttᵖ = ⊢▷ (suc k) (squash tt) k (s≤s{k} (≤-refl{k})) 
 
   ▷→▷ : ∀{𝒫}{P Q : Setᵏ}
      → 𝒫 ⊢ᵒ ▷ᵒ P

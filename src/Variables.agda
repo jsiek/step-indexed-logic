@@ -46,3 +46,9 @@ timeof {B ∷ Γ} (sucᵒ x) (t ∷ Δ) = timeof x Δ
 timeof-later : ∀{Γ}{A} → (x : Γ ∋ A) → (timeof x (laters Γ)) ≡ Later
 timeof-later {B ∷ Γ} zeroᵒ = refl
 timeof-later {B ∷ Γ} (sucᵒ x) = timeof-later x
+
+timeof-combine : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{A}{x : Γ ∋ A}
+   → timeof x (combine Δ₁ Δ₂) ≡ choose (timeof x Δ₁) (timeof x Δ₂)
+timeof-combine {B ∷ Γ} {s ∷ Δ₁} {t ∷ Δ₂} {.B} {zeroᵒ} = refl
+timeof-combine {B ∷ Γ} {s ∷ Δ₁} {t ∷ Δ₂} {A} {sucᵒ x} =
+  timeof-combine {Γ} {Δ₁} {Δ₂} {A} {x}
