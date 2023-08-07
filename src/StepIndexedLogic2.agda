@@ -98,7 +98,7 @@ module _ where
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ k → ▷ (# S) δ k) (down-later S) (strong-▷ S)
+  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ → ▷ ((# S) δ)) (down-later S) (strong-▷ S)
 {-
                 ; tz = {!!}
                 ; good = {!!}
@@ -106,12 +106,12 @@ module _ where
                 }
                 -}
 
-  #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ ▷ (# ϕ)
+  #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ λ δ → ▷ (# ϕ δ)
   #▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
 
   ▷sk : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ}{δ : RecEnv Γ}{k}
      → downClosedᵈ δ
-     → ▷ (# ϕ) δ (suc k) ⇔ (# ϕ) δ k
+     → ▷ (# ϕ δ) (suc k) ⇔ # ϕ δ k
   ▷sk {Γ}{Δ}{ϕ}{δ}{k} down-δ =
      (λ ▷ϕsk → ▷ϕsk k (≤-refl{k})) , λ ϕk j j<sk → down ϕ δ down-δ k ϕk j (≤-pred{j}{k} j<sk)
 
