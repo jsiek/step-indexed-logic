@@ -6,7 +6,6 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans)
---open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
 
 open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
 open import RawSetO

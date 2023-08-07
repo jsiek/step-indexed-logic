@@ -65,6 +65,7 @@ open import Fixpoint
 open import Membership
 open import Later
 open import RecPred
+open import Forall
 
 record Inhabited (A : Set) : Set where
   field
@@ -132,7 +133,7 @@ abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
-  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) {!!}
+  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) (strong-mu Sᵃ a)
 
 {-    
            ; tz = {!!}
@@ -150,9 +151,9 @@ abstract
   ∀ᵒ : ∀{Γ}{Δ : Times Γ}{A : Set}
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
-  ∀ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ k → ∀ (a : A) → # (P a) δ k)
+  ∀ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
                             (λ δ dc-δ n Pδn k k≤n a → down (P a) δ dc-δ n (Pδn a) k k≤n)
-                            {!!}
+                            (strong-all P)
 
 {-    
            ; tz = {!!}
