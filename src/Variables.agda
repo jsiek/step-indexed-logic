@@ -1,7 +1,7 @@
 {-# OPTIONS --without-K #-}
 open import Data.List using (List; []; _∷_)
 import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl)
+open Eq using (_≡_; refl; cong₂)
 
 module Variables where
 
@@ -52,3 +52,9 @@ timeof-combine : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{A}{x : Γ ∋ A}
 timeof-combine {B ∷ Γ} {s ∷ Δ₁} {t ∷ Δ₂} {.B} {zeroᵒ} = refl
 timeof-combine {B ∷ Γ} {s ∷ Δ₁} {t ∷ Δ₂} {A} {sucᵒ x} =
   timeof-combine {Γ} {Δ₁} {Δ₂} {A} {x}
+
+combine-laters : ∀{Γ} → combine (laters Γ) (laters Γ) ≡ laters Γ
+combine-laters {[]} = refl
+combine-laters {A ∷ Γ} = cong₂ _∷_ refl combine-laters
+
+

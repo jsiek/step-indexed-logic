@@ -1,7 +1,6 @@
 {-# OPTIONS --without-K --prop #-}
 
-open import Agda.Primitive using (lzero; lsuc)
-open import Data.Nat using (ℕ) -- ; _≤_)
+open import Data.Nat using (ℕ)
 open import EquivalenceRelationProp using (EquivalenceRelation; _⇔_; ⩦-refl; ⩦-sym; ⩦-trans)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
