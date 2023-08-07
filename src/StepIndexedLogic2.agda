@@ -67,6 +67,9 @@ open import Forall
 open import Exists
 open import Pure
 open import Conjunction
+open import Disjunction
+open import Implication
+open import Let
 
 record Inhabited (A : Set) : Set where
   field
@@ -215,7 +218,7 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S ×ᵒ T = make-Setᵒ (λ δ k → # S δ k × # T δ k)
+  S ×ᵒ T = make-Setᵒ (λ δ → (# S δ) ×ₒ (# T δ))
                      (λ δ dc-δ n Sδn×Tδn k k≤n →
                        (down S δ dc-δ n (proj₁ Sδn×Tδn) k k≤n) , (down T δ dc-δ n (proj₂ Sδn×Tδn) k k≤n))
                      (strong-conjunction S T)
@@ -246,13 +249,11 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S ⊎ᵒ T = make-Setᵒ (λ δ k → # S δ k ⊎ # T δ k)
+  S ⊎ᵒ T = make-Setᵒ (λ δ → (# S δ) ⊎ₒ (# T δ))
                      (λ {δ dc-δ n (inj₁ Sn) k k≤n → inj₁ (down S δ dc-δ n Sn k k≤n);
                          δ dc-δ n (inj₂ Tn) k k≤n → inj₂ (down T δ dc-δ n Tn k k≤n)})
-                     {!!}
+                     (strong-disjunction S T)
 {-  
-                  ; tz = {!!}
-                  ; good = {!!}
                   ; congr = {!!}
                   -}
 
@@ -278,12 +279,10 @@ abstract
      → Setᵒ Γ Δ₂
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
-  S →ᵒ T = make-Setᵒ (λ δ k → ∀ j → j ≤ k → # S δ j → # T δ j)
+  S →ᵒ T = make-Setᵒ (λ δ → (# S δ) →ₒ (# T δ))
                      (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj → ∀j<n,Sj→Tj j (≤-trans{j}{k}{n} j≤k k≤n) Sj)
-                     {!!}
+                     (strong-implication S T)
 {-  
-                  ; tz = {!!}
-                  ; good = {!!}
                   ; congr = {!!}
 -}                  
   #→ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
@@ -293,9 +292,9 @@ abstract
 {---------------------- Let for Predicates -----------------------------------------}
 
   letᵒ : ∀{A}{Γ}{t}{Δ} → (A → Setᵒ Γ Δ) → Setᵒ (A ∷ Γ) (t ∷ Δ) → Setᵒ Γ Δ   
-  letᵒ Sᵃ T = make-Setᵒ (λ δ k →  # T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ) k)
+  letᵒ Sᵃ T = make-Setᵒ (λ δ →  # T ((λ a → # (Sᵃ a) δ) ,ᵃ δ))
                         (λ δ dc-δ n Tn k k≤n → down T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ) ((λ a → down (Sᵃ a) δ dc-δ) , dc-δ) n Tn k k≤n)
-                        {!!}
+                        (strong-let T Sᵃ)
 
 {-  
                      ; tz = {!!}
