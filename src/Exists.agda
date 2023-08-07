@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --prop --allow-unsolved-metas #-}
+{-# OPTIONS --without-K --prop  #-}
 open import Data.List using (List; []; _∷_; length)
 open import Data.Product using (_,_;_×_) -- ; proj₁; proj₂; Σ-syntax; ∃-syntax)
 open import Data.Nat using (ℕ; zero; suc; _+_)

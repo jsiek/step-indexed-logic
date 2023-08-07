@@ -67,6 +67,7 @@ open import Later
 open import RecPred
 open import Forall
 open import Exists
+open import Pure
 
 record Inhabited (A : Set) : Set where
   field
@@ -189,7 +190,7 @@ abstract
 {---------------------- Pure -----------------------------------------}
 
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
-  p ᵒ = make-Setᵒ (λ δ k → Squash p) (λ δ dc-δ n p k k≤n → p) {!!}
+  p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (strong-pure p)
 
 {-  
                ; tz = {!!}
