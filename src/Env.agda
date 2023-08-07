@@ -58,5 +58,14 @@ strong-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) �
 strong-var x Now F = strongly-nonexpansive x F
 strong-var x Later F = strongly-contractive x F
 
+strong-now⇒nonexpansive : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setₒ}
+   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Now → strongly-nonexpansive x F
+strong-now⇒nonexpansive gF eq rewrite eq = gF
+
+strong-later⇒contractive : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setₒ}
+   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Later → strongly-contractive x F
+strong-later⇒contractive gF eq rewrite eq = gF
+
 strong-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Prop₁
 strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
+
