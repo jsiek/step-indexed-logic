@@ -95,3 +95,16 @@ strong-mu {Γ} {Δ} {A} Sᵃ a x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → mu-nonexpansive Sᵃ a x time-x δ k j k≤j
 ... | Later = λ δ j k k≤j → mu-contractive Sᵃ a x time-x δ k j k≤j
+
+cong-iter : ∀{A}{a : A} (i : ℕ) (f g : Predₒ A → Predₒ A)
+  → (∀ P Q a → (∀ b → P b ≡ₒ Q b) → f P a ≡ₒ g Q a) → (I : Predₒ A)
+  → (f ^ i) I a ≡ₒ (g ^ i) I a
+cong-iter zero f g f=g I = ≡ₒ-refl refl
+cong-iter{A}{a} (suc i) f g f=g I =
+  let IH = λ b → cong-iter{A}{b} i f g f=g I in
+  f=g ((f ^ i) I) ((g ^ i) I) a IH
+
+congruent-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
+   → congruent (λ δ → mu Sᵃ δ a)
+congruent-mu{Γ}{Δ}{A} Sᵃ a {δ}{δ′} δ=δ′ k =
+  cong-iter (suc k) (⟅ Sᵃ ⟆ δ) (⟅ Sᵃ ⟆ δ′) (λ P Q a P=Q → congr (Sᵃ a) (P=Q ,ₚ δ=δ′)) ⊤ᵖ k

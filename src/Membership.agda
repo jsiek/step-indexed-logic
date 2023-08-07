@@ -75,3 +75,9 @@ strong-lookup {B ∷ Γ}{A}{a} (sucᵒ x) (sucᵒ y)
       let eq = (lookup-diff{Γ}{δ = δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
       subst (λ X → (lookup x δ a) ≡ₒ[ suc k ] (X a)) (≐-sym (≐-refl eq)) (≡ₒ-refl refl)
       
+congruent-lookup : ∀{Γ}{A} (x : Γ ∋ A) (a : A) → congruent (λ δ → lookup x δ a)
+congruent-lookup x a d=d′ = aux x a d=d′
+  where
+  aux : ∀{Γ}{A}{δ δ′ : RecEnv Γ} (x : Γ ∋ A) (a : A) → δ ≡ᵈ δ′ → lookup x δ a ≡ₒ lookup x δ′ a
+  aux {B ∷ Γ} {.B}{P , δ}{P′ , δ′} zeroᵒ a (P=P′ ,ₚ d=d′) = P=P′ a
+  aux {B ∷ Γ} {A}{P , δ}{P′ , δ′} (sucᵒ x) a (P=P′ ,ₚ d=d′) = aux x a d=d′

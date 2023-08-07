@@ -1,4 +1,4 @@
-{-# OPTIONS --without-K --rewriting --prop --allow-unsolved-metas #-}
+{-# OPTIONS --without-K --rewriting --prop #-}
 
 {-
 
@@ -86,13 +86,7 @@ module _ where
  {---------------------- Membership in Recursive Predicate ---------------------}
 
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
-  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup (strong-lookup x)
-{-
-           ; tz = tz-lookup
-           ; good = good-lookup x
-           ; congr = congruent-lookup x a
-           }
-           -}
+  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup (strong-lookup x) (congruent-lookup x a)
 
   #∈≡ : ∀{Γ}{A} → (a : A) → (x : Γ ∋ A) → # (a ∈ x) ≡ λ δ → (lookup x δ) a
   #∈≡ a x = refl
@@ -103,13 +97,7 @@ module _ where
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ → ▷ ((# S) δ)) (down-later S) (strong-▷ S)
-{-
-                ; tz = {!!}
-                ; good = {!!}
-                ; congr = {!!}
-                }
-                -}
+  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ → ▷ ((# S) δ)) (down-later S) (strong-▷ S) (λ δ=δ′ → cong-▷ (congr S δ=δ′))
 
   #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ λ δ → ▷ (# ϕ δ)
   #▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
@@ -130,21 +118,13 @@ module _ where
   ◇ᵒ {Γ} {Δ} zero ϕ = ▷ᵒ ϕ
   ◇ᵒ {Γ} {Δ} (suc i) ϕ = ◇ᵒ i (▷ᵒ ϕ)
 
-
 {---------------------- Recursive Predicate -----------------------------------}
 
 abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
-  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) (strong-mu Sᵃ a)
-
-{-    
-           ; tz = {!!}
-           ; good = {!!}
-           ; congr = {!!}
-           }
--}
+  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) (strong-mu Sᵃ a) (congruent-mu Sᵃ a)
 
   #μᵒ≡ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) → ∀ δ k
      → # (μᵒ Sᵃ a) δ k ≡ mu Sᵃ δ a k
@@ -158,13 +138,7 @@ abstract
   ∀ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
                             (λ δ dc-δ n Pδn k k≤n a → down (P a) δ dc-δ n (Pδn a) k k≤n)
                             (strong-all P)
-
-{-    
-           ; tz = {!!}
-           ; good = {!!}
-           ; congr = {!!}
-           }
-           -}
+                            (λ δ=δ′ → cong-∀ λ a → congr (P a) δ=δ′)
 
   #∀ᵒ≡ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}{Sᵃ : A → Setᵒ Γ Δ}{δ}{k}
      → (# (∀ᵒ Sᵃ) δ k) ≡ ∀ (a : A) → # (Sᵃ a) δ k
@@ -178,11 +152,7 @@ abstract
   ∃ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
                             (λ δ dc-δ n a×Paδn k k≤n → match a×Paδn λ a Pa → a , (down (P a) δ dc-δ n Pa k k≤n))
                             (strong-exists P)
-{-
-; tz = {!!}
-           ; good = {!!}
-           ; congr = {!!}
-           -}
+                            (λ δ=δ′ → cong-∃ λ a → congr (P a) δ=δ′)
 
   #∃ᵒ≡ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}{Sᵃ : A → Setᵒ Γ Δ}{δ}{k}
      → (# (∃ᵒ Sᵃ) δ k) ≡ (Σ[ a ∈ A ] (# (Sᵃ a) δ k))
@@ -192,7 +162,7 @@ abstract
 {---------------------- Pure -----------------------------------------}
 
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
-  p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (strong-pure p)
+  p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (strong-pure p) (λ δ=δ′ → ≡ₒ-refl refl)
 
   #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ (suc k) ≡ Squash p
   #pureᵒ≡ = refl
@@ -220,14 +190,11 @@ abstract
      → Setᵒ Γ (combine Δ₁ Δ₂)
   S ×ᵒ T = make-Setᵒ (λ δ → (# S δ) ×ₒ (# T δ))
                      (λ δ dc-δ n Sδn×Tδn k k≤n →
-                       (down S δ dc-δ n (proj₁ Sδn×Tδn) k k≤n) , (down T δ dc-δ n (proj₂ Sδn×Tδn) k k≤n))
+                       (down S δ dc-δ n (proj₁ Sδn×Tδn) k k≤n)
+                       , (down T δ dc-δ n (proj₂ Sδn×Tδn) k k≤n))
                      (strong-conjunction S T)
+                     (λ δ=δ′ → cong-×ₒ (congr S δ=δ′) (congr T δ=δ′))
 
-{-  
-                  ; tz = {!!}
-                  ; good = {!!}
-                  ; congr = {!!}
--}                  
   #×ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
        → (# (ϕ ×ᵒ ψ) δ k) ≡ (# ϕ δ k × # ψ δ k)
   #×ᵒ≡ {Γ}{Δ₁}{Δ₂}{ϕ}{ψ}{δ}{k} = refl
@@ -253,9 +220,7 @@ abstract
                      (λ {δ dc-δ n (inj₁ Sn) k k≤n → inj₁ (down S δ dc-δ n Sn k k≤n);
                          δ dc-δ n (inj₂ Tn) k k≤n → inj₂ (down T δ dc-δ n Tn k k≤n)})
                      (strong-disjunction S T)
-{-  
-                  ; congr = {!!}
-                  -}
+                     λ δ=δ′ → cong-⊎ₒ (congr S δ=δ′) (congr T δ=δ′)
 
   #⊎ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
        → (# (ϕ ⊎ᵒ ψ) δ k) ≡ (# ϕ δ k ⊎ # ψ δ k)
@@ -280,11 +245,11 @@ abstract
        ------------------------
      → Setᵒ Γ (combine Δ₁ Δ₂)
   S →ᵒ T = make-Setᵒ (λ δ → (# S δ) →ₒ (# T δ))
-                     (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj → ∀j<n,Sj→Tj j (≤-trans{j}{k}{n} j≤k k≤n) Sj)
+                     (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj →
+                        ∀j<n,Sj→Tj j (≤-trans{j}{k}{n} j≤k k≤n) Sj)
                      (strong-implication S T)
-{-  
-                  ; congr = {!!}
--}                  
+                     (λ δ=δ′ → cong-→ₒ (congr S δ=δ′) (congr T δ=δ′))
+                     
   #→ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
        → (# (ϕ →ᵒ ψ) δ k) ≡ (∀ j → j ≤ k → # ϕ δ j → # ψ δ j)
   #→ᵒ≡ {Γ}{Δ₁}{Δ₂}{ϕ}{ψ}{δ}{k} = refl
@@ -293,14 +258,13 @@ abstract
 
   letᵒ : ∀{A}{Γ}{t}{Δ} → (A → Setᵒ Γ Δ) → Setᵒ (A ∷ Γ) (t ∷ Δ) → Setᵒ Γ Δ   
   letᵒ Sᵃ T = make-Setᵒ (λ δ →  # T ((λ a → # (Sᵃ a) δ) ,ᵃ δ))
-                        (λ δ dc-δ n Tn k k≤n → down T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ) ((λ a → down (Sᵃ a) δ dc-δ) , dc-δ) n Tn k k≤n)
+                        (λ δ dc-δ n Tn k k≤n →
+                              down T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ)
+                                     ((λ a → down (Sᵃ a) δ dc-δ) , dc-δ)
+                                     n Tn k k≤n)
                         (strong-let T Sᵃ)
-
-{-  
-                     ; tz = {!!}
-                     ; good = {!!}
-                     ; congr = {!!}
--}
+                        λ δ=δ′ → congr T ((λ a → congr (Sᵃ a) δ=δ′) , δ=δ′)
+                        
   #letᵒ≡ : ∀{A}{Γ}{Δ}{t} (P : A → Setᵒ Γ Δ) (ϕ : Setᵒ (A ∷ Γ) (t ∷ Δ)) → ∀ δ k
      → (# (letᵒ P ϕ) δ k) ≡ (# ϕ ((λ a k → # (P a) δ k) ,ᵃ δ) k)
   #letᵒ≡ {A}{Γ}{Δ}{t} P ϕ d k = refl

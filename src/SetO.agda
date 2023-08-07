@@ -23,20 +23,16 @@ record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
     # : RecEnv Γ → Setₒ
     down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
     strong : strong-fun Δ #
-{-    
     congr : congruent #
--}    
+
 open Setᵒ public
 
 make-Setᵒ : ∀{Γ}{Δ} → (sem : RecEnv Γ → Setₒ)
   → (∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ))
   → (strong-fun Δ sem)
+  → (congruent sem)
   → Setᵒ Γ Δ
-make-Setᵒ sem dc s = record { # = sem ; down = dc ; strong = s}
-
---postulate down : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → ∀ δ → downClosedᵈ δ → downClosed (# ϕ δ)
---postulate strong : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → strong-fun Δ (# ϕ)
-postulate congr : ∀{Γ}{Δ} (ϕ : Setᵒ Γ Δ) → congruent (# ϕ)
+make-Setᵒ sem dc s c = record { # = sem ; down = dc ; strong = s ; congr = c}
 
 private variable Γ : Context
 private variable Δ : Times Γ
