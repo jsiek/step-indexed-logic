@@ -66,6 +66,7 @@ open import Membership
 open import Later
 open import RecPred
 open import Forall
+open import Exists
 
 record Inhabited (A : Set) : Set where
   field
@@ -171,9 +172,9 @@ abstract
   ∃ᵒ : ∀{Γ}{Δ : Times Γ}{A : Set}{{_ : Inhabited A}}
      → (A → Setᵒ Γ Δ)
      → Setᵒ Γ Δ
-  ∃ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ k → Σ[ a ∈ A ] # (P a) δ k)
+  ∃ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
                             (λ δ dc-δ n a×Paδn k k≤n → match a×Paδn λ a Pa → a , (down (P a) δ dc-δ n Pa k k≤n))
-                            {!!}
+                            (strong-exists P)
 {-
 ; tz = {!!}
            ; good = {!!}
