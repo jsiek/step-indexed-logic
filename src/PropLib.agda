@@ -21,14 +21,6 @@ data ⊥ {ℓ} : Prop ℓ where
 data ⊤ {ℓ} : Prop ℓ where
   tt : ⊤
 
-{-
-⊤ : ∀{ℓ} → Prop (lsuc ℓ)
-⊤ {ℓ} = ∀ (P : Prop ℓ) → P → P
-
-tt : ∀{ℓ} → ⊤{ℓ}
-tt = λ P x → x
--}
-
 infixr 2 _×_
 infixr 4 _,_
 data _×_ {ℓ} (A B : Prop ℓ) : Prop ℓ where
