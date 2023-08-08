@@ -31,6 +31,7 @@ _∎ : ∀{ℓ ℓ′}{A : Set ℓ}{{_ : EquivalenceRelation{ℓ}{ℓ′} A}}
    → P ⩦ P
 P ∎ = ⩦-refl refl
 
+infix 0 _≐_
 data _≐_ {ℓ} {A : Set ℓ} (x : A) : A → Prop ℓ where
   refl : x ≐ x
 

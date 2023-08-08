@@ -149,13 +149,21 @@ abstract
   #∃ᵒ≡ = refl
   
 
-{---------------------- Pure -----------------------------------------}
+{---------------------- Pure (Set) ------------------------------------}
 
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
   p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (strong-pure p) (λ δ=δ′ → ≡ₒ-refl refl)
 
   #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ (suc k) ≡ Squash p
   #pureᵒ≡ = refl
+
+{---------------------- Pure (Prop) -----------------------------------}
+
+  _ᵖ : ∀{Γ} → Prop → Setᵒ Γ (laters Γ)
+  p ᵖ = make-Setᵒ (λ δ → p ₚ) (λ δ dc-δ n p k k≤n → p) (strong-pure-prop p) (λ δ=δ′ → ≡ₒ-refl refl)
+
+  #pureᵖ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵖ) δ (suc k) ≡ p
+  #pureᵖ≡ = refl
 
 {---------------------- False -----------------------------------------}
 
@@ -270,7 +278,11 @@ abstract
   let-pureᵒ : ∀{A : Set}{P : A → Setᵒ [] []}{p : Set}
      → letᵒ P (p ᵒ) ≡ p ᵒ
   let-pureᵒ = refl
-  
+
+  let-pureᵖ : ∀{A : Set}{P : A → Setᵒ [] []}{p : Prop}
+     → letᵒ P (p ᵖ) ≡ p ᵖ
+  let-pureᵖ = refl
+
   let-⊥ᵒ : ∀{A}{P : A → Setᵒ [] []}
      → letᵒ P ⊥ᵒ ≡ ⊥ᵒ
   let-⊥ᵒ = refl
@@ -304,6 +316,7 @@ abstract
 {-# REWRITE let-▷ᵒ #-}
 {-# REWRITE let-∈ #-}
 {-# REWRITE let-pureᵒ #-}
+{-# REWRITE let-pureᵖ #-}
 {-# REWRITE let-×ᵒ #-}
 {-# REWRITE let-⊎ᵒ #-}
 {-# REWRITE let-→ᵒ #-}
@@ -390,6 +403,17 @@ abstract
 
   pureᵒE[] : [] ⊢ᵒ p ᵒ  →  Squash p
   pureᵒE[] ⊢pᵒ = ⊢pᵒ 0 (squash tt)
+
+  pureᵖI : ∀{p : Prop} → p → 𝒫 ⊢ᵒ p ᵖ
+  pureᵖI s n ⊨𝒫n = s
+
+  pureᵖE : ∀{p : Prop} → 𝒫 ⊢ᵒ p ᵖ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+  pureᵖE {𝒫} {p} {R} ⊢p p→⊢R n 𝒫n 
+     with ⊢p n 𝒫n
+  ... | r = p→⊢R r n 𝒫n
+
+  pureᵖE[] : ∀{p : Prop} → [] ⊢ᵒ p ᵖ  → p
+  pureᵖE[] ⊢pᵖ = ⊢pᵖ 0 (squash tt)
 
 pureᵒE-syntax = pureᵒE
 infix 1 pureᵒE-syntax

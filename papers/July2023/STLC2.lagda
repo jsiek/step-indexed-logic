@@ -1,6 +1,6 @@
 \begin{comment}
 \begin{code}
-{-# OPTIONS --rewriting #-}
+{-# OPTIONS --rewriting --prop #-}
 
 module July2023.STLC2 where
 
@@ -10,24 +10,32 @@ open import Data.Nat.Induction
 open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List using (map)
 open import Data.Nat.Properties
+
 open import Data.Product using (_,_;_×_; proj₁; proj₂; Σ-syntax; ∃-syntax)
 open import Data.Unit using (⊤; tt)
-open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
-open import Data.Vec using (Vec) renaming ([] to []̌; _∷_ to _∷̌_)
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
+open import Relation.Nullary using (¬_; Dec; yes; no)
+open import PropLib using (⊥-elimₛ) renaming (_⊎_ to _⊎ₚ_; ⊥-elim to ⊥-elimₚ; Σ to Σₚ; ¬_ to ¬ₚ_)
+
+{-
+open import Data.Product using () renaming (_×_ to _×ₐ_; _,_ to _,ₐ_; Σ to Σₐ)
+open import Data.Sum using () renaming (_⊎_ to _⊎ₐ_; inj₁ to inj₁ₐ; inj₂ to inj₂ₐ)
+open import PropLib
+-}
+
+open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
+open import Data.Vec using (Vec) renaming ([] to []̌; _∷_ to _∷̌_)
 open import Induction using (RecStruct)
-open import Induction.WellFounded as WF
-open import Data.Product.Relation.Binary.Lex.Strict
-  using (×-Lex; ×-wellFounded; ×-preorder)
+--open import Induction.WellFounded as WF
+--open import Data.Product.Relation.Binary.Lex.Strict using (×-Lex; ×-wellFounded; ×-preorder)
 open import Relation.Binary using (Rel)
 open import Relation.Binary.PropositionalEquality as Eq
   using (_≡_; _≢_; refl; sym; cong; cong₂; subst; trans)
-open import Relation.Nullary using (¬_; Dec; yes; no)
 open import Sig
 open import Var
 open import StepIndexedLogic2
-open import EquivalenceRelation public
+open import EquivalenceRelationProp public
 
 \end{code}
 \end{comment}
@@ -661,12 +669,12 @@ then it must either be a lambda abstraction or a fixpoint value.
 \noindent A well-behaved value is also a well-behaved term.
 
 \begin{code}
-.𝒱⇒ℰ : ∀{A}{𝒫}{V} →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ V  →  𝒫 ⊢ᵒ ℰ⟦ A ⟧ V
+𝒱⇒ℰ : ∀{A}{𝒫}{V} →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ V  →  𝒫 ⊢ᵒ ℰ⟦ A ⟧ V
 𝒱⇒ℰ {A}{𝒫}{V} 𝒫⊢𝒱V = ℰ-intro prog pres
     where prog = inj₁ᵒ 𝒫⊢𝒱V
           pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ V—→N →
                    pureᵒE (Sᵒ (𝒱⇒Value A V 𝒫⊢𝒱V)) λ v →
-                   ⊥-elim (value-irreducible v V—→N))
+                   ⊥-elimₛ (value-irreducible v V—→N))
 \end{code}
 
 \subsection{Definition of Semantic Type Safety for Open Terms}
@@ -695,7 +703,7 @@ a well behaved value.
 
 \begin{code}
 infix 3 _⊨ⱽ_⦂_
-_⊨ⱽ_⦂_ : List Type → Term → Type → Set
+_⊨ⱽ_⦂_ : List Type → Term → Type → Prop
 Γ ⊨ⱽ V ⦂ A = ∀ (γ : Subst) → 𝓖⟦ Γ ⟧ γ ⊢ᵒ 𝒱⟦ A ⟧ (⟪ γ ⟫ V)
 \end{code}
 
@@ -705,7 +713,7 @@ $⟪ γ ⟫\, M$ is well behaved.
 
 \begin{code}
 infix 3 _⊨_⦂_
-_⊨_⦂_ : List Type → Term → Type → Set
+_⊨_⦂_ : List Type → Term → Type → Prop
 Γ ⊨ M ⦂ A = ∀ (γ : Subst) → 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M)
 \end{code}
 

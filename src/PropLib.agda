@@ -3,6 +3,7 @@
 open import Agda.Primitive using (lzero; lsuc; _⊔_)
 open import Data.Nat using (ℕ; zero; suc)
 import Relation.Binary.PropositionalEquality as Eq
+open import Data.Empty renaming (⊥ to ⊥ₐ; ⊥-elim to ⊥-elimₐ)
 open Eq using (_≡_; refl)
 
 module PropLib where
@@ -17,6 +18,9 @@ data ⊥ {ℓ} : Prop ℓ where
 
 ⊥-elim : ∀{ℓ}{A : Prop ℓ} → ⊥{ℓ} → A
 ⊥-elim {A} ()
+
+⊥-elimₛ : ∀{ℓ}{A : Prop ℓ} → ⊥ₐ → A
+⊥-elimₛ {A} ()
 
 data ⊤ {ℓ} : Prop ℓ where
   tt : ⊤
@@ -90,3 +94,6 @@ n≮0 {n} ()
 
 ≤-pred : ∀ {m n} → suc m ≤ suc n → m ≤ n
 ≤-pred {m}{n} m≤n = m≤n
+
+¬_ : ∀{ℓ} → Prop ℓ → Prop ℓ
+¬_ {ℓ} A = A → ⊥{ℓ}
