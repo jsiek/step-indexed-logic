@@ -1,3 +1,5 @@
+\begin{comment}
+\begin{code}
 {-# OPTIONS --without-K --rewriting --prop #-}
 
 {-
@@ -27,17 +29,8 @@ open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _+_; _∸_) renaming (_<_ to _<ₙ_)
-{-
-open import Data.Nat.Properties
-   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; ≤-pred)
-   -}
 open import Data.Product
    renaming (_,_ to _,ᵃ_; ∃ to ∃ᵃ) using ()
-{-
-open import Data.Product
-   using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
-   -}
---open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit using (tt; ⊤)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
@@ -70,7 +63,10 @@ open import Conjunction
 open import Disjunction
 open import Implication
 open import Let
+\end{code}
+\end{comment}
 
+\begin{code}
 record Inhabited (A : Set) : Set where
   field
     elt : A
@@ -80,8 +76,7 @@ instance
   ℕ-Inhabited : Inhabited ℕ
   ℕ-Inhabited = record { elt = zero }
 
-module _ where
- abstract
+abstract
 
  {---------------------- Membership in Recursive Predicate ---------------------}
 
@@ -705,3 +700,4 @@ abstract
   let ◇kϕ = ▷ϕ⇒ϕ (◇▷⇒▷◇ k ◇k▷ϕ) in
   []⊢◇ϕ⇒[]⊢ϕ {k = k} ◇kϕ
 
+\end{code}

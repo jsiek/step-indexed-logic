@@ -220,6 +220,9 @@
 \newunicodechar{♭}{\ensuremath{\flat}}
 \newunicodechar{ℓ}{\ensuremath{\ell}}
 \newunicodechar{ₒ}{\ensuremath{_o}}
+\newunicodechar{ₛ}{\ensuremath{_s}}
+\newunicodechar{ₚ}{\ensuremath{_p}}
+\newunicodechar{ₐ}{\ensuremath{_a}}
 \newunicodechar{ᵃ}{\ensuremath{^a}}
 \newunicodechar{ⁱ}{\ensuremath{^i}}
 \newunicodechar{ⱽ}{\ensuremath{^V}}
@@ -238,6 +241,13 @@
 \newunicodechar{𝓖}{\ensuremath{\mathcal{G}}}
 \newunicodechar{𝓔}{\ensuremath{\mathcal{E}}}
 \newunicodechar{⨟}{\ensuremath{\fatsemi}}
+\newunicodechar{≐}{\ensuremath{\doteq}}
+\newunicodechar{⊂}{\ensuremath{\subset}}
+\newunicodechar{⌊}{\ensuremath{\lfloor}}
+\newunicodechar{⌋}{\ensuremath{\rfloor}}
+\newunicodechar{ᵇ}{\ensuremath{^b}}
+\newunicodechar{ᵏ}{\ensuremath{^k}}
+\newunicodechar{◇}{\ensuremath{\diamond}}
                  
                  
 %%
@@ -293,6 +303,14 @@
 %% the author to define a more concise list
 %% of authors' names for this purpose.
 %\renewcommand{\shortauthors}{Trovato et al.}
+
+%
+%  step-indexed logics 
+%
+%
+%
+
+
 
 %%
 %% The abstract is a short summary of the work to be presented in the
@@ -399,12 +417,14 @@ ergonomics of interactive proof development using SIL.  Limitations in
 Agda's inference algorithm sometimes leads to verbosity in SIL proofs.
 
 
-\input{latex/July2023/SILIntro.tex}
+% \input{latex/July2023/SILIntro.tex}
 
-\input{latex/July2023/STLC.tex}
-\input{latex/July2023/STLCDeterministic.tex}
-\input{latex/July2023/STLCBind.tex}
-\input{latex/July2023/STLCSafe.tex}
+\input{latex/July2023/STLC2.tex}
+\input{latex/July2023/LogRel2.tex}
+\input{latex/July2023/STLCDeterministic2.tex}
+\input{latex/July2023/STLCBind2.tex}
+\input{latex/July2023/STLCSafe2.tex}
+\input{latex/July2023/STLCTypeSafe.tex}
 
 \section{Constructing a Step-Indexed Logic}
 
@@ -464,8 +484,8 @@ proof rules of this modal logic.
 
 \input{review-appel.tex}
 
-\input{latex/July2023/StepIndexedLogic.tex}
-\input{latex/July2023/SILReference.tex}
+\input{../../src/latex/StepIndexedLogic2.tex}
+% \input{latex/July2023/SILReference.tex}
 
 
 \bibliographystyle{ACM-Reference-Format}

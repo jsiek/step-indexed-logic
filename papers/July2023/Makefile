@@ -1,4 +1,10 @@
-paper.pdf: paper.tex latex/July2023/StepIndexedLogic.tex latex/July2023/SILIntro.tex latex/July2023/SILReference.tex latex/July2023/STLC.tex latex/July2023/STLCDeterministic.tex latex/July2023/STLCBind.tex latex/July2023/STLCSafe.tex latex/July2023/STLCDeterministic.tex
+SRCDIR = ../../src
+SRCTEX = $(SRCDIR)/latex
+
+PAPERTEX = latex/July2023
+
+# latex/July2023/SILIntro.tex latex/July2023/SILReference.tex
+paper.pdf: paper.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex 
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper
@@ -10,26 +16,32 @@ texclean:
 	rm -f paper.out paper.aux paper.bbl paper.blg
 
 clean:
-	rm -f paper.out paper.aux paper.bbl paper.blg latex/July2023/*
+	rm -f paper.out paper.aux paper.bbl paper.blg $(PAPERTEX)/* $(SRCTEX)/*
 
 
-latex/July2023/StepIndexedLogic.tex: StepIndexedLogic.lagda
-	agda --latex StepIndexedLogic.lagda
+$(SRCTEX)/StepIndexedLogic2.tex: StepIndexedLogic2.lagda
+	cd $(SRCDIR) ; agda --latex StepIndexedLogic2.lagda
 
-latex/July2023/SILIntro.tex: SILIntro.lagda StepIndexedLogic.lagda
+$(PAPERTEX)/SILIntro.tex: SILIntro.lagda StepIndexedLogic.lagda
 	agda --latex SILIntro.lagda
 
-latex/July2023/SILReference.tex: SILReference.lagda StepIndexedLogic.lagda
+$(PAPERTEX)/SILReference.tex: SILReference.lagda StepIndexedLogic.lagda
 	agda --latex SILReference.lagda
 
-latex/July2023/STLC.tex: STLC.lagda StepIndexedLogic.lagda
-	agda --latex STLC.lagda
+$(PAPERTEX)/STLC2.tex: STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+	agda --latex STLC2.lagda
 
-latex/July2023/STLCDeterministic.tex: STLCDeterministic.lagda STLC.lagda StepIndexedLogic.lagda
-	agda --latex STLCDeterministic.lagda
+$(PAPERTEX)/LogRel2.tex: STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+	agda --latex LogRel2.lagda
 
-latex/July2023/STLCBind.tex: STLCBind.lagda STLCDeterministic.lagda STLC.lagda StepIndexedLogic.lagda
-	agda --latex STLCBind.lagda
+$(PAPERTEX)/STLCDeterministic2.tex: STLCDeterministic2.lagda STLC.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+	agda --latex STLCDeterministic2.lagda
 
-latex/July2023/STLCSafe.tex: STLCSafe.lagda  STLCBind.lagda STLC.lagda StepIndexedLogic.lagda
-	agda --latex STLCSafe.lagda
+$(PAPERTEX)/STLCBind2.tex: STLCBind2.lagda STLCDeterministic2.lagda STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+	agda --latex STLCBind2.lagda
+
+$(PAPERTEX)/STLCSafe2.tex: STLCSafe2.lagda  STLCBind2.lagda STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+	agda --latex STLCSafe2.lagda
+
+$(PAPERTEX)/STLCTypeSafe.tex: STLCTypeSafe.lagda STLCSafe2.lagda  STLCBind2.lagda STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+	agda --latex STLCTypeSafe.lagda

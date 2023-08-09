@@ -1,26 +1,36 @@
 \begin{comment}
 \begin{code}
-{-# OPTIONS --rewriting --without-K --allow-unsolved-metas #-}
+{-# OPTIONS --rewriting --without-K --prop --allow-unsolved-metas #-}
 module July2023.SILIntro where
 
 open import Data.Empty using (⊥; ⊥-elim)
+open import Data.Product
+   using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
+open import Data.Unit using (tt; ⊤)
+open import Relation.Nullary using (¬_)
+open import EquivalenceRelation public
+
+open import Agda.Primitive using (lzero; lsuc; _⊔_)
 open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; _*_; z≤n; s≤s; _≤′_; ≤′-step; ≤-pred)
 open import Data.Nat.Properties
    using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s; 0≢1+n)
-open import Data.Product
-   using (_×_; _,_; proj₁; proj₂; Σ; ∃; Σ-syntax; ∃-syntax)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
-open import Data.Unit using (tt; ⊤)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
-open import Relation.Nullary using (¬_)
 open import Function using (id; _∘_)
 open import Level using (Lift)
-open import EquivalenceRelation public
-open import July2023.StepIndexedLogic
+open import StepIndexedLogic2
+open import PropLib using (squash; ⌊_⌋) renaming (Σ to Σₚ; _,_ to _,ₚ_; ⊥-elim to ⊥-elimₚ)
+
+infix 2 Σ-syntaxₚ
+Σ-syntaxₚ : ∀{a b} → (A : Set a) → (A → Prop b) → Prop (a ⊔ b)
+Σ-syntaxₚ = Σₚ
+
+syntax Σ-syntaxₚ A (λ x → B) = Σₚ[ x ∈ A ] B
+
 
 postulate excl-mid : ∀ (P : Set) → P ⊎ ¬ P
 
@@ -37,15 +47,15 @@ Agda, we add a superscript ``o'' to most names.
 
 \begin{code}
 _ : Set₁
-_ = Setᵒ
+_ = Setᵒ [] []
 \end{code}
 
 \begin{code}
-variable ϕ ϕ′ ψ ψ′ þ : Setᵒ
+variable ϕ ϕ′ ψ ψ′ þ : Setᵒ [] []
 \end{code}
 
 \begin{code}
-variable 𝒫 : List Setᵒ
+variable 𝒫 : List (Setᵒ [] [])
 \end{code}
 
 \noindent The representation, or meaning, of a SIL formula is an Agda
@@ -55,8 +65,8 @@ we write $\#\, ϕ\, k$ to mean that formula $ϕ$ is true at time $k$, or
 just say ``ϕ at $k$''.
 
 \begin{code}
-_ : Setᵒ → ℕ → Set
-_ = #
+--_ : Setᵒ → ℕ → Prop
+--_ = #
 \end{code}
 
 \noindent The purpose of the step indexing in SIL is to support the
@@ -72,8 +82,8 @@ all times. (We recommend ignoring the Agda proofs in this section as
 they involve ideas that we have not yet discussed.)
 
 \begin{code}
-_ : ([] ⊢ᵒ ϕ)  ⇔  (∀ n → # ϕ n)
-_ = (λ ⊢ϕ k → ⊢ᵒE ⊢ϕ k tt) , λ ∀nϕn → ⊢ᵒI λ n _ → ∀nϕn n
+--_ : ([] ⊢ᵒ ϕ)  ⇔  (∀ n → # ϕ n)
+--_ = (λ ⊢ϕ k → ⊢ᵒE ⊢ϕ k tt) , λ ∀nϕn → ⊢ᵒI λ n _ → ∀nϕn n
 \end{code}
 
 \noindent We discuss the entailment relation ⊢ᵒ in more detail in
@@ -82,7 +92,7 @@ Section~\ref{sec:proof-rules}.
 The ``pure'' connective imports (timeless) Agda propositions into SIL.
 
 \begin{code}
-_ : Set → Setᵒ
+_ : Set → Setᵒ [] []
 _ = _ᵒ
 \end{code}
 
@@ -97,8 +107,8 @@ _ = pureᵒI refl
 \noindent Of course, it is not true that $0 = 1$. 
 
 \begin{code}
-_ : ¬  ([] ⊢ᵒ (0 ≡ 1)ᵒ)
-_ = λ ⊢0=1ᵒ → ⊥ᵒ⇒⊥ (let-pureᵒ[ 0=1 ] ⊢0=1ᵒ within ⊥⇒⊥ᵒ (0≢1+n 0=1))
+-- _ : ¬  ([] ⊢ᵒ (0 ≡ 1)ᵒ)
+-- _ = λ ⊢0=1ᵒ → ⊥ᵒ⇒⊥ (let-pureᵒ[ 0=1 ] ⊢0=1ᵒ within ⊥⇒⊥ᵒ (0≢1+n 0=1))
 \end{code}
 
 
@@ -107,7 +117,7 @@ _ = λ ⊢0=1ᵒ → ⊥ᵒ⇒⊥ (let-pureᵒ[ 0=1 ] ⊢0=1ᵒ within ⊥⇒⊥
 The ``true'' formula in SIL is written ⊤ᵒ
 
 \begin{code}
-_ : Setᵒ
+_ : Setᵒ [] []
 _ = ⊤ᵒ
 \end{code}
 
@@ -122,16 +132,16 @@ _ = ttᵒ
 disjunction, and implication.
 
 \begin{code}
-_ : Setᵒ
+_ : Setᵏ
 _ = ⊥ᵒ
 
-_ : Setᵒ → Setᵒ → Setᵒ
+_ : Setᵏ → Setᵏ → Setᵏ
 _ = _×ᵒ_
 
-_ : Setᵒ → Setᵒ → Setᵒ
+_ : Setᵏ → Setᵏ → Setᵏ
 _ = _⊎ᵒ_
 
-_ : Setᵒ → Setᵒ → Setᵒ
+_ : Setᵏ → Setᵏ → Setᵏ
 _ = _→ᵒ_
 \end{code}
 
@@ -140,8 +150,8 @@ ones in Agda. For example, conjunction in SIL is equivalent to
 conjunction in Agda.
 
 \begin{code}
-_ : ([] ⊢ᵒ ϕ ×ᵒ ψ) ⇔ (([] ⊢ᵒ ϕ) × ([] ⊢ᵒ ψ))
-_ = (λ ϕ×ψ → (proj₁ᵒ ϕ×ψ , proj₂ᵒ ϕ×ψ)) , λ {(ϕ , ψ) → (ϕ ,ᵒ ψ)}
+--_ : ([] ⊢ᵒ ϕ ×ᵒ ψ) ⇔ (([] ⊢ᵒ ϕ) × ([] ⊢ᵒ ψ))
+--_ = (λ ϕ×ψ → (proj₁ᵒ ϕ×ψ , proj₂ᵒ ϕ×ψ)) , λ {(ϕ , ψ) → (ϕ ,ᵒ ψ)}
 \end{code}
 
 \subsection{SIL is a first-order logic}
@@ -156,15 +166,15 @@ quantification.  So the ``for all'' quantifier ∀ᵒ has the following
 type.
 
 \begin{code}
-_ : (A → Setᵒ) → Setᵒ
+_ : (A → Setᵏ) → Setᵏ
 _ = ∀ᵒ
 \end{code}
 
 \noindent Its meaning is equivalent to Agda′s ∀ quantifier.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ} →  ([] ⊢ᵒ ∀ᵒ ϕᵃ) ⇔ (∀ a → [] ⊢ᵒ ϕᵃ a)
-_ = (λ ∀ϕ a → ∀ᵒE ∀ϕ a) , λ ∀aϕa → Λᵒ[ a ] ∀aϕa a
+--_ : ∀{ϕᵃ : A → Setᵏ} →  ([] ⊢ᵒ ∀ᵒ ϕᵃ) ⇔ (∀ a → [] ⊢ᵒ ϕᵃ a)
+--_ = (λ ∀ϕ a → ∀ᵒE ∀ϕ a) , λ ∀aϕa → Λᵒ[ a ] ∀aϕa a
 \end{code}
 
 \noindent As a simple example, the following SIL formula asserts that,
@@ -190,7 +200,7 @@ to be inhabited, which we express using an implicit instance argument
 to avoid cluttering the uses of ∃ᵒ.
 
 \begin{code}
-_ : {{_ : Inhabited A}} → (A → Setᵒ) → Setᵒ
+_ : {{_ : Inhabited A}} → (A → Setᵏ) → Setᵏ
 _ = ∃ᵒ
 \end{code}
 
@@ -223,16 +233,16 @@ a function from the domain of the predicate to a formula in the type
 \textsf{Even}′ function from ℕ to \textsf{Set}ˢ.
 
 \begin{code}
-Evenˢ : ℕ → Setˢ (ℕ ∷ []) (Later ∷ [])
-Evenˢ n = (n ≡ zero)ˢ ⊎ˢ (∃ˢ[ m ] (n ≡ 2 + m)ˢ ×ˢ ▷ˢ (m ∈ zeroˢ))
+Evenᵒ : ℕ → Setᵒ (ℕ ∷ []) (Later ∷ [])
+Evenᵒ n = (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ zeroᵒ))
 \end{code}
 
 \noindent We then define \textsf{Even}′ as follows using
-\textsf{Even}ˢ, μᵒ, and \textsf{tautology}.
+\textsf{Even}ᵒ, μᵒ, and \textsf{tautology}.
 
 \begin{code}
-Even′ : ℕ → Set
-Even′ n = [] ⊢ᵒ μᵒ Evenˢ n
+Even′ : ℕ → Prop
+Even′ n = [] ⊢ᵒ μᵒ Evenᵒ n
 \end{code}
 
 \begin{comment}
@@ -253,7 +263,7 @@ even⇒even′ .(2 + m) (Even-plus-two m even-n) (suc k) = inj₂ (m , (refl , e
 {-
 even′⇒even : ∀ n → Even′ n → Even n
 even′⇒even n even′-n = induct n n ≤-refl (even′-n n) where
-  induct : ∀ n k → n ≤ k → # (μᵒ Evenˢ n) k → Even n
+  induct : ∀ n k → n ≤ k → # (μᵒ Evenᵒ n) k → Even n
   induct .zero zero z≤n even′-n-k = Even-zero
   induct n (suc k) n≤k even′-n-k
       with even′-n-k
@@ -265,35 +275,35 @@ even′⇒even n even′-n = induct n n ≤-refl (even′-n n) where
 \end{comment}
 
 \noindent There are a few odd things in the definition of
-\textsf{Even}ˢ.  First, the superscripts have changed from ``o'' to
+\textsf{Even}ᵒ.  First, the superscripts have changed from ``o'' to
 ``s''. Second, where one would have expected $m ∈ \mathsf{Even}$,
-instead we have $▷ˢ (m ∈ \mathsf{zero}ˢ)$.  The $\mathsf{zero}ˢ$ is a
+instead we have $▷ᵒ (m ∈ \mathsf{zero}ᵒ)$.  The $\mathsf{zero}ᵒ$ is a
 de Bruijn index for refering to recursively defined predicates. In
 general one can nest recursive definitions in SIL, so the de Bruijn
 index specifies which one is being used. In this example there is just
 one recursive predicate being defined, so its de Bruijn index is
-\textsf{zero}ˢ. The first argument of \textsf{Set}ˢ is a list
+\textsf{zero}ᵒ. The first argument of \textsf{Set}ᵒ is a list
 containing the domain type for each recursive predicate. The domain of
-\textsf{Even} is ℕ, so the first argument of \textsf{Set}ˢ is (ℕ ∷ []).
+\textsf{Even} is ℕ, so the first argument of \textsf{Set}ᵒ is (ℕ ∷ []).
 
-The use of ▷ˢ in $▷ˢ (m ∈ \mathsf{zero}ˢ)$
+The use of ▷ᵒ in $▷ᵒ (m ∈ \mathsf{zero}ᵒ)$
 serves to guard the recursion to ensure that the
 recursive definition is well founded. SIL enforces the following rules.  When
-SIL sees the use of a recursive predicate, such as $\mathsf{zero}ˢ$,
+SIL sees the use of a recursive predicate, such as $\mathsf{zero}ᵒ$,
 it clasifyies that the predicate as being used \textsf{Now}.  When the
-▷ˢ operator is applied to a subformula, all the predicates that were
+▷ᵒ operator is applied to a subformula, all the predicates that were
 used \textsf{Now} inside the subformula are instead considered to be
 used \textsf{Later}. Finally, when we apply the μᵒ operator, SIL
 checks to make sure that the zero de Bruijn index is used
-\textsf{Later}. The second argument of \textsf{Set}ˢ tracks this
+\textsf{Later}. The second argument of \textsf{Set}ᵒ tracks this
 \textsf{Now}/\textsf{Later} categorization for each recursive predicate.
-For \textsf{Even}ˢ, the second argument is (\textsf{Later} ∷ [])
-because the recursive use of the predicate (the $m ∈ \mathsf{zero}ˢ$) is
-under the ▷ˢ operator.
+For \textsf{Even}ᵒ, the second argument is (\textsf{Later} ∷ [])
+because the recursive use of the predicate (the $m ∈ \mathsf{zero}ᵒ$) is
+under the ▷ᵒ operator.
 
-Finally, to explain why the superscripts in \textsf{Even}ˢ changed to
+Finally, to explain why the superscripts in \textsf{Even}ᵒ changed to
 "s", one of the reasons is that the "s" connectives build formulas of
-type \textsf{Set}ˢ instead of \textsf{Set}ᵒ and the types of those
+type \textsf{Set}ᵒ instead of \textsf{Set}ᵒ and the types of those
 connectives do the enforcement of the rules described above.
 The membership operator $a ∈ x$ assigns $x$ the time \textsf{Now}
 and all the other variables in $Γ$ the time \textsf{Later},
@@ -307,17 +317,17 @@ variable Δ Δ₁ Δ₂ : Times Γ
 \end{code}
 
 \begin{code}
-_ : A → (x : Γ ∋ A) → Setˢ Γ (var-now Γ x)
+_ : A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
 _ = _∈_
 \end{code}
 
-\noindent The $▷ˢ S$ formula disregards the usage times in subformula $S$
+\noindent The $▷ᵒ S$ formula disregards the usage times in subformula $S$
 and instead assigns \textsf{Later} to every variable in Γ, using the
 \textsf{laters} function.
 
 \begin{code}
-_ : Setˢ Γ Δ → Setˢ Γ (laters Γ)
-_ = ▷ˢ
+_ : Setᵒ Γ Δ → Setᵒ Γ (laters Γ)
+_ = ▷ᵒ
 \end{code}
 
 The formula $μᵒ Sᵃ$ requires that for any $a ∈ A$, the subformula
@@ -325,17 +335,17 @@ $Sᵃ\, a$ used de Bruijn index zero (for this recursive predicate) at
 time \textsf{Later}.
 
 \begin{code}
-_ : (A → Setˢ (A ∷ []) (Later ∷ [])) → (A → Setᵒ)
+_ : (A → Setᵒ (A ∷ []) (Later ∷ [])) → (A → Setᵏ)
 _ = μᵒ
 \end{code}
 
-\noindent The μᵒ connective is a special case of the μˢ connective,
+\noindent The μᵒ connective is a special case of the μᵒ connective,
 which can be nested inside the definition of other recursive
 predicates.
 
 \begin{code}
-_ : (A → Setˢ (A ∷ Γ) (Later ∷ Δ)) → (A → Setˢ Γ Δ)
-_ = μˢ
+_ : (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → (A → Setᵒ Γ Δ)
+_ = μᵒ
 \end{code}
 
 \subsection{Encoding Mutually Recursive Predicates in SIL}
@@ -365,15 +375,15 @@ indicate a request to test if the number is even and the second
 injection indicates a request to test if the number is odd.
 
 \begin{code}
-Evens⊎Odds : ℕ ⊎ ℕ → Setˢ ((ℕ ⊎ ℕ) ∷ []) (Later ∷ [])
-Evens⊎Odds (inj₁ n) = (n ≡ zero)ˢ ⊎ˢ (∃ˢ[ m ] (n ≡ suc m)ˢ ×ˢ ▷ˢ (inj₂ m ∈ zeroˢ))
-Evens⊎Odds (inj₂ n) = ∃ˢ[ m ] (n ≡ suc m)ˢ ×ˢ ▷ˢ (inj₁ m ∈ zeroˢ)
+Evens⊎Odds : ℕ ⊎ ℕ → Setᵒ ((ℕ ⊎ ℕ) ∷ []) (Later ∷ [])
+Evens⊎Odds (inj₁ n) = (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ suc m)ᵒ ×ᵒ ▷ᵒ (inj₂ m ∈ zeroᵒ))
+Evens⊎Odds (inj₂ n) = ∃ᵒ[ m ] (n ≡ suc m)ᵒ ×ᵒ ▷ᵒ (inj₁ m ∈ zeroᵒ)
 \end{code}
 
 Now that in the first line of \textsf{Evens⊎Odds}, we write
-$\mathsf{inj}₂ m ∈ \mathsf{zero}ˢ$ to test whether $m$ is odd.
+$\mathsf{inj}₂ m ∈ \mathsf{zero}ᵒ$ to test whether $m$ is odd.
 In the second line of \textsf{Evens⊎Odds}, we write 
-$\mathsf{inj}₁ m ∈ \mathsf{zero}ˢ$ to test whether $m$ is even.
+$\mathsf{inj}₁ m ∈ \mathsf{zero}ᵒ$ to test whether $m$ is even.
 
 We apply the μᵒ connective to \textsf{Evens⊎Odds} to define
 \textsf{Evens}′ and then \textsf{Odds}′, using \textsf{inj₁ n} for the
@@ -381,10 +391,10 @@ argument in \textsf{Evens}′ and using \textsf{inj₂ n} for the argument
 in \textsf{Odds}′.
 
 \begin{code}
-Evens′ : ℕ → Set
+Evens′ : ℕ → Prop
 Evens′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₁ n)
 
-Odds′ : ℕ → Set
+Odds′ : ℕ → Prop
 Odds′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₂ n)
 \end{code}
 
@@ -396,7 +406,7 @@ We write $𝒫 ⊢ᵒ ϕ$ for entailment, which means that ϕ is true when
 the list of formulas in 𝒫 are true.
 
 \begin{code}
-_ : List Setᵒ → Setᵒ → Set
+_ : List Setᵏ → Setᵏ → Prop
 _ = _⊢ᵒ_
 \end{code}
 
@@ -522,7 +532,7 @@ Moving on to the proof rules for universal and existential quantifiers.
 The universal quantifier is introduced by Λᵒ.
 
 \begin{code}
-_ : {ϕᵃ : A → Setᵒ} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
+_ : {ϕᵃ : A → Setᵏ} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ ϕᵃ
 _ = Λᵒ
 \end{code}
 
@@ -537,7 +547,7 @@ the following is a proof that for any natural $x$, $x = x$.
 \noindent The universal quantifier is eliminated by ∀ᵒE.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
+_ : ∀{ϕᵃ : A → Setᵏ} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
 _ = ∀ᵒE
 \end{code}
 
@@ -553,10 +563,10 @@ The existential quantifier of SIL is introduced by the rule ∃ᵒI and
 eliminated by the rule unpackᵒ.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ}{{_ : Inhabited A}} →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
+_ : ∀{ϕᵃ : A → Setᵏ}{{_ : Inhabited A}} →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
 _ = ∃ᵒI
 
-_ : ∀{ϕᵃ : A → Setᵒ}{þ : Setᵒ}{{_ : Inhabited A}}
+_ : ∀{ϕᵃ : A → Setᵏ}{þ : Setᵏ}{{_ : Inhabited A}}
      → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a  →  ϕᵃ a ∷ 𝒫 ⊢ᵒ ϕᵃ a  →  ϕᵃ a ∷ 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
 _ = unpackᵒ
 \end{code}
@@ -579,7 +589,7 @@ Finally, regarding recursive predicates, the introduction rule is
 we discuss below.
 
 \begin{code}
-_ : ∀{𝒫} (Sᵃ : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)  →  𝒫 ⊢ᵒ μᵒ Sᵃ a
+_ : ∀{𝒫} (Sᵃ : A → Setᵒ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)  →  𝒫 ⊢ᵒ μᵒ Sᵃ a
 _ = foldᵒ
 \end{code}
 
@@ -589,81 +599,109 @@ is doing a lot of work behind the scenes.
 
 \begin{code}
 even-zero : Even′ 0
-even-zero = foldᵒ Evenˢ 0 (inj₁ᵒ (pureᵒI refl))
+even-zero = foldᵒ Evenᵒ 0 (inj₁ᵒ (pureᵒI refl))
 \end{code}
 
 \noindent To better see what's going on, let's take it slower. The
 proof starts with the use of the \textsf{fold}ᵒ rule, after which it
 remains to prove
 \[
-   \text{even-0 : letᵒ (μᵒ Evenˢ) (Evenˢ 0)}
+   \text{even-0 : letᵒ (μᵒ Evenᵒ) (Evenᵒ 0)}
 \]
-This \textsf{let}ᵒ operator substitutes the predicate \textsf{(μᵒ Evenˢ)} for the
-\textsf{zero}ˢ de Bruijn index inside \textsf{Even}ˢ. Recall the definition
-of \textsf{Even}ˢ:
+This \textsf{let}ᵒ operator substitutes the predicate \textsf{(μᵒ Evenᵒ)} for the
+\textsf{zero}ᵒ de Bruijn index inside \textsf{Even}ᵒ. Recall the definition
+of \textsf{Even}ᵒ:
 \[
-  \text{Evenˢ n = (n ≡ zero)ˢ ⊎ˢ (∃ˢ[ m ] (n ≡ 2 + m)ˢ ×ˢ ▷ˢ (m ∈ zeroˢ))}
+  \text{Evenᵒ n = (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ zeroᵒ))}
 \]
 So \textsf{even-0} above is equivalent to the following, where
-\textsf{m ∈ zeroˢ} has been replaced by \textsf{μᵒ Evenˢ m}.
+\textsf{m ∈ zeroᵒ} has been replaced by \textsf{μᵒ Evenᵒ m}.
 \[
-  \text{(0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m))}
+  \text{(0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenᵒ m))}
 \]
 Finally, we conclude the proof by choosing the first branch of the disjunction
 with \textsf{inj₁ᵒ} and then proving \textsf{(0 ≡ zero)ᵒ} by \textsf{pureᵒI refl}.
 
 \begin{code}
 _ : Even′ 0
-_ = foldᵒ Evenˢ 0 even-0
+_ = foldᵒ Evenᵒ 0 even-0
  where
- even-0 : [] ⊢ᵒ letᵒ (μᵒ Evenˢ) (Evenˢ 0)
- even-0 = subst (λ X → [] ⊢ᵒ X) (sym let-eq) even-body-0
+ even-0 : [] ⊢ᵒ letᵒ (μᵒ Evenᵒ) (Evenᵒ 0)
+ even-0 = substᵒ (≡ᵒ-sym (≡ᵒ-refl let-eq)) even-body-0
   where
-  let-eq : letᵒ (μᵒ Evenˢ) (Evenˢ 0)  ≡  (0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m))
+  let-eq : letᵒ (μᵒ Evenᵒ) (Evenᵒ 0)  ≡  (0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenᵒ m))
   let-eq = refl
-  even-body-0 : [] ⊢ᵒ (0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m))
+  even-body-0 : [] ⊢ᵒ (0 ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenᵒ m))
   even-body-0 = inj₁ᵒ (pureᵒI refl)
 \end{code}
 
 TODO: keep this or delete?
 \begin{code}
-even-two : [] ⊢ᵒ μᵒ Evenˢ 2
-even-two = foldᵒ Evenˢ 2 (inj₂ᵒ (∃ᵒI 0 (pureᵒI refl ,ᵒ monoᵒ even-zero)))
+even-two : [] ⊢ᵒ μᵒ Evenᵒ 2
+even-two = foldᵒ Evenᵒ 2 (inj₂ᵒ (∃ᵒI 0 (pureᵒI refl ,ᵒ monoᵒ even-zero)))
 \end{code}
 
 The eleminiation rule for μᵒ is \textsf{unfold}ᵒ.
 
 \begin{code}
-_ : ∀{𝒫} (Sᵃ : A → Setˢ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ μᵒ Sᵃ a  →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
+_ : ∀{𝒫} (Sᵃ : A → Setᵒ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ μᵒ Sᵃ a  →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
 _ = unfoldᵒ
 \end{code}
 
-\noindent For example, if we unfold $μᵒ Evenˢ 1$, we obtain that either
+\noindent For example, if we unfold $μᵒ Evenᵒ 1$, we obtain that either
 $1 = 0$ or $1 = 2 + m$ for some $m$. Either case is impossible, so it must
 be that $1$ is not even.
 
 \begin{code}
-not-even-one : ¬ ([] ⊢ᵒ μᵒ Evenˢ 1)
-not-even-one even-one = ⊥ᵒ⇒⊥ (caseᵒ (unfoldᵒ Evenˢ 1 even-one)
+{-
+not-even-one : ¬ ([] ⊢ᵒ μᵒ Evenᵒ 1)
+not-even-one even-one = ⊥ᵒ⇒⊥ (caseᵒ (unfoldᵒ Evenᵒ 1 even-one)
                                (pureᵒE Zᵒ λ{()})
                                (unpackᵒ Zᵒ λ m [0=2+m]×[even-m] → pureᵒE (proj₁ᵒ [0=2+m]×[even-m]) λ{()}))
+-}
 \end{code}
 
 
 \begin{code}
-even-implies-div2 : Setᵒ
-even-implies-div2 = ∀ᵒ[ n ⦂ ℕ ] μᵒ Evenˢ n →ᵒ (∃ᵒ[ m ] (n ≡ 2 * m)ᵒ)
+even-div2 : ∀ n → [] ⊢ᵒ μᵒ Evenᵒ n → (Σₚ[ m ∈ ℕ ] ⌊ n ≡ 2 * m ⌋)
+even-div2 zero even-n = 0 ,ₚ squash refl
+even-div2 (suc zero) even-n =
+   let false : [] ⊢ᵒ ⊥ᵒ
+       false = caseᵒ (unfoldᵒ Evenᵒ 1 even-n)
+               (pureᵒE Zᵒ λ {()})
+               (unpackᵒ Zᵒ λ m rest → pureᵒE (proj₁ᵒ rest) λ{()}) in
+   ⊥-elimₚ (⊥ᵒ⇒⊥ false)
+even-div2 (suc (suc n)) even-ssn =
+  let xx : [] ⊢ᵒ (Σₚ[ m ∈ ℕ ] ⌊ n ≡ 2 * m ⌋)ᵖ
+      xx = caseᵒ (unfoldᵒ Evenᵒ (2 + n) even-ssn)
+           (pureᵒE Zᵒ λ{()})
+           (unpackᵒ Zᵒ λ m rest →
+           pureᵒE (proj₁ᵒ Zᵒ) λ { refl →
+           let IH = even-div2 n {!!} in
+           pureᵖI ({!!} ,ₚ {!!})})
+           in
+  {!!}
+  
+{-
+  let IH = even-div2 n {!!} in
+  {!!}
+  -}
+
+{-
+even-implies-div2 : Setᵏ
+even-implies-div2 = ∀ᵒ[ n ⦂ ℕ ] μᵒ Evenᵒ n →ᵒ (∃ᵒ[ m ] (n ≡ 2 * m)ᵒ)
 
 even-div2-proof : [] ⊢ᵒ even-implies-div2
 even-div2-proof =
-  lobᵒ (Λᵒ[ n ] λᵒ[ even-n ⦂ μᵒ Evenˢ n ]
-        caseᵒ (unfoldᵒ Evenˢ n even-n)
+  lobᵒ (Λᵒ[ n ] λᵒ[ even-n ⦂ μᵒ Evenᵒ n ]
+        caseᵒ (unfoldᵒ Evenᵒ n even-n)
           (pureᵒE Zᵒ λ{ refl → ∃ᵒI 0 (pureᵒI refl)})
           (unpackᵒ Zᵒ λ m [n=2+m]×[even-m] →
             pureᵒE (proj₁ᵒ [n=2+m]×[even-m]) λ{ refl →
-              let 𝒫 = (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenˢ m) ∷ μᵒ Evenˢ n ∷ ▷ᵒ even-implies-div2 ∷ [] in
+              let 𝒫 = (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenᵒ m) ∷ μᵒ Evenᵒ n ∷ ▷ᵒ even-implies-div2 ∷ [] in
               let  IH : 𝒫 ⊢ᵒ ▷ᵒ even-implies-div2
                    IH = Sᵒ (Sᵒ Zᵒ) in
               --unpackᵒ IH λ m′ m=2*m′ →
               {!!}}))
+-}
 \end{code}
