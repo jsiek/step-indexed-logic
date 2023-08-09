@@ -161,6 +161,11 @@ corollary of the above.
 ℰ-intro 𝒫⊢prog 𝒫⊢pres = substᵒ (≡ᵒ-sym ℰ-stmt) (𝒫⊢prog ,ᵒ 𝒫⊢pres)
 \end{code}
 
+\begin{code}
+ℰ-elim : ∀ {𝒫}{A}{M} → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ M → 𝒫 ⊢ᵒ progress A M ×ᵒ preservation A M
+ℰ-elim 𝒫⊢ℰ = substᵒ ℰ-stmt 𝒫⊢ℰ
+\end{code}
+
 Next we turn several uses of the fixpoint theorem for 𝒱.
 The \textsf{zero} literal is well-behaved at type ℕ.
 

@@ -1,15 +1,17 @@
-{-# OPTIONS --without-K --rewriting --allow-unsolved-metas #-}
+{-# OPTIONS --without-K --rewriting --prop #-}
 
 module RepRewrites where
 
 open import StepIndexedLogic2
 
+{-# REWRITE #⊤ᵒ≡⊤ #-}
+{-# REWRITE #⊥ᵒ≡⊥ #-}
 {-# REWRITE #pureᵒ≡ #-}
 {-# REWRITE #×ᵒ≡ #-}
 {-# REWRITE #⊎ᵒ≡ #-}
 {-# REWRITE #→ᵒ≡ #-}
--- {-# REWRITE #∀ᵒ≡ #-}  "not a legal rewrite rule" ?
+{-# REWRITE #∀ᵒ≡ #-}
 {-# REWRITE #∃ᵒ≡ #-}
-{-# REWRITE ▷ᵒ≡ #-}
+{-# REWRITE #▷ᵒ≡ #-}
 {-# REWRITE #μᵒ≡ #-}
 {-# REWRITE #letᵒ≡ #-}

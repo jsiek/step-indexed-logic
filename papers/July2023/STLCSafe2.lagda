@@ -98,7 +98,7 @@ compatible-μ {Γ}{A}{B}{V} v ⊨V γ =
   where
   V' = ⟪ ext γ ⟫ V
   ▷𝒱V : ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (μ V')) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (⟪ μ V' • γ ⟫ V))
-  ▷𝒱V = {!!} -- ▷→▷ Zᵒ (⊢ᵒI λ {n (𝒱μγVn , _ , 𝓖γn) → ⊢ᵒE (⊨V (μ V' • γ)) n (𝒱μγVn , 𝓖γn)})
+  ▷𝒱V = ▷→▷ Zᵒ (weaken (⊨V (μ V' • γ)) (Zᵒ ,ₚ (drop (drop ⊂-refl))))
 \end{code}
 
 That completes the compatibility lemmas for well-typed values, so we
@@ -185,189 +185,155 @@ compatible-case {Γ}{L}{M}{N}{A} ⊨L ⊨M ⊨N γ =
                      monoᵒ (weaken ℰ⟪V′•γ⟫N (𝒱-suc-E Zᵒ ,ₚ drop (drop ⊂-refl)) ) in
              Sᵒ (substₚ (λ L → 𝒫₁ (`suc V′) ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ L)) (≐-sym (≐-refl L≡⟪γ⟫N[V])) ▷ℰN[V′])})) in
        ℰ-intro prog pres})
--- \end{code}
--- \caption{Compatibility lemma for the \textsf{case} expression.}
--- \label{fig:compatible-case}
--- \end{figure}
+\end{code}
+\caption{Compatibility lemma for the \textsf{case} expression.}
+\label{fig:compatible-case}
+\end{figure}
 
--- The proof of the compatibility lemma for application $L · M$ splits
--- into two cases, one for when $L$ reduces to a lambda abstraction and
--- another for when $L$ reduces to a fixpoint value. We prove a separate
--- lemma for each of these cases.
+The proof of the compatibility lemma for application $L · M$ splits
+into two cases, one for when $L$ reduces to a lambda abstraction and
+another for when $L$ reduces to a fixpoint value. We prove a separate
+lemma for each of these cases.
 
--- The first lemma (Figure~\ref{fig:apply-lambda}) handles the
--- application of a lambda abstraction $ƛ N′$. The term $ƛ N′ · W$
--- satisfies progress by rule β-ƛ.  It satisfies preservation because $ƛ
--- N′$ and $W$ are well-behaved values and so by lemma \textsf{𝒱-fun},
--- $N′ [ W ]$ is well behaved.
+The first lemma (Figure~\ref{fig:apply-lambda}) handles the
+application of a lambda abstraction $ƛ N′$. The term $ƛ N′ · W$
+satisfies progress by rule β-ƛ.  It satisfies preservation because $ƛ
+N′$ and $W$ are well-behaved values and so by lemma \textsf{𝒱-fun},
+$N′ [ W ]$ is well behaved.
 
--- \begin{figure}[tbp]
--- \begin{code}
--- apply-λ : ∀{A}{B}{W}{N′}{𝒫} → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (ƛ N′)  →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ W  →  Value W
---   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ (ƛ N′ · W)
--- apply-λ {A}{B}{W}{N′}{𝒫} ⊢𝒱V ⊢𝒱W w = 
---   let prog : 𝒫 ⊢ᵒ progress B (ƛ N′ · W)
---       prog = inj₂ᵒ (pureᵒI (_ , (β-ƛ w))) in
---   let pres : 𝒫 ⊢ᵒ preservation B (ƛ N′ · W)
---       pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ {r →
---                let ⊢▷ℰN′W : 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ (N′ [ W ]))
---                    ⊢▷ℰN′W = →ᵒE (∀ᵒE (substᵒ 𝒱-fun ⊢𝒱V) W) (monoᵒ ⊢𝒱W) in
---                Sᵒ (subst (λ N → 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)) (sym (deterministic r (β-ƛ w))) ⊢▷ℰN′W)}) in
---   ℰ-intro prog pres
--- \end{code}
--- \caption{Application of a well-behaved lambda abstraction.}
--- \label{fig:apply-lambda}
--- \end{figure}
+\begin{figure}[tbp]
+\begin{code}
+apply-λ : ∀{A}{B}{W}{N′}{𝒫} → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (ƛ N′)  →  𝒫 ⊢ᵒ 𝒱⟦ A ⟧ W  →  Value W
+  → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ (ƛ N′ · W)
+apply-λ {A}{B}{W}{N′}{𝒫} ⊢𝒱V ⊢𝒱W w = 
+  let prog : 𝒫 ⊢ᵒ progress B (ƛ N′ · W)
+      prog = inj₂ᵒ (pureᵒI (_ , (β-ƛ w))) in
+  let pres : 𝒫 ⊢ᵒ preservation B (ƛ N′ · W)
+      pres = Λᵒ[ N ] →ᵒI (pureᵒE Zᵒ λ {r →
+               let ⊢▷ℰN′W : 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ (N′ [ W ]))
+                   ⊢▷ℰN′W = →ᵒE (∀ᵒE (substᵒ 𝒱-fun ⊢𝒱V) W) (monoᵒ ⊢𝒱W) in
+               Sᵒ (substₚ (λ N → 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)) (≐-sym (≐-refl (deterministic r (β-ƛ w)))) ⊢▷ℰN′W)}) in
+  ℰ-intro prog pres
+\end{code}
+\caption{Application of a well-behaved lambda abstraction.}
+\label{fig:apply-lambda}
+\end{figure}
 
--- The second lemma (Figure~\ref{fig:apply-mu}) handles the application
--- of a fixpoint value $μ V′$ to another value $W$.  For this case of the
--- proof we use \textsf{lobᵒ} induction, so we state the property that
--- we're trying to prove entirely in SIL:
+The second lemma (Figure~\ref{fig:apply-mu}) handles the application
+of a fixpoint value $μ V′$ to another value $W$.  For this case of the
+proof we use \textsf{lobᵒ} induction, so we state the property that
+we're trying to prove entirely in SIL:
 
--- \begin{code}
--- WBApp : Type → Type → Setᵒ
--- WBApp A B = ∀ᵒ[ V ] ∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W))
--- \end{code}
+\begin{code}
+WBApp : Type → Type → Setᵒ [] []
+WBApp A B = ∀ᵒ[ V ] ∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W))
+\end{code}
 
--- \noindent We pass the induction hypothesis $▷ᵒ \,WBApp\, A\, B$ to this lemma.
--- The term $μ V′ · W$ satisfies progress by rule $β-μ$.
--- To prove preservation, we need to show that $V′ [ μ V′ ] · W$ is well behaved.
--- We apply the induction hypothesis, and we know that $W$ is well behaved,
--- so it suffices to show that $V′ [ μ V′ ]$ is well behaved.
--- This we prove using lemma 𝒱-μ and the premise that $μ V′$  is well behaved.
+\noindent We pass the induction hypothesis $▷ᵒ \,WBApp\, A\, B$ to this lemma.
+The term $μ V′ · W$ satisfies progress by rule $β-μ$.
+To prove preservation, we need to show that $V′ [ μ V′ ] · W$ is well behaved.
+We apply the induction hypothesis, and we know that $W$ is well behaved,
+so it suffices to show that $V′ [ μ V′ ]$ is well behaved.
+This we prove using lemma 𝒱-μ and the premise that $μ V′$  is well behaved.
 
--- \begin{figure}[tbp]
--- \begin{code}
--- apply-μ : ∀{A}{B}{W}{V′}{𝒫} → 𝒫 ⊢ᵒ ▷ᵒ WBApp A B
---   → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (μ V′)  →  Value (μ V′)
---   → 𝒫 ⊢ᵒ 𝒱⟦ A ⟧ W  →  Value W
---   → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ (μ V′ · W)
--- apply-μ {A = A}{B}{W}{V′}{𝒫} IH ⊢𝒱V v ⊢𝒱W w = 
---   let prog : 𝒫 ⊢ᵒ progress B (μ V′ · W)
---       prog = inj₂ᵒ (pureᵒI (_ , β-μ (Value-μ-inv v) w)) in
---   let ▷ℰV[μV]·W : (μ V′ · W —→ (V′ [ μ V′ ]) · W) ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ ℰ⟦ B ⟧ ((V′ [ μ V′ ]) · W)
---       ▷ℰV[μV]·W =
---         let ▷𝒱V[μV] = proj₂ᵒ (substᵒ 𝒱-μ (Sᵒ ⊢𝒱V)) in
---         let P = (λ V → ▷ᵒ (∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W)))) in
---         →ᵒE (▷→ (→ᵒE (▷→ (∀ᵒE (▷∀ (∀ᵒE{ϕᵃ = P} (▷∀ (Sᵒ IH)) (V′ [ μ V′ ]))) W)) ▷𝒱V[μV]))
---              (monoᵒ (Sᵒ ⊢𝒱W)) in
---   let ▷ℰN : ∀ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)
---       ▷ℰN N = let-pureᵒ[ r ] Zᵒ within
---                subst (λ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N))
---                      (sym (β-μ-inv (Value-μ-inv v) w r)) ▷ℰV[μV]·W in
---   let pres : 𝒫 ⊢ᵒ preservation B (μ V′ · W)
---       pres = Λᵒ[ N ] →ᵒI (▷ℰN N) in
---   ℰ-intro prog pres
--- \end{code}
--- \caption{Application of a well-behaved fixpoint value.}
--- \label{fig:apply-mu}
--- \end{figure}
+\begin{figure}[tbp]
+\begin{code}
+apply-μ : ∀{A}{B}{W}{V′}{𝒫} → 𝒫 ⊢ᵒ ▷ᵒ (WBApp A B)
+  → 𝒫 ⊢ᵒ 𝒱⟦ A ⇒ B ⟧ (μ V′)  →  Value (μ V′)
+  → 𝒫 ⊢ᵒ 𝒱⟦ A ⟧ W  →  Value W
+  → 𝒫 ⊢ᵒ ℰ⟦ B ⟧ (μ V′ · W)
+apply-μ {A = A}{B}{W}{V′}{𝒫} IH ⊢𝒱V v ⊢𝒱W w = 
+  let prog : 𝒫 ⊢ᵒ progress B (μ V′ · W)
+      prog = inj₂ᵒ (pureᵒI (_ , β-μ (Value-μ-inv v) w)) in
+  let ▷ℰV[μV]·W : (μ V′ · W —→ (V′ [ μ V′ ]) · W) ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ ((V′ [ μ V′ ]) · W))
+      ▷ℰV[μV]·W =
+        let ▷𝒱V[μV] = proj₂ᵒ (substᵒ 𝒱-μ (Sᵒ ⊢𝒱V)) in
+        let P = (λ V → ▷ᵒ (∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ W →ᵒ ℰ⟦ B ⟧ (V · W)))) in
+        →ᵒE (▷→ (→ᵒE (▷→ (∀ᵒE (▷∀ (∀ᵒE{ϕᵃ = P} (▷∀ (Sᵒ IH)) (V′ [ μ V′ ]))) W)) ▷𝒱V[μV]))
+             (monoᵒ (Sᵒ ⊢𝒱W)) in
+  let ▷ℰN : ∀ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)
+      ▷ℰN N = let-pureᵒ[ r ] Zᵒ within
+               substₚ (λ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N))
+                     (≐-sym (≐-refl (β-μ-inv (Value-μ-inv v) w r))) ▷ℰV[μV]·W in
+  let pres : 𝒫 ⊢ᵒ preservation B (μ V′ · W)
+      pres = Λᵒ[ N ] →ᵒI (▷ℰN N) in
+  ℰ-intro prog pres
+\end{code}
+\caption{Application of a well-behaved fixpoint value.}
+\label{fig:apply-mu}
+\end{figure}
 
--- With the above two lemmas complete, we turn to the proof of the
--- compatibility lemma for application (Figure~\ref{fig:compatible-app}).
--- The proof begins with two uses of the \textsf{ℰ-bind} lemma, for
--- subterms $L$ and $M$, which reduce to $V$ and $W$ respectively.
--- Now we need to prove $ℰ⟦ B ⟧ (V · W)$. We proceed by \textsf{lobᵒ} induction,
--- so we need to prove that \textsf{▷ᵒ WBApp A B} entails \textsf{WBApp A B}.
--- Because $V$ is well-behaved at function type, it must be either a
--- lambda abstraction or a fixpoint value. For the later case, we
--- use the lemma \textsf{apply-λ} , and in the former case, we
--- use \textsf{apply-μ}.
+With the above two lemmas complete, we turn to the proof of the
+compatibility lemma for application (Figure~\ref{fig:compatible-app}).
+The proof begins with two uses of the \textsf{ℰ-bind} lemma, for
+subterms $L$ and $M$, which reduce to $V$ and $W$ respectively.
+Now we need to prove $ℰ⟦ B ⟧ (V · W)$. We proceed by \textsf{lobᵒ} induction,
+so we need to prove that \textsf{▷ᵒ WBApp A B} entails \textsf{WBApp A B}.
+Because $V$ is well-behaved at function type, it must be either a
+lambda abstraction or a fixpoint value. For the later case, we
+use the lemma \textsf{apply-λ} , and in the former case, we
+use \textsf{apply-μ}.
 
--- \begin{figure}[tbp]
--- \small
--- \begin{code}
--- compatible-app : ∀{Γ}{A}{B}{L}{M} →  Γ ⊨ L ⦂ (A ⇒ B)  →  Γ ⊨ M ⦂ A  →  Γ ⊨ L · M ⦂ B
--- compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ℰ-bind {F = □· (⟪ γ ⟫ M)} (⊨L γ) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVM))
---   where
---   ⊢ℰVM : ∀{V} → 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ B ⟧ (V · ⟪ γ ⟫ M)
---   ⊢ℰVM {V} = let-sucᵒ Zᵒ λ 𝒱Vsn → let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in
---     ℰ-bind {F = v ·□} (Sᵒ (Sᵒ (⊨M γ))) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW))
---     where
---     𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
---     Gen-ℰVW : ∀{V′}{W′} → ▷ᵒ WBApp A B ∷ 𝒫₂ V′ W′ ⊢ᵒ WBApp A B
---     Gen-ℰVW {V′}{W′} = Λᵒ[ V ] Λᵒ[ W ] →ᵒI (→ᵒI aux) where
---       aux : ∀{V}{W} → 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ ▷ᵒ WBApp A B ∷ 𝒫₂ V′ W′ ⊢ᵒ ℰ⟦ B ⟧ (V · W)
---       aux {V}{W} =
---         let ⊢𝒱V = Sᵒ Zᵒ in let ⊢𝒱W = Zᵒ in
---         let-sucᵒ ⊢𝒱V λ 𝒱Vsn → let-sucᵒ ⊢𝒱W λ 𝒱Wsn →
---         let v = 𝒱⇒Value (A ⇒ B) V 𝒱Vsn in let w = 𝒱⇒Value A W 𝒱Wsn in
---         𝒱-fun-case ⊢𝒱V (λ { N′ refl → apply-λ ⊢𝒱V ⊢𝒱W w })
---                         (λ { V′ refl → apply-μ (Sᵒ (Sᵒ Zᵒ)) ⊢𝒱V v ⊢𝒱W w })
---     ⊢ℰVW : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
---     ⊢ℰVW {V}{W} = →ᵒE (→ᵒE (∀ᵒE (∀ᵒE (lobᵒ Gen-ℰVW) V) W) (Sᵒ (Sᵒ Zᵒ))) Zᵒ
--- \end{code}
--- \caption{Compatibility lemma for application.}
--- \label{fig:compatible-app}
--- \end{figure}
+\begin{figure}[tbp]
+\small
+\begin{code}
+compatible-app : ∀{Γ}{A}{B}{L}{M} →  Γ ⊨ L ⦂ (A ⇒ B)  →  Γ ⊨ M ⦂ A  →  Γ ⊨ L · M ⦂ B
+compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ℰ-bind {F = □· (⟪ γ ⟫ M)} (⊨L γ) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVM))
+  where
+  ⊢ℰVM : ∀{V} → 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ B ⟧ (V · ⟪ γ ⟫ M)
+  ⊢ℰVM {V} = let-pureᵒ[ v ] (𝒱⇒Value (A ⇒ B) V Zᵒ) within
+             ℰ-bind {F = v ·□} (Sᵒ (Sᵒ (⊨M γ))) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW))
+    where
+    𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
+    Gen-ℰVW : ∀{V′}{W′} → ▷ᵒ (WBApp A B) ∷ 𝒫₂ V′ W′ ⊢ᵒ WBApp A B
+    Gen-ℰVW {V′}{W′} = Λᵒ[ V ] Λᵒ[ W ] →ᵒI (→ᵒI aux) where
+      aux : ∀{V}{W} → 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ ▷ᵒ (WBApp A B) ∷ 𝒫₂ V′ W′ ⊢ᵒ ℰ⟦ B ⟧ (V · W)
+      aux {V}{W} =
+        let ⊢𝒱V = Sᵒ Zᵒ in let ⊢𝒱W = Zᵒ in
+        let-pureᵒ[ v ] (𝒱⇒Value (A ⇒ B) V ⊢𝒱V) within
+        let-pureᵒ[ w ] (𝒱⇒Value A W ⊢𝒱W) within
+        𝒱-fun-case ⊢𝒱V (λ { N′ refl → apply-λ ⊢𝒱V ⊢𝒱W w })
+                        (λ { V′ refl → apply-μ (Sᵒ (Sᵒ Zᵒ)) ⊢𝒱V v ⊢𝒱W w })
+    ⊢ℰVW : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
+    ⊢ℰVW {V}{W} = →ᵒE (→ᵒE (∀ᵒE (∀ᵒE (lobᵒ Gen-ℰVW) V) W) (Sᵒ (Sᵒ Zᵒ))) Zᵒ
+\end{code}
+\caption{Compatibility lemma for application.}
+\label{fig:compatible-app}
+\end{figure}
 
--- The last compatibility lemma shows that a well-behaved value is also a
--- well-behaved term, which is a corollary of the lemma 𝒱⇒ℰ.
+The last compatibility lemma shows that a well-behaved value is also a
+well-behaved term, which is a corollary of the lemma 𝒱⇒ℰ.
 
--- \begin{code}
--- compatible-value : ∀{Γ V A} → Γ ⊨ⱽ V ⦂ A  →  Γ ⊨ V ⦂ A
--- compatible-value {Γ}{V}{A} ⊨V γ = 𝒱⇒ℰ (⊨V γ) 
--- \end{code}
+\begin{code}
+compatible-value : ∀{Γ V A} → Γ ⊨ⱽ V ⦂ A  →  Γ ⊨ V ⦂ A
+compatible-value {Γ}{V}{A} ⊨V γ = 𝒱⇒ℰ (⊨V γ) 
+\end{code}
 
--- \clearpage
+\clearpage
 
--- \subsection{Fundamental Lemma}
--- \label{sec:fundamental}
+\subsection{Fundamental Lemma}
+\label{sec:fundamental}
 
--- The Fundamental Lemma(s) follow immediately from the compatibility
--- lemmas of the last section. So a well-typed value is also a
--- well-behaved value, and similarly for terms.
+The Fundamental Lemma(s) follow immediately from the compatibility
+lemmas of the last section. So a well-typed value is also a
+well-behaved value, and similarly for terms.
 
--- \begin{code}
--- fundamentalⱽ : ∀ {Γ W A} → (Γ ⊢ⱽ W ⦂ A) → (Γ ⊨ⱽ W ⦂ A)
--- fundamental : ∀ {Γ M A} → (Γ ⊢ M ⦂ A) → (Γ ⊨ M ⦂ A)
+\begin{code}
+fundamentalⱽ : ∀ {Γ W A} → (Γ ⊢ⱽ W ⦂ A) → (Γ ⊨ⱽ W ⦂ A)
+fundamental : ∀ {Γ M A} → (Γ ⊢ M ⦂ A) → (Γ ⊨ M ⦂ A)
 
--- fundamentalⱽ {Γ} {.`zero} {.`ℕ} ⊢ⱽzero = compatible-zero
--- fundamentalⱽ {Γ} {`suc V} {.`ℕ} (⊢ⱽsuc ⊢V) = compatible-sucⱽ{V = V} (fundamentalⱽ ⊢V)
--- fundamentalⱽ {Γ} {ƛ N} {.(_ ⇒ _)} (⊢ⱽƛ ⊢N) = compatible-λ{N = N} (fundamental ⊢N)
--- fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) =
---    compatible-μ{V = V} (⊢ⱽ⇒Value ⊢V) (fundamentalⱽ ⊢V)
+fundamentalⱽ {Γ} {.`zero} {.`ℕ} ⊢ⱽzero = compatible-zero
+fundamentalⱽ {Γ} {`suc V} {.`ℕ} (⊢ⱽsuc ⊢V) = compatible-sucⱽ{V = V} (fundamentalⱽ ⊢V)
+fundamentalⱽ {Γ} {ƛ N} {.(_ ⇒ _)} (⊢ⱽƛ ⊢N) = compatible-λ{N = N} (fundamental ⊢N)
+fundamentalⱽ {Γ} {μ V} {.(_ ⇒ _)} (⊢ⱽμ ⊢V) =
+   compatible-μ{V = V} (⊢ⱽ⇒Value ⊢V) (fundamentalⱽ ⊢V)
    
--- fundamental {Γ} {.(` _)} {A} (⊢` x) = compatible-var x
--- fundamental {Γ} {`suc M} {.`ℕ} (⊢suc ⊢M) = compatible-suc{M = M} (fundamental ⊢M)
--- fundamental {Γ} {case L M N} {A} (⊢case ⊢L ⊢M ⊢N) =
---    compatible-case{L = L}{M}{N} (fundamental ⊢L) (fundamental ⊢M) (fundamental ⊢N)
--- fundamental {Γ} {L · M} {A} (⊢· ⊢L ⊢M) =
---    compatible-app{L = L}{M} (fundamental ⊢L) (fundamental ⊢M)
--- fundamental {Γ} {V} {A} (⊢val ⊢V) = compatible-value {V = V} (fundamentalⱽ ⊢V)
--- \end{code}
+fundamental {Γ} {.(` _)} {A} (⊢` x) = compatible-var x
+fundamental {Γ} {`suc M} {.`ℕ} (⊢suc ⊢M) = compatible-suc{M = M} (fundamental ⊢M)
+fundamental {Γ} {case L M N} {A} (⊢case ⊢L ⊢M ⊢N) =
+   compatible-case{L = L}{M}{N} (fundamental ⊢L) (fundamental ⊢M) (fundamental ⊢N)
+fundamental {Γ} {L · M} {A} (⊢· ⊢L ⊢M) =
+   compatible-app{L = L}{M} (fundamental ⊢L) (fundamental ⊢M)
+fundamental {Γ} {V} {A} (⊢val ⊢V) = compatible-value {V = V} (fundamentalⱽ ⊢V)
+\end{code}
 
--- \subsection{Proof of Semantic Type Safety}
--- \label{sec:proof-sem-safety}
-
--- The type safety property, stated below, involves multi-step reduction,
--- whereas our logical relation merely says that a well-behaved term is
--- one that satisfies single-step progress and preservation.
-
--- \begin{code}
--- type-safety : ∀ {A} → [] ⊢ M ⦂ A → M —↠ N → Value N  ⊎ (∃[ N′ ] (N —→ N′))
--- \end{code}
-
--- \noindent So we prove the following lemma, which states that if $M$ is
--- well behaved and multi-step reduces to $N$, then $N$ is well behaved.
-
--- \begin{code}
--- ℰ-multi-preserve : ∀ {A} → (r : M —↠ N)  →  # (ℰ⟦ A ⟧ M) (suc (len r))  →  # (ℰ⟦ A ⟧ N) 1
--- ℰ-multi-preserve {A} (_ END) ℰM = ℰM
--- ℰ-multi-preserve {M}{N}{A} (_—→⟨_⟩_ .M {M′} M→M′ M′→N) (_ , pres) =
---     let ℰM′ : # (ℰ⟦ A ⟧ M′) (suc (len M′→N))
---         ℰM′ = pres M′ (suc (suc (len M′→N))) ≤-refl M→M′ in
---     ℰ-multi-preserve M′→N ℰM′
--- \end{code}
-
--- \noindent The Type Safety theorem follows from \textsf{fundamental}
--- followed by \textsf{ℰ-multi-preserve}.
-
--- \begin{code}
--- type-safety {A = A} ⊢M M—↠N
---     with ⊢ᵒE (fundamental ⊢M id) (suc (len M—↠N)) tt
--- ... | ℰM
---     with ℰ-multi-preserve M—↠N ℰM
--- ... | (inj₁ 𝒱N , _) = inj₁ (𝒱⇒Value A _ 𝒱N)
--- ... | (inj₂ N→ , _) = inj₂ N→
--- \end{code}
