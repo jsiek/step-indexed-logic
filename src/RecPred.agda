@@ -7,7 +7,7 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans)
 
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
+open import PropP
 open import RawSetO
 open import SetO
 open import Variables
@@ -28,15 +28,15 @@ down-mu Sᵃ a δ dc-δ k μSᵃa-k j j≤k =
    let dc-iter-F : downClosed ((F ^ (1 + k)) ⊤ᵖ a)
        dc-iter-F = down-iter (suc k) F dc-F a in
    let ↓-iter-sk : (↓ (1 + j) ((⟅ Sᵃ ⟆ δ ^ (1 + k)) ⊤ᵖ a)) j
-       ↓-iter-sk = (≤-refl{j}) ,ₚ (dc-iter-F k μSᵃa-k j j≤k) in
+       ↓-iter-sk = (≤-reflₚ{j}) ,ₚ (dc-iter-F k μSᵃa-k j j≤k) in
    let eq : (((⟅ Sᵃ ⟆ δ ^ (1 + j)) ⊤ᵖ) a)  ≡ₒ[ 1 + j ]  (((⟅ Sᵃ ⟆ δ ^ (1 + k)) ⊤ᵖ) a)
-       eq = lemma15b-env-fun {δ = δ} (1 + k) (1 + j) Sᵃ a (s≤s{j}{k} j≤k) in
+       eq = lemma15b-env-fun {δ = δ} (1 + k) (1 + j) Sᵃ a (s≤sₚ{j}{k} j≤k) in
    let ↓-iter-sj : (↓ (1 + j) (((⟅ Sᵃ ⟆ δ ^ (1 + j)) ⊤ᵖ) a)) j
-       ↓-iter-sj = proj₂ (eq j) ↓-iter-sk  in
-   proj₂ ↓-iter-sj 
+       ↓-iter-sj = proj₂ₚ (eq j) ↓-iter-sk  in
+   proj₂ₚ ↓-iter-sj 
 
 mu-nonexpansive : ∀{Γ}{Δ : Times Γ}{A}{B} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (x : Γ ∋ B)
-   → timeof x Δ ≡ Now → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
+   → timeof x Δ ≡ Now → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ₚ j)
    → mu Sᵃ δ a ≡ₒ[ k ] mu Sᵃ (↓ᵈ j x δ) a
 mu-nonexpansive {Γ} {Δ} {A} Sᵃ a x time-x δ zero j k≤j = ≡ₒ[0]
 mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
@@ -57,13 +57,13 @@ mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
   where
   nonexpansive-Sa-sx = strong-now⇒nonexpansive{x = sucᵒ x}{Δ = Later ∷ Δ}
                     (strong (Sᵃ a) (sucᵒ x)) time-x (mu Sᵃ δ , δ) j (suc k′) k≤j
-  contractive-Sa-z-δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k′ k′ (≤-refl{k′})
+  contractive-Sa-z-δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k′ k′ (≤-reflₚ{k′})
   IH : ∀ a → ↓ k′ (mu Sᵃ δ a) ≡ₒ ↓ k′ (mu Sᵃ (↓ᵈ j x δ) a)
-  IH a = mu-nonexpansive Sᵃ a x time-x δ k′ j (≤-trans{k′}{suc k′}{j} (n≤1+n k′) k≤j)
-  contractive-Sa-z-↓δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ (≤-refl{k′})
+  IH a = mu-nonexpansive Sᵃ a x time-x δ k′ j (≤-transₚ{k′}{suc k′}{j} (n≤1+nₚ k′) k≤j)
+  contractive-Sa-z-↓δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ (≤-reflₚ{k′})
 
 mu-contractive : ∀{A}{Γ}{Δ}{B} → (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (x : Γ ∋ B)
-   → timeof x Δ ≡ Later → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ j)
+   → timeof x Δ ≡ Later → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ₚ j)
    → mu Sᵃ δ a ≡ₒ[ 1 + k ] mu Sᵃ (↓ᵈ j x δ) a
 mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ k j k≤j =
       ↓ (suc k) (mu Sᵃ δ a)
@@ -83,11 +83,11 @@ mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ k j k≤j =
   where
   contractive-Sᵃ-sx = strong-later⇒contractive {A = B}{sucᵒ x}{Δ = Later ∷ Δ}
                        (strong (Sᵃ a) (sucᵒ x)) time-x (mu Sᵃ δ , δ) j k k≤j 
-  contractive-Sa-z-δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k k (≤-refl{k})
-  IH : ∀ k → k ≤ j → ∀ a → ↓ k (mu Sᵃ δ a) ≡ₒ ↓ k (mu Sᵃ (↓ᵈ j x δ) a)
+  contractive-Sa-z-δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k k (≤-reflₚ{k})
+  IH : ∀ k → k ≤ₚ j → ∀ a → ↓ k (mu Sᵃ δ a) ≡ₒ ↓ k (mu Sᵃ (↓ᵈ j x δ) a)
   IH zero  k≤j a = ≡ₒ[0]
-  IH (suc k) k≤j a = mu-contractive Sᵃ a x time-x δ k j (≤-trans{k}{suc k}{j} (n≤1+n k) k≤j)
-  contractive-Sa-z-↓δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k (≤-refl{k})
+  IH (suc k) k≤j a = mu-contractive Sᵃ a x time-x δ k j (≤-transₚ{k}{suc k}{j} (n≤1+nₚ k) k≤j)
+  contractive-Sa-z-↓δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k (≤-reflₚ{k})
 
 strong-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
    → strong-fun Δ (λ δ → mu Sᵃ δ a)

@@ -10,7 +10,7 @@ open import Data.Product
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym)
 
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_) hiding (⊥-elim)
+open import PropP
 open import Variables
 open import Env
 open import RawSetO
@@ -31,7 +31,7 @@ down-lookup {x = sucᵒ x} (P , δ) (dcP ,ₚ dcδ) = down-lookup δ dcδ
 ↓-lookup : ∀{Γ}{A}{B}{a}{k}{j}{δ : RecEnv Γ}
    → (x : Γ ∋ A)
    → (y : Γ ∋ B)
-   → k ≤ j
+   → k ≤ₚ j
    → (lookup{Γ}{A} x δ a) ≡ₒ[ k ] (lookup{Γ}{A} x (↓ᵈ j y δ) a)
 ↓-lookup {a = a}{k}{j}{P , δ} zeroᵒ zeroᵒ k≤j = ≡ₒ-sym (j≤k⇒↓kϕ≡[j]ϕ{j = k} (P a) k≤j)
 ↓-lookup zeroᵒ (sucᵒ y) k≤j = ≡ₒ-refl refl

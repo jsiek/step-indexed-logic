@@ -1,13 +1,7 @@
 {-# OPTIONS --without-K --prop  #-}
-open import Data.List using (List; []; _∷_; length)
-open import Data.Product using (_,_;_×_) -- ; proj₁; proj₂; Σ-syntax; ∃-syntax)
-open import Data.Nat using (ℕ; zero; suc; _+_)
---open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
+open import Data.Nat using (ℕ; zero; suc)
 
-import Relation.Binary.PropositionalEquality as Eq
-open Eq using (_≡_; refl; sym; trans)
-
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
+open import PropP
 open import RawSetO
 open import SetO
 open import Variables
@@ -18,7 +12,7 @@ open import EquivalenceRelationProp
 module Exists where
 
 ∃ₒ : ∀(A : Set) → (P : A → Setₒ) → Setₒ
-∃ₒ A P = λ k → Σ[ a ∈ A ] P a k
+∃ₒ A P = λ k → Σₚ[ a ∈ A ] P a k
 
 ∃ₒ-syntax : ∀ (A : Set) → (A → Setₒ) → Setₒ
 ∃ₒ-syntax A = ∃ₒ A
@@ -26,10 +20,10 @@ infix 2 ∃ₒ-syntax
 syntax ∃ₒ-syntax A (λ x → P) = ∃ₒ[ x ⦂ A ] P
 
 cong-∃ : ∀{A : Set}{P Q : Predₒ A} → (∀ a → P a ≡ₒ Q a) → (∃ₒ[ a ⦂ A ] P a) ≡ₒ (∃ₒ[ a ⦂ A ] Q a)
-cong-∃ {A} {P} {Q} P=Q i = (λ {(a ,ₚ b) → a ,ₚ proj₁ (P=Q a i) b}) ,ₚ λ {(a ,ₚ b) → a ,ₚ (proj₂ (P=Q a i) b)}
+cong-∃ {A} {P} {Q} P=Q i = (λ {(a ,ₚ b) → a ,ₚ proj₁ₚ (P=Q a i) b}) ,ₚ λ {(a ,ₚ b) → a ,ₚ (proj₂ₚ (P=Q a i) b)}
 
 nonexpansive-∃ : ∀ k → ∀{A : Set} → (P : Predₒ A) → (∃ₒ[ a ⦂ A ] P a) ≡ₒ[ k ] (∃ₒ[ a ⦂ A ] ↓ k (P a))
-nonexpansive-∃ k {A} P i = (λ {(a ,ₚ (b ,ₚ c)) → a ,ₚ (b ,ₚ (a ,ₚ c))}) ,ₚ λ { (a ,ₚ b ,ₚ c) → a ,ₚ b ,ₚ proj₂ c}
+nonexpansive-∃ k {A} P i = (λ {(a ,ₚ (b ,ₚ c)) → a ,ₚ (b ,ₚ (a ,ₚ c))}) ,ₚ λ { (a ,ₚ b ,ₚ c) → a ,ₚ b ,ₚ proj₂ₚ c}
 
 strong-exists : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ)
   → strong-fun Δ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)

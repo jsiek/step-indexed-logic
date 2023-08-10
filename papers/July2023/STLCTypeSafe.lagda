@@ -10,12 +10,13 @@ open import Data.Nat.Induction
 open import Data.Bool using (true; false) renaming (Bool to 𝔹)
 open import Data.List using (map)
 open import Data.Nat.Properties
-open import Data.Product using () renaming (_,_ to _,ₐ_)
+open import Data.Product using (_,_; proj₁; proj₂; Σ; Σ-syntax)
+open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import StepIndexedLogic2
 open import July2023.STLC2
 open import July2023.LogRel2
 open import July2023.STLCSafe2
-open import PropLib
+open import PropP
 
 \end{code}
 \end{comment}
@@ -29,7 +30,7 @@ whereas our logical relation merely says that a well-behaved term is
 one that satisfies single-step progress and preservation.
 
 \begin{code}
-type-safety : ∀ {A} → [] ⊢ M ⦂ A → M —↠ N →  ⌊ Value N ⌋ ⊎ (Σ[ N′ ∈ Term ] ⌊ N —→ N′ ⌋)
+type-safety : ∀ {A} → [] ⊢ M ⦂ A → M —↠ N →  ⌊ Value N ⊎ (Σ[ N′ ∈ Term ] (N —→ N′)) ⌋
 \end{code}
 
 \noindent So we prove the following lemma, which states that if $M$ is
@@ -53,7 +54,7 @@ type-safety {M}{N}{A} ⊢M M—↠N =
    let ℰN = ℰ-multi-preserve M—↠N ℰM in
    let progᵒ = proj₁ᵒ (ℰ-elim ℰN) in
    let prog = caseᵒ progᵒ
-               (pureᵒE (𝒱⇒Value A N Zᵒ) λ v → pureᵖI (inj₁ (squash v)))
-               (pureᵒE Zᵒ λ (N′ ,ₐ N→N′) → pureᵖI (inj₂ (N′ , squash N→N′))) in
-   pureᵖE[] prog
+               (pureᵒE (𝒱⇒Value A N Zᵒ) λ v → pureᵒI (inj₁ v))
+               (pureᵒE Zᵒ λ (N′ , N→N′) → pureᵒI (inj₂ (N′ , N→N′))) in
+   pureᵒE[] prog
 \end{code}

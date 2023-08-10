@@ -2,12 +2,11 @@
 open import Data.List using (List; []; _∷_; length)
 open import Data.Product using (_,_;_×_) -- ; proj₁; proj₂; Σ-syntax; ∃-syntax)
 open import Data.Nat using (ℕ; zero; suc; _+_)
---open import Data.Nat using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; z≤n; s≤s; _≤′_; ≤′-step)
 
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans)
 
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
+open import PropP
 open import RawSetO
 open import SetO
 open import Variables
@@ -25,7 +24,7 @@ strong-let {Γ}{Δ}{A}{Now} T Sᵃ x
     let strongTsx = strong-now⇒nonexpansive{x = sucᵒ x}{Δ = Now ∷ Δ} ((strong T) (sucᵒ x)) time-x
                  ((λ a → ↓ j (# (Sᵃ a) δ)) , δ) j k k≤j in
     let nonexpansiveSx : ∀ a → ↓ j (# (Sᵃ a) δ) ≡ₒ ↓ j (# (Sᵃ a) (↓ᵈ j x δ))
-        nonexpansiveSx = (λ a → strong-now⇒nonexpansive (strong (Sᵃ a) x) time-x δ j j (≤-refl{j})) in
+        nonexpansiveSx = (λ a → strong-now⇒nonexpansive (strong (Sᵃ a) x) time-x δ j j (≤-reflₚ{j})) in
       ↓ k (# T ((λ a → # (Sᵃ a) δ) , δ))
     ⩦⟨ ((strong T) zeroᵒ) ((λ a → # (Sᵃ a) δ) , δ) j k k≤j ⟩
       ↓ k (# T ((λ a → ↓ j (# (Sᵃ a) δ)) , δ))
@@ -39,7 +38,7 @@ strong-let {Γ}{Δ}{A}{Now} T Sᵃ x
 ... | Later = λ δ j k k≤j →
     let strongTz = ((strong T) zeroᵒ) ((λ a → # (Sᵃ a) δ) , δ) (suc j) (suc k) k≤j in
     let EQ : ((λ a → ↓ (suc j) (# (Sᵃ a) δ)) , δ) ≡ᵈ ((λ a → ↓ (suc j)  (# (Sᵃ a) (↓ᵈ j x δ))) , δ)
-        EQ = (λ a → strong-later⇒contractive (strong (Sᵃ a) x) time-x δ j j (≤-refl{j})) ,ₚ ≡ᵈ-refl in
+        EQ = (λ a → strong-later⇒contractive (strong (Sᵃ a) x) time-x δ j j (≤-reflₚ{j})) ,ₚ ≡ᵈ-refl in
     let strongTsx : ↓ (suc k) (# T ((λ a → # (Sᵃ a) (↓ᵈ j x δ)) , δ))
                     ≡ₒ ↓ (suc k) (# T ((λ a → # (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))
         strongTsx = strong-later⇒contractive{x = sucᵒ x}{Δ = Now ∷ Δ} ((strong T) (sucᵒ x)) time-x
@@ -64,7 +63,7 @@ strong-let {Γ}{Δ}{A}{Later} T Sᵃ x
                  ((λ a → ↓ j (# (Sᵃ a) δ)) , δ) j k k≤j in
     let EQ : ((λ a → ↓ j (# (Sᵃ a) δ)) , ↓ᵈ j x δ)
           ≡ᵈ ((λ a → ↓ j  (# (Sᵃ a) (↓ᵈ j x δ))) , ↓ᵈ j x δ)
-        EQ = (λ a → strong-now⇒nonexpansive (strong (Sᵃ a) x) time-x δ j j (≤-refl{j}))
+        EQ = (λ a → strong-now⇒nonexpansive (strong (Sᵃ a) x) time-x δ j j (≤-reflₚ{j}))
              ,ₚ ≡ᵈ-refl in
       ↓ k (# T ((λ a → # (Sᵃ a) δ) , δ))
     ⩦⟨ ≡ₒ-sym (lemma17 k) ⟩
@@ -85,10 +84,10 @@ strong-let {Γ}{Δ}{A}{Later} T Sᵃ x
       ↓ k (# T ((λ a → # (Sᵃ a) (↓ᵈ j x δ)) , ↓ᵈ j x δ))
     ∎
 ... | Later = λ δ j k k≤j →
-    let strongTz = ((strong T) zeroᵒ) ((λ a → # (Sᵃ a) δ) , δ) (suc j) k (≤-trans{k}{j}{suc j} k≤j (n≤1+n j)) in
-    let strongTz2 = ((strong T) zeroᵒ) (((λ a → # (Sᵃ a) (↓ᵈ j x δ))) , δ) (suc j) k (≤-trans{k}{j}{suc j} k≤j (n≤1+n j)) in
+    let strongTz = ((strong T) zeroᵒ) ((λ a → # (Sᵃ a) δ) , δ) (suc j) k (≤-transₚ{k}{j}{suc j} k≤j (n≤1+nₚ j)) in
+    let strongTz2 = ((strong T) zeroᵒ) (((λ a → # (Sᵃ a) (↓ᵈ j x δ))) , δ) (suc j) k (≤-transₚ{k}{j}{suc j} k≤j (n≤1+nₚ j)) in
     let EQ : ((λ a → ↓ (suc j) (# (Sᵃ a) δ)) , δ) ≡ᵈ ((λ a → ↓ (suc j)  (# (Sᵃ a) (↓ᵈ j x δ))) , δ)
-        EQ = (λ a → strong-later⇒contractive (strong (Sᵃ a) x) time-x δ j j (≤-refl{j})) ,ₚ ≡ᵈ-refl in
+        EQ = (λ a → strong-later⇒contractive (strong (Sᵃ a) x) time-x δ j j (≤-reflₚ{j})) ,ₚ ≡ᵈ-refl in
     let strongTsx = strong-later⇒contractive{x = sucᵒ x}{Δ = Now ∷ Δ} ((strong T) (sucᵒ x)) time-x
                  ((λ a → # (Sᵃ a) (↓ᵈ j x δ)) , δ) j k k≤j in
       ↓ (suc k) (# T ((λ a → # (Sᵃ a) δ) , δ))

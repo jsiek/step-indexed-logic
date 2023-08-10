@@ -7,7 +7,7 @@ open import Data.Nat using (ℕ; zero; suc; _+_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; sym; trans)
 
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
+open import PropP
 open import RawSetO
 open import SetO
 open import Variables
@@ -26,11 +26,11 @@ infix 2 ∀ₒ-syntax
 syntax ∀ₒ-syntax A (λ x → P) = ∀ₒ[ x ⦂ A ] P
 
 cong-∀ : ∀{A : Set}{P Q : A → Setₒ} → (∀ a → P a ≡ₒ Q a) → (∀ₒ[ a ⦂ A ] P a) ≡ₒ (∀ₒ[ a ⦂ A ] Q a)
-cong-∀ {A}{P}{Q} P=Q i = (λ ∀Pi a → proj₁ (P=Q a i) (∀Pi a)) ,ₚ (λ ∀Qi a → proj₂ (P=Q a i) (∀Qi a))
+cong-∀ {A}{P}{Q} P=Q i = (λ ∀Pi a → proj₁ₚ (P=Q a i) (∀Pi a)) ,ₚ (λ ∀Qi a → proj₂ₚ (P=Q a i) (∀Qi a))
 
 nonexpansive-∀ : ∀ k → ∀{A} (P : A → Setₒ) → (∀ₒ[ a ⦂ A ] P a)  ≡ₒ[ k ]  (∀ₒ[ a ⦂ A ] ↓ k (P a))
 nonexpansive-∀ k P i = (λ {(i<k ,ₚ ∀Pi) → i<k ,ₚ λ a → i<k ,ₚ ∀Pi a})
-                       ,ₚ (λ {(i<k ,ₚ ↓k∀Pi) → i<k ,ₚ λ a → proj₂ (↓k∀Pi a)})
+                       ,ₚ (λ {(i<k ,ₚ ↓k∀Pi) → i<k ,ₚ λ a → proj₂ₚ (↓k∀Pi a)})
 
 strong-all : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ) → strong-fun Δ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
 strong-all {A}{Γ}{Δ} P x

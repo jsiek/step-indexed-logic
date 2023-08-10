@@ -2,7 +2,7 @@
 
 open import Data.Nat using (ℕ; zero; suc; _+_)
 
-open import PropLib
+open import PropP
 open import Variables
 open import RawSetO
 open import SetO
@@ -13,20 +13,20 @@ open import EquivalenceRelationProp
 module Later where
 
 ▷ : Setₒ → Setₒ
-▷ ϕ k = ∀ j → j < k → ϕ j
+▷ ϕ k = ∀ j → j <ₚ k → ϕ j
 
 down-later : ∀{Γ}{Δ : Times Γ} (ϕ : Setᵒ Γ Δ)
   → ∀ δ → downClosedᵈ δ → downClosed (▷ (# ϕ δ))
-down-later {Γ}{Δ} ϕ δ down-δ n ▷ϕn k k≤n j j<k = ▷ϕn j (≤-trans{suc j}{k}{n} j<k k≤n)
+down-later {Γ}{Δ} ϕ δ down-δ n ▷ϕn k k≤n j j<k = ▷ϕn j (≤-transₚ{suc j}{k}{n} j<k k≤n)
 
 cong-▷ : ∀{ϕ ψ : Setₒ} → ϕ ≡ₒ ψ → ▷ ϕ ≡ₒ ▷ ψ
-cong-▷ {ϕ}{ψ} ϕ=ψ i = (λ ▷ϕi j j<i → let ψj = proj₁ (ϕ=ψ j) (▷ϕi j j<i) in ψj)
-        , (λ ▷ψi j j<i → let ϕj = proj₂ (ϕ=ψ j) (▷ψi j j<i) in ϕj)
+cong-▷ {ϕ}{ψ} ϕ=ψ i = (λ ▷ϕi j j<i → let ψj = proj₁ₚ (ϕ=ψ j) (▷ϕi j j<i) in ψj)
+        ,ₚ (λ ▷ψi j j<i → let ϕj = proj₂ₚ (ϕ=ψ j) (▷ψi j j<i) in ϕj)
 
 contractive-▷ : ∀{k} (S : Setₒ) → ▷ S ≡ₒ[ suc k ] ▷ (↓ k S)
-contractive-▷ {k} S zero = (λ _ → tt , (λ x ())) , (λ _ → tt , (λ x ()))
-contractive-▷ {k} S (suc i) = (λ { (x , x₁) → x , (λ j x₂ → ≤-trans{suc j}{suc i}{k} x₂ x , (x₁ j x₂))})
-     , λ { (x , ▷↓kSsi) → x , (λ j x₂ → let xx = ▷↓kSsi j x₂ in proj₂ xx)}
+contractive-▷ {k} S zero = (λ _ → ttₚ ,ₚ (λ x ())) ,ₚ (λ _ → ttₚ ,ₚ (λ x ()))
+contractive-▷ {k} S (suc i) = (λ { (x ,ₚ x₁) → x ,ₚ (λ j x₂ → ≤-transₚ{suc j}{suc i}{k} x₂ x ,ₚ (x₁ j x₂))})
+     ,ₚ λ { (x ,ₚ ▷↓kSsi) → x ,ₚ (λ j x₂ → let xx = ▷↓kSsi j x₂ in proj₂ₚ xx)}
 
 strong-▷ : ∀{Γ}{Δ : Times Γ}(S : Setᵒ Γ Δ) → strong-fun (laters Γ) (λ δ → ▷ (# S δ))
 strong-▷ {Γ}{Δ} S x

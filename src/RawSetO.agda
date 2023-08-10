@@ -5,18 +5,18 @@ open import EquivalenceRelationProp using (EquivalenceRelation; _⇔_; ⩦-refl;
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
-open import PropLib
+open import PropP
 
 module RawSetO where
 
 Setₒ : Set₁
-Setₒ = ℕ → Prop -- Try changing to Set
+Setₒ = ℕ → Prop
 
 Predₒ : Set → Set₁
 Predₒ A = A → Setₒ
 
 ⊤ᵖ : ∀{A} → Predₒ A
-⊤ᵖ = λ _ _ → ⊤
+⊤ᵖ = λ _ _ → ⊤ₚ
 
 infix 2 _≡ₒ_
 _≡ₒ_ : Setₒ → Setₒ → Prop
@@ -50,21 +50,10 @@ congruentᵖ : ∀{A}{B} (F : Predₒ A → Predₒ B) → Prop₁
 congruentᵖ F = ∀ {P Q} → (∀ a → P a ≡ₒ Q a) → ∀ b → (F P b) ≡ₒ (F Q b)
 
 downClosed : Setₒ → Prop
-downClosed S = ∀ n → S n → ∀ k → k ≤ n → S k
+downClosed S = ∀ n → S n → ∀ k → k ≤ₚ n → S k
 
 downClosedᵖ : ∀{A} (P : Predₒ A) → Prop
 downClosedᵖ {A} P = ∀ (a : A) → downClosed (P a)
 
 downClosed-fun : ∀{A}{B} (F : Predₒ A → Predₒ B) → Prop₁
 downClosed-fun {A}{B} F = ∀ (P : Predₒ A) (b : B) → downClosedᵖ P → downClosed (F P b)
-
-{- For Alternative Formulation -}
-upClosed : Setₒ → Prop
-upClosed S = ∀ n → S n → ∀ k → n ≤ k → S k
-
-upClosedᵖ : ∀{A} (P : Predₒ A) → Prop
-upClosedᵖ {A} P = ∀ (a : A) → upClosed (P a)
-
-upClosed-fun : ∀{A}{B} (F : Predₒ A → Predₒ B) → Prop₁
-upClosed-fun {A}{B} F = ∀ (P : Predₒ A) (b : B) → upClosedᵖ P → upClosed (F P b)
-

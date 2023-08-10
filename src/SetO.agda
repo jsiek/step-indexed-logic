@@ -8,7 +8,7 @@ open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
-open import PropLib renaming (_×_ to _×ₚ_; _,_ to _,ₚ_)
+open import PropP
 open import EquivalenceRelationProp using (EquivalenceRelation; _⇔_; ⩦-refl; ⩦-sym; ⩦-trans)
 open import RawSetO
 open import Approx

@@ -2,7 +2,7 @@
 
 open import Relation.Binary.PropositionalEquality using (refl)
 
-open import PropLib
+open import PropP
 open import RawSetO
 open import Variables
 open import Env
@@ -10,7 +10,7 @@ open import Env
 module Pure where
 
 _ₒ : Set → Setₒ
-p ₒ = λ k → Squash p
+p ₒ = λ k → ⌊ p ⌋
 
 strong-pure : ∀{Γ}{A}{Δ : Times Γ} (p : Set) (x : Γ ∋ A) → strong-var x (timeof x Δ) (λ δ → p ₒ)
 strong-pure {Γ}{A}{Δ} p x

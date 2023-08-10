@@ -12,6 +12,10 @@ data _∋_ : Context → Set → Set₁ where
   zeroᵒ : ∀{Γ}{A} → (A ∷ Γ) ∋ A
   sucᵒ : ∀{Γ}{A}{B} → Γ ∋ B → (A ∷ Γ) ∋ B
 
+{- For the common case -}
+recᵒ : ∀{Γ}{A} → (A ∷ Γ) ∋ A
+recᵒ = zeroᵒ
+
 data Time : Set where
   Now : Time
   Later : Time
