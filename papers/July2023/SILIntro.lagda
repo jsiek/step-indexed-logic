@@ -305,7 +305,7 @@ variable p q r : Set
 \end{code}
 
 We start with the pure connective. Given a proof of an Agda formula
-$p$, \textsf{(pureᵒI p)} produces a proof of $𝒫 ⊢ᵒ p ᵒ$.
+$p$, the rule \textsf{pureᵒI} produces a proof of $𝒫 ⊢ᵒ p ᵒ$.
 
 \begin{code}
 _ : p → 𝒫 ⊢ᵒ p ᵒ
