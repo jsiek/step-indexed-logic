@@ -245,11 +245,11 @@ _ = _∈ recᵒ
 \end{code}
 
 In the unlikely event that you have multiple nested μᵒ in a formula,
-you can replace \textsf{recᵒ} with a natural number (de Bruijn index
+you can replace \textsf{recᵒ} with a natural number (a de Bruijn index
 built from \textsf{zero}ᵒ and \textsf{suc}ᵒ) that specifies which μᵒ
 you want to refer to.  (\textsf{recᵒ} is just defined to be the de
 Bruijn index \textsf{zero}ᵒ.) In general, the membership connective
-$a ∈ x$ has the following type, with the \textsf{var-now} function
+$a ∈ x$ has the following type, where the \textsf{var-now} function
 assigns variable $x$ the time \textsf{Now} and all the other variables
 in $Γ$ are assigned \textsf{Later}.
 
@@ -268,8 +268,8 @@ _ = ▷ᵒ
 \end{code}
 
 Finally, when we apply the μᵒ operator, SIL checks to make sure that
-uses of the recursive uses of this predicate in its own body were
-categorized as \textsf{Later}.
+the recursive uses of this predicate in its own body were categorized
+as \textsf{Later}.
 
 \begin{code}
 _ : (A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) → (A → Setᵒ Γ Δ)
