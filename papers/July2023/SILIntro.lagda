@@ -15,7 +15,7 @@ open import Data.List using (List; []; _∷_)
 open import Data.Nat
    using (ℕ; zero; suc; _≤_; _<_; _+_; _∸_; _*_; z≤n; s≤s; _≤′_; ≤′-step; ≤-pred)
 open import Data.Nat.Properties
-   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s; 0≢1+n)
+   using (≤-refl; ≤-antisym; ≤-trans; ≤-step; ≤⇒≤′; ≤′⇒≤; n≤1+n; <⇒≤; s≤′s; 0≢1+n; *-distribˡ-+)
 open import Data.Sum using (_⊎_; inj₁; inj₂)
 open import Data.Unit.Polymorphic renaming (⊤ to topᵖ; tt to ttᵖ)
 import Relation.Binary.PropositionalEquality as Eq
@@ -233,6 +233,7 @@ a function from the domain of the predicate to a formula in the type
 \textsf{Even}′ function from ℕ to \textsf{Set}ˢ.
 
 \begin{code}
+-- create definition to hide (m ∈ zeroᵒ), call it "rec"
 Evenᵒ : ℕ → Setᵒ (ℕ ∷ []) (Later ∷ [])
 Evenᵒ n = (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ zeroᵒ))
 \end{code}
@@ -663,45 +664,30 @@ not-even-one even-one = ⊥ᵒ⇒⊥ (caseᵒ (unfoldᵒ Evenᵒ 1 even-one)
 
 
 \begin{code}
-even-div2 : ∀ n → [] ⊢ᵒ μᵒ Evenᵒ n → (Σₚ[ m ∈ ℕ ] ⌊ n ≡ 2 * m ⌋)
-even-div2 zero even-n = 0 ,ₚ squash refl
-even-div2 (suc zero) even-n =
-   let false : [] ⊢ᵒ ⊥ᵒ
-       false = caseᵒ (unfoldᵒ Evenᵒ 1 even-n)
-               (pureᵒE Zᵒ λ {()})
-               (unpackᵒ Zᵒ λ m rest → pureᵒE (proj₁ᵒ rest) λ{()}) in
-   ⊥-elimₚ (⊥ᵒ⇒⊥ false)
-even-div2 (suc (suc n)) even-ssn =
-  let xx : [] ⊢ᵒ (Σₚ[ m ∈ ℕ ] ⌊ n ≡ 2 * m ⌋)ᵖ
-      xx = caseᵒ (unfoldᵒ Evenᵒ (2 + n) even-ssn)
-           (pureᵒE Zᵒ λ{()})
-           (unpackᵒ Zᵒ λ m rest →
-           pureᵒE (proj₁ᵒ Zᵒ) λ { refl →
-           let IH = even-div2 n {!!} in
-           pureᵖI ({!!} ,ₚ {!!})})
-           in
-  {!!}
-  
-{-
-  let IH = even-div2 n {!!} in
-  {!!}
-  -}
-
-{-
-even-implies-div2 : Setᵏ
-even-implies-div2 = ∀ᵒ[ n ⦂ ℕ ] μᵒ Evenᵒ n →ᵒ (∃ᵒ[ m ] (n ≡ 2 * m)ᵒ)
-
-even-div2-proof : [] ⊢ᵒ even-implies-div2
+-- show proof this in normal Agda
+even-div2-proof : [] ⊢ᵒ ∀ᵒ[ n ⦂ ℕ ] (μᵒ Evenᵒ n) →ᵒ ◇ᵒ n (∃ᵒ[ m ] ((n ≡ 2 * m)ᵒ))
 even-div2-proof =
   lobᵒ (Λᵒ[ n ] λᵒ[ even-n ⦂ μᵒ Evenᵒ n ]
         caseᵒ (unfoldᵒ Evenᵒ n even-n)
-          (pureᵒE Zᵒ λ{ refl → ∃ᵒI 0 (pureᵒI refl)})
+          {- Case n = 0 -}
+          (pureᵒE Zᵒ λ{ refl → monoᵒ (∃ᵒI 0 (pureᵒI refl)) })
+          {- Case n = 2 + m and ▷ (Even m) -}
           (unpackᵒ Zᵒ λ m [n=2+m]×[even-m] →
             pureᵒE (proj₁ᵒ [n=2+m]×[even-m]) λ{ refl →
-              let 𝒫 = (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenᵒ m) ∷ μᵒ Evenᵒ n ∷ ▷ᵒ even-implies-div2 ∷ [] in
-              let  IH : 𝒫 ⊢ᵒ ▷ᵒ even-implies-div2
-                   IH = Sᵒ (Sᵒ Zᵒ) in
-              --unpackᵒ IH λ m′ m=2*m′ →
-              {!!}}))
--}
+            let IH : _ ⊢ᵒ ◇ᵒ m (▷ᵒ (∃ᵒ[ m′ ] ((m ≡ 2 * m′)ᵒ)))
+                IH = ▷◇⇒◇▷ m (→ᵒE (▷→ (∀ᵒE (▷∀ (Sᵒ (Sᵒ (Sᵒ Zᵒ)))) m)) (proj₂ᵒ Zᵒ)) in
+            ◇→◇{k = m} IH (▷→▷ Zᵒ (∃ᵒE Zᵒ λ m′ →
+            pureᵒE Zᵒ λ { refl →
+            monoᵒ (∃ᵒI (suc m′) (pureᵒI EQ))} ))}))
+  where
+  EQ : ∀{m′} → 2 + (2 * m′) ≡ 2 * (1 + m′)
+  EQ {m′} = sym (*-distribˡ-+ 2 1 m′)
+
+even-div2 : ∀ n → [] ⊢ᵒ μᵒ Evenᵒ n → (Σₚ[ m ∈ ℕ ] ⌊ n ≡ 2 * m ⌋)
+even-div2 n even-n =
+   let ∃m,n=2mᵒ : [] ⊢ᵒ (∃ᵒ[ m ]  (n ≡ m + (m + zero)) ᵒ)
+       ∃m,n=2mᵒ = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE even-div2-proof n) even-n) in
+   let ∃m,n=2mᵖ : [] ⊢ᵒ (Σₚ[ m ∈ ℕ ] ⌊ n ≡ 2 * m ⌋) ᵖ
+       ∃m,n=2mᵖ = unpackᵒ ∃m,n=2mᵒ λ m eq → pureᵒE eq λ {refl → pureᵖI (m ,ₚ (squash refl)) } in
+   pureᵖE[] ∃m,n=2mᵖ
 \end{code}

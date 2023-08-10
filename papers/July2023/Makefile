@@ -3,8 +3,8 @@ SRCTEX = $(SRCDIR)/latex
 
 PAPERTEX = latex/July2023
 
-# latex/July2023/SILIntro.tex latex/July2023/SILReference.tex
-paper.pdf: paper.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex 
+#  latex/July2023/SILReference.tex
+paper.pdf: paper.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper
@@ -19,13 +19,13 @@ clean:
 	rm -f paper.out paper.aux paper.bbl paper.blg $(PAPERTEX)/* $(SRCTEX)/*
 
 
-$(SRCTEX)/StepIndexedLogic2.tex: StepIndexedLogic2.lagda
+$(SRCTEX)/StepIndexedLogic2.tex: $(SRCDIR)/StepIndexedLogic2.lagda
 	cd $(SRCDIR) ; agda --latex StepIndexedLogic2.lagda
 
-$(PAPERTEX)/SILIntro.tex: SILIntro.lagda StepIndexedLogic.lagda
+$(PAPERTEX)/SILIntro.tex: SILIntro.lagda $(SRCDIR)/StepIndexedLogic2.lagda
 	agda --latex SILIntro.lagda
 
-$(PAPERTEX)/SILReference.tex: SILReference.lagda StepIndexedLogic.lagda
+$(PAPERTEX)/SILReference.tex: SILReference.lagda $(SRCDIR)/StepIndexedLogic2.lagda
 	agda --latex SILReference.lagda
 
 $(PAPERTEX)/STLC2.tex: STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda

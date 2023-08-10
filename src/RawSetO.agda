@@ -10,7 +10,7 @@ open import PropLib
 module RawSetO where
 
 Setₒ : Set₁
-Setₒ = ℕ → Prop
+Setₒ = ℕ → Prop -- Try changing to Set
 
 Predₒ : Set → Set₁
 Predₒ A = A → Setₒ
