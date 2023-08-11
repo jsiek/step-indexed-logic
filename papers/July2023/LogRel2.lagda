@@ -52,12 +52,13 @@ of the predicates is that, for a given type $A$,
 $𝒱⟦ A ⟧\, V$ means that value $V$ is well behaved according to type $A$
 and $ℰ⟦ A ⟧\, M$ means that $M$ is well behaved according to type $A$.
 
-SIL does not directly support mutual recursion, but we can merge the
-two predicates into one predicate named 𝒱⊎ℰ, using a sum type.  We
+As we discussed in Section~\ref{sec:mutually-recursive}, SIL does not
+directly support mutual recursion but we can merge the two predicates
+into one predicate using a sum type, which here we name 𝒱⊎ℰ.  We
 define 𝒱⊎ℰ by an application of μᵒ, so we first need to define the
 non-recursive version of 𝒱⊎ℰ, which we call \textsf{pre}-𝒱⊎ℰ, defined
-below. It simply dispatches to the non-recursive \textsf{pre}-ℰ and
-\textsf{pre}-ℰ which we will get to shortly.
+below. It simply dispatches to the non-recursive \textsf{pre}-𝒱 and
+\textsf{pre}-ℰ functions which we get to shortly.
 
 \begin{code}
 Γ₁ : Context
@@ -80,18 +81,18 @@ pre-𝒱⊎ℰ (inj₂ (A , M)) = pre-ℰ A M
 ℰ⟦ A ⟧ M = 𝒱⊎ℰ (inj₂ (A , M))
 \end{code}
 
-When we use 𝒱 and ℰ recursively in their definition, we do so by using
-the membership operator of SIL with a de Bruijn index to select
-which recursive predicate we wish to refer to. In this case, there is
-only one recursive predicate in scope and its de Bruijn index is zero.
-We define the following shorthand notation for refering to 𝒱 and ℰ.
+When we use 𝒱 and ℰ recursively inside their own definitions, we do so
+by using the membership operator of SIL with \textsf{recᵒ} (for ``this
+recursive predicate''), and either \textsf{inj₁} for 𝒱 and
+\textsf{inj₂} for ℰ. So we define the following shorthand notation for
+these recursive references to 𝒱 and ℰ.
 
 \begin{code}
 𝒱ᵒ⟦_⟧ : Type → Term → Setᵒ Γ₁ (Now ∷ [])
-𝒱ᵒ⟦ A ⟧ V = inj₁ (A , V) ∈ zeroᵒ
+𝒱ᵒ⟦ A ⟧ V = inj₁ (A , V) ∈ recᵒ
 
 ℰᵒ⟦_⟧ : Type → Term → Setᵒ Γ₁ (Now ∷ [])
-ℰᵒ⟦ A ⟧ M = inj₂ (A , M) ∈ zeroᵒ
+ℰᵒ⟦ A ⟧ M = inj₂ (A , M) ∈ recᵒ
 \end{code}
 
 The definition of \textsf{pre-ℰ}, i.e., what it means for a term to be
@@ -100,8 +101,8 @@ well behaved, is essentially a statement of what we'd like to prove:
 says that either $M$ is a well-behaved value or it is reducible. The
 preservation part says that if $M$ reduces to $N$, then $N$ is also
 well behaved. Note that we insert the ▷ᵒ operator in front of the
-recursive use of ℰ because when we use the μᵒ operator, it will
-require the zero de Bruijn index to be at time \textsf{Later}.
+recursive use of ℰ to satisfy SIL's rules for well formed recursive
+definitions.
 
 \begin{code}
 pre-ℰ A M = (pre-𝒱 A M ⊎ᵒ (reducible M)ᵒ) ×ᵒ (∀ᵒ[ N ] (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰᵒ⟦ A ⟧ N))
@@ -111,13 +112,14 @@ The definition of \textsf{pre-𝒱} defines what it means to be a
 well-behaved value according to a given type. For type ℕ, the value
 must be the literal for zero or be the successor of a well-behaved
 value at type ℕ. For function types, the value must be either a lambda
-abstraction or fixpoint. In the former case, given an arbitrary
+abstraction or fixpoint. For a lambda abstraction, given an arbitrary
 well-behaved values $W$, substituting it into the lambda's body $N$
-produces a well-behaved term.  In the later case, for the fixpoint
-value $μ\,V$, the $V$ must be a value (syntactically) and substituting
-the whose fixpoint value into $V$ produces a well-behaved value. We
-insert the ▷ᵒ operator around each recursive use of 𝒱 and ℰ.
+produces a well-behaved term.  For a fixpoint $μ\,V$, the term $V$
+must be a value (syntactically) and substituting the whole fixpoint
+into $V$ produces a well-behaved value. We insert the ▷ᵒ operator
+around each recursive use of 𝒱 and ℰ.
 
+\begin{minipage}{\textwidth}
 \begin{code}
 pre-𝒱 `ℕ `zero       = ⊤ᵒ
 pre-𝒱 `ℕ (`suc V)    = pre-𝒱 `ℕ V
@@ -125,6 +127,7 @@ pre-𝒱 (A ⇒ B) (ƛ N)  = ∀ᵒ[ W ] ▷ᵒ (𝒱ᵒ⟦ A ⟧ W) →ᵒ ▷�
 pre-𝒱 (A ⇒ B) (μ V)  = (Value V)ᵒ ×ᵒ (▷ᵒ (𝒱ᵒ⟦ A ⇒ B ⟧ (V [ μ V ])))
 pre-𝒱 A M            = ⊥ᵒ
 \end{code}
+\end{minipage}
 
 Next we prove several lemmas that encapsulate uses of the fixpoint
 theorem.  We define the following shorthand for referring to the two

@@ -43,10 +43,10 @@ open import EquivalenceRelationProp public
 \section{Case Study: Type Safety of the STLC with Recursive Functions}
 \label{sec:STLC}
 
-We provide an example application of our Step-Indexed Logic with a
+We provide an example application of the Step-Indexed Logic with a
 case study in proving semantic type safety for the STLC with recursive
 functions. We choose to extend STLC with recursive functions because
-otherwise, one does not need step-indexed logical relations; logical
+otherwise one does not need step-indexed logical relations; logical
 relations that are only indexed by types are sufficient.  The next few
 subsections give the definition of this variant of the STLC (syntax in
 §\ref{sec:STLC-syntax}, reduction semantics in
@@ -54,12 +54,11 @@ subsections give the definition of this variant of the STLC (syntax in
 §\ref{sec:STLC-type-system}). We then define the step-indexed logical
 relation in Section~\ref{sec:log-rel} and use it to define semantic
 type safety in Section~\ref{sec:sem-type-safety}. The rest of the
-subsections give the proof of semantic type safety, starting
-with the Bind Lemma (§\ref{sec:bind-lemma}), then the many
-Compatibility Lemmas (§\ref{sec:compatibility-lemmas}) that
-lead up to the Fundamental Lemma (§\ref{sec:fundamental}).
-We conclude with the proof of semantic type safety
-in Section~\ref{sec:proof-sem-safety}.
+subsections give the proof of semantic type safety, starting with the
+Bind Lemma (§\ref{sec:bind-lemma}), then the many Compatibility Lemmas
+(§\ref{sec:compatibility-lemmas}) that lead up to the Fundamental
+Lemma (§\ref{sec:fundamental}).  We conclude with the proof of
+semantic type safety in Section~\ref{sec:proof-sem-safety}.
 
 \subsection{Syntax of STLC with Recursive Functions}
 \label{sec:STLC-syntax}
@@ -87,21 +86,22 @@ module AsIf where
     μ : Term → Term
 \end{code}
 
-\noindent Instead of using the above data type, we instead use
-Abstract Binding Tree (ABT) library~\citep{Siek:2021to} to define the
-syntax of terms. The reason is that the proof of semantic type safety
-relies on a lemma regarding substitution whose proof is quite involved
-but standard.  We can obtain this substitution lemma for free if we
+\noindent Instead of using the above data type, we use the Abstract
+Binding Tree (ABT) library~\citep{Siek:2021to} to define the syntax of
+terms. The reason is that the proof of semantic type safety relies on
+a lemma regarding substitution whose proof is rather involved but also
+quite standard.  We can obtain this substitution lemma for free if we
 use the ABT library.
 
 The ABT library is parameterized by a type \textsf{Op} that specifies
-the constructors and a function \textsf{sig} that describes the arity
-and binding structure of each term constructor. For this variant of
-the STLC, the terms include lambda abstraction, application, the zero
-numeral, the successor operation, case analysis on natural numbers,
-and a recursive fixpoint operator. The ABT library automatically
-includes a constructor for variables (de Bruijn indices), so we do not
-need to include them in \textsf{Op}.
+the term constructors and a function \textsf{sig} that describes the
+arity and binding structure of each term constructor. For this variant
+of the STLC, the terms include lambda abstraction, application, the
+zero numeral, the successor operation, case analysis on natural
+numbers, and a recursive fixpoint operator. The ABT library
+automatically includes a constructor for variables (de Bruijn
+indices), so we do not need a constructor for variables in
+\textsf{Op}.
 
 \begin{code}
 data Op : Set where
@@ -132,8 +132,7 @@ sig op-rec = (ν ■) ∷ []
 \end{code}
 
 \noindent We import the ABT library to obtain the definition of terms,
-whose type we name \textsf{Term}, the definition of substitution,
-and lemmas about substitution.
+the definition of substitution, and lemmas about substitution.
 
 \begin{code}
 open import rewriting.AbstractBindingTree Op sig renaming (ABT to Term) public
@@ -176,9 +175,9 @@ typically performs substitution when removing a variable binding, as
 we shall see in the β-ƛ reduction rule in the next section.
 
 \begin{code}
-_ = example where
-  example : ∀ N → (` 1) [ N ] ≡ ` 0
-  example N rewrite sub-var (N • id) 1 = refl
+_ = eg where
+  eg : ∀ N → (` 1) [ N ] ≡ ` 0
+  eg N rewrite sub-var (N • id) 1 = refl
 \end{code}
 
 The ABT library also defines parallel substitution, which takes a function σ from natural
@@ -191,30 +190,28 @@ _ : ⟪ id ⟫ (` 0) ≡ ` 0
 _ = refl
 \end{code}
 
-\noindent The ABT library defines a cons-like operator on substitutions, written $M • σ$,
-that maps $0$ to $M$ and an other $x$ to $σ\, (x \minus 1)$. Here are a few example
-that demonstrate the application of the substitution $M • N • \mathsf{id}$ to several different
-variables.
+\noindent The ABT library defines a cons-like operator on
+substitutions, written $M • σ$, that maps $0$ to $M$ and any other
+variable $x$ to $σ\, (x \minus 1)$. Here are a few example that
+demonstrate the application of the substitution $M • N • \mathsf{id}$
+to several different variables.
 
 \begin{code}
 _ : ∀{M N} → ⟪ M • N • id ⟫ (` 0) ≡ M
 _ = refl
 
-_ = example where
-  example : ∀ M N → ⟪ M • N • id ⟫ (` 1) ≡ N
-  example M N rewrite sub-var (M • N • id) 1 = refl
+_ = eg where eg : ∀ M N → ⟪ M • N • id ⟫ (` 1) ≡ N
+             eg M N rewrite sub-var (M • N • id) 1 = refl
 
-_ = example where
-  example : ∀ M N → ⟪ M • N • id ⟫ (` 2) ≡ ` 0
-  example M N rewrite sub-var (M • N • id) 2 = refl
+_ = eg where eg : ∀ M N → ⟪ M • N • id ⟫ (` 2) ≡ ` 0
+             eg M N rewrite sub-var (M • N • id) 2 = refl
 \end{code}
 
 \noindent The ↑ operator increments the de Bruijn indices.
 
 \begin{code}
-_ = example where
-  example : ⟪ ↑ ⟫ (` 0) ≡ ` 1
-  example rewrite sub-var ↑ 0 | ren-def suc 0 = refl
+_ = eg where eg : ⟪ ↑ ⟫ (` 0) ≡ ` 1
+             eg rewrite sub-var ↑ 0 | ren-def suc 0 = refl
 \end{code}
 
 \noindent The sequencing operator (σ ⨟ τ) creates a substitution that is equivalent
@@ -305,8 +302,8 @@ subst-preserves-value σ (`suc V) (V-suc v) = V-suc (subst-preserves-value σ V 
 subst-preserves-value σ (μ V) (V-μ v) = V-μ (subst-preserves-value (ext σ) V v)
 \end{code}
 
-Our reduction semantics will employ frames, a kind of shallow evaluation context,
-which we define as follows.
+Our reduction semantics employs frames, a kind of shallow evaluation
+context, which we define as follows.
 
 \begin{code}
 infix  6 □·_
@@ -332,6 +329,7 @@ suc□ ⟦ M ⟧          = `suc M
 
 The reduction relation for this STLC are defined as follows.  
 
+\begin{minipage}{\textwidth}
 \begin{code}
 infix 2 _—→_
 data _—→_ : Term → Term → Set where
@@ -341,6 +339,7 @@ data _—→_ : Term → Term → Set where
   β-μ : Value V → Value W → (μ V) · W —→ V [ μ V ] · W
   ξξ : (F : Frame) →  M′ ≡ F ⟦ M ⟧  →  N′ ≡ F ⟦ N ⟧  →  M —→ N  →  M′ —→ N′
 \end{code}
+\end{minipage}
 
 \noindent The ξξ rule will most often be used with \textsf{refl} as
 arguments for the second and third premise, so we define the following
@@ -419,7 +418,8 @@ data _⊢_⦂_ : List Type → Term → Type → Set
 \end{code}
 
 \noindent We define the well-typed values as follows. Note that we
-restrict the fixpoint operator to only be applicable to functions.
+restrict the fixpoint operator to only be applicable to values of
+function type.
 
 \begin{code}
 data _⊢ⱽ_⦂_ where

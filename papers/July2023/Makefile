@@ -31,7 +31,7 @@ $(PAPERTEX)/SILReference.tex: SILReference.lagda $(SRCDIR)/StepIndexedLogic2.lag
 $(PAPERTEX)/STLC2.tex: STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
 	agda --latex STLC2.lagda
 
-$(PAPERTEX)/LogRel2.tex: STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+$(PAPERTEX)/LogRel2.tex: LogRel2.lagda STLC2.lagda $(SRCDIR)/StepIndexedLogic2.lagda
 	agda --latex LogRel2.lagda
 
 $(PAPERTEX)/STLCDeterministic2.tex: STLCDeterministic2.lagda STLC.lagda $(SRCDIR)/StepIndexedLogic2.lagda

@@ -182,12 +182,18 @@ predicate``.  So $m ∈ \mathsf{rec}ᵒ$ is morally equivalent to saying
 $m ∈ \mathsf{Even}′$.  More precisely, \textsf{rec}ᵒ refers to the
 nearest enclosing μᵒ.
 
-The use of ▷ᵒ in $▷ᵒ (m ∈ \mathsf{rec}ᵒ)$ serves to guard the
-recursion to ensure that the recursive definition is well defined.
-SIL uses the two parameters of \textsf{Set}ᵒ for this purpose. The
-first parameter is a list of the domain types for all the recursive
-predicates in scope (often just zero or one). We refer to such as list
-as a \textsf{Context}. Let Γ range over contexts.
+The use of the ``later'' operator ▷ᵒ in $▷ᵒ (m ∈ \mathsf{rec}ᵒ)$
+serves to guard the recursion to ensure that the recursive definition
+is well defined. The presense of the ▷ᵒ operator means that SIL is a
+temporal logic, and more broadly, a modal logic. We discuss the rules
+for conducting proofs involving the ▷ᵒ operator in
+Section~\ref{sec:proof-rules}.
+
+SIL uses the two parameters of \textsf{Set}ᵒ to enforce the
+well-definedness of recursive definitions. The first parameter is a
+list of the domain types for all the recursive predicates in scope
+(often just zero or one). We refer to such as list as a
+\textsf{Context}. Let Γ range over contexts.
 
 \begin{code}
 variable Γ : Context
@@ -487,40 +493,77 @@ _ = λ n-even → unpackᵒ n-even λ x n=2xᵒ →
 
 \subsubsection{Reasoning about ``later''}
 
+As briefly mentioned above, SIL is a temporal logic and the ▷ᵒ
+operator means ``later''. Furthermore, SIL is designed so that if a
+formula is true now, then it remains true in the future. The following
+\textsf{monoᵒ} (for monotonic) proof rule exhibits this invariant.
+
 \begin{code}
 _ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
 _ = monoᵒ
 \end{code}
+
+The ▷ᵒ operator distributes over the other logical connectives.  For
+example, if you have a conjunction that is true later, then you have a
+conjunction (now) of two formulas that are true later.
 
 \begin{code}
 _ : 𝒫 ⊢ᵒ ▷ᵒ (ϕ ×ᵒ ψ)  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) ×ᵒ (▷ᵒ ψ)
 _ = ▷×
 \end{code}
 
+\noindent Similarly, ▷ᵒ distributes with implication.
+
+\begin{code}
+_ : 𝒫 ⊢ᵒ ▷ᵒ (ϕ →ᵒ ψ)  →  𝒫 ⊢ᵒ (▷ᵒ ϕ) →ᵒ (▷ᵒ ψ)
+_ = ▷→
+\end{code}
+
+\noindent The following derived rule captures a common pattern of
+reasoning for proofs in SIL. You have a proof of $▷ᵒ\, ϕ$
+and you know that ϕ implies ψ, and you need to prove
+that $▷ᵒ\, ψ$. Can you think of how to prove this using
+\textsf{monoᵒ}, \textsf{▷ᵒ}, \textsf{→ᵒI}, and \textsf{→ᵒE}?
+
 \begin{code}
 _ : 𝒫 ⊢ᵒ ▷ᵒ ϕ  →  ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ▷ᵒ ψ
 _ = ▷→▷
 \end{code}
+
+We also find it useful to introduce an operator that expresses $k$
+repetitions of ``later'', which we call the ``eventually'' operator,
+written $◇ᵒ\, k$.
 
 \begin{code}
 _ : ℕ → Setᵒ Γ Δ → Setᵒ Γ (laters Γ)
 _ = ◇ᵒ
 \end{code}
 
+\noindent When $k = 0$, ◇ᵒ is equivalent to ▷ᵒ.
+
 \begin{code}
 _ : ◇ᵒ 0 ϕ ≡ ▷ᵒ ϕ
 _ = refl
 \end{code}
+
+\noindent Otherwise, we have the following equation that adds one more
+▷ᵒ for each $k$.
 
 \begin{code}
 _ : ◇ᵒ (suc k) ϕ ≡ ◇ᵒ k (▷ᵒ ϕ)
 _ = refl
 \end{code}
 
+\noindent The ▷ᵒ operator commutes with the ◇ᵒ operator.
+
 \begin{code}
 _ : ∀ i → 𝒫 ⊢ᵒ ▷ᵒ (◇ᵒ i ϕ) → 𝒫 ⊢ᵒ ◇ᵒ i (▷ᵒ ϕ)
 _ = ▷◇⇒◇▷
 \end{code}
+
+Perhaps one of the surprising things about SIL is that the ``later''
+and ``eventually'' operators ultimately do not matter. If you can show
+that a formula ϕ is eventually true, then its just plain true.
 
 \begin{code}
 _ : [] ⊢ᵒ ▷ᵒ ϕ → [] ⊢ᵒ ϕ
@@ -530,6 +573,10 @@ _ : ∀ k → [] ⊢ᵒ ◇ᵒ k ϕ → [] ⊢ᵒ ϕ
 _ = ◇ϕ⇒ϕ
 \end{code}
 
+\noindent (The corresponding rule with non-empty assumptions, 
+$𝒫 ⊢ᵒ ▷ᵒ ϕ → 𝒫 ⊢ᵒ ϕ$, would be unsound. The sound generalization is
+the Weak-▷ rule of \citet{Dreyer:2009aa}:
+$𝒫 ⊢ᵒ ▷ᵒ ϕ → ◁ 𝒫 ⊢ᵒ ϕ$ where ◁ is the ``earlier'' operator.)
 
 \subsubsection{Recursive Predicates}
 
@@ -632,13 +679,17 @@ mysterious, so let's see its use in an example. Let's prove that
 \textsf{Even′ n} implies that $n$ is a multiple of $2$.  When we use
 the \textsf{lobᵒ} rule, we must state the property entirely within
 SIL, so in the following proof we restate our goal with the definition
-of \textsf{aux}.
+of \textsf{aux}. If you look closely at the type of \textsf{aux},
+you'll see that we inserted \textsf{◇ᵒ n} in the conclusion.  The
+reason is that the \textsf{lobᵒ} rules inserts another ▷ᵒ around the
+conclusion every time we use the induction hypothesis. We use the ◇ᵒ
+operator to collect them into one connective, and then we apply the
+◇ϕ⇒ϕ rule at the end of the proof to get rid of them.
 
-
+\begin{minipage}{\textwidth}
 \begin{code}
 even′-mul2 : ∀ n → [] ⊢ᵒ Even′ n → [] ⊢ᵒ (Σ[ m ∈ ℕ ] n ≡ 2 * m)ᵒ
-even′-mul2 n even-n = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE aux n) even-n)
-  where
+even′-mul2 n even-n = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE aux n) even-n) where
   aux : [] ⊢ᵒ ∀ᵒ[ n ⦂ ℕ ] (μᵒ Evenᵒ n) →ᵒ ◇ᵒ n ((∃[ m ] n ≡ 2 * m)ᵒ)
   aux = lobᵒ (Λᵒ[ n ] λᵒ[ even-n ⦂ μᵒ Evenᵒ n ]
           caseᵒ (unfoldᵒ Evenᵒ n even-n)
@@ -649,9 +700,17 @@ even′-mul2 n even-n = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE aux n) even-n)
               pureᵒE (proj₁ᵒ [n=2+m]×[even-m]) λ{ refl →
               let IH : _ ⊢ᵒ ▷ᵒ (◇ᵒ m ((∃[ m′ ] m ≡ 2 * m′)ᵒ))
                   IH = →ᵒE (▷→ (∀ᵒE (▷∀ (Sᵒ (Sᵒ (Sᵒ Zᵒ)))) m)) (proj₂ᵒ Zᵒ) in
-              ◇→◇{k = m} (▷◇⇒◇▷ m IH) (▷→▷ Zᵒ (pureᵒE Zᵒ λ {(m′ , refl) →
+              ◇→◇ m (▷◇⇒◇▷ m IH) (▷→▷ Zᵒ (pureᵒE Zᵒ λ {(m′ , refl) →
               monoᵒ (pureᵒI ((suc m′) , sym (*-distribˡ-+ 2 1 m′)))}))}))
 \end{code}
+\end{minipage}
+
+Comparing \textsf{even-mul2} to \textsf{even′-mul2}, we see that the
+proof in SIL is considerably more verbose than in plain Agda.  Thus,
+we only recommend using SIL to define recursive predicates that can't
+easily be defined in plain old Agda, such as step-indexed logical
+relations.
+
 
 \subsection{Encoding Mutually Recursive Predicates in SIL}
 \label{sec:mutually-recursive}
@@ -703,4 +762,6 @@ Odds′ : ℕ → Prop
 Odds′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₂ n)
 \end{code}
 
+
+TODO: discuss equality ≡ᵒ, substᵒ, and fixpointᵒ!
 
