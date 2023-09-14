@@ -250,6 +250,7 @@
 \newunicodechar{ᵏ}{\ensuremath{^k}}
 \newunicodechar{◇}{\ensuremath{\diamond}}
 \newunicodechar{ˡ}{\ensuremath{^l}}
+\newunicodechar{⁰}{\ensuremath{^0}}
 
 
                  
@@ -385,17 +386,22 @@ The authors are interested in using step-indexed logical relations for
 purposes of developing mechanized proofs in Agda of the Gradual
 Guarantee~\citep{Siek:2015ac} and Parametricity~\citep{REYNOLDS74C}
 for gradually-typed polymorphic
-languages~\citep{Ahmed:2011fk,Ahmed:2017aa,Igarashi:2017aa,New:2019ab,Labrada:2020tk}. One
-option would be to use Guarded Cubical Agda~\citep{Veltri:2020aa}, but
-both Cubical Agda~\citep{Vezzosi:2019aa} and its extension with
-guarded fixpoints are experimental features of Agda that may not be
-supported indefinitely.  We would prefer to have a step-indexed logic
-that is embedded in (vanilla) Agda.
+languages~\citep{Ahmed:2011fk,Ahmed:2017aa,Igarashi:2017aa,New:2019ab,Labrada:2020tk}.
+One option is to use Guarded Cubical Agda~\citep{Veltri:2020aa}, an
+experimental extension to Agda, and another option is to develop an
+embedding of a step-indexed logic in (vanilla) Agda. The authors are
+interested in both approaches, as there are tradeoffs that should be
+evaluated. For example, using Cubical Agda comes with the down-side of
+losing Uniqueness of Identity Proofs (UIP) but on the other hand
+Guarded Cubical Agda provides a more ergonomic user-interface for
+step-indexed reasoning than an embedded logic. The authors chose to
+first investigate the embedding approach, which we describe in this
+paper.
 
-This paper fills that need by showing how to build a step-indexed
-logic in Agda, a system that we abbreviate as SIL.  This paper is a
-literate Agda file; all of the definitions and proofs have been
-checked with Agda 2.6.2.2. 
+This paper shows how to embed a step-indexed logic in Agda, developing
+a system that we abbreviate as SIL. This paper is a literate Agda
+file; all of the definitions and proofs have been checked with Agda
+2.6.2.2.
 
 
 %% Our goal is to define an operator for recursive predicates and relations

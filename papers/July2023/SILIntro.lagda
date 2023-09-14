@@ -35,39 +35,49 @@ The first thing to know about SIL is that it is a logic that emulates
 Agda's logic. For example, the type of a logical formula in Agda is
 \textsf{Set} and in SIL it is \textsf{Set}ᵒ. To distinguish SIL from
 Agda, we add a superscript ``o'' to most names. Unlike \textsf{Set},
-\textsf{Set}ᵒ type is parameterized by two lists that enable SIL to
-ensure that recursively-defined predicates are well defined, but we
-get ahead of ourselves.
+the \textsf{Set}ᵒ type is parameterized by two lists that enable SIL
+to ensure that recursively-defined predicates are well defined.
+We discuss recursively-defined predicates in Section~\ref{sec:intro-recursive-predicates}.
+For now, we use empty lists and define \textsf{Set}⁰ as short-hand
+for \textsf{Setᵒ [] []}.
 
 \begin{code}
-_ : Set₁
-_ = Setᵒ [] []
+Set⁰ : Set₁
+Set⁰ = Setᵒ [] []
 \end{code}
 
-\noindent Let the following variables range over \textsf{Set}ᵒ.
+\noindent Let the following variables range over \textsf{Set}⁰.
 
 \begin{code}
-variable ϕ ϕ′ ψ ψ′ χ : Setᵒ [] []
+variable ϕ ϕ′ ψ ψ′ χ χ′ : Set⁰
 \end{code}
 
 SIL defines an entailment relation 𝒫 ⊢ᵒ ϕ to express that a SIL
 formula ϕ is provable from the list of formulas 𝒫. If 𝒫 is empty, then
 ϕ is just plain true.
 
-The ``pure'' connective imports an Agda proposition into SIL.
+We use anoynymous definitions in Agda as a way to display some value
+and its type. For example, the answer to life, the universe, and
+everything is the natural number 42.
 
 \begin{code}
-_ : Set → Setᵒ [] []
+_ : ℕ
+_ = 42
+\end{code}
+
+The ``pure'' connective, written \textsf{p ᵒ}. imports the Agda
+proposition \textsf{p} into SIL.
+
+\begin{code}
+_ : Set → Set⁰
 _ = _ᵒ
 \end{code}
 
 \noindent For example, we can use the pure connective to express
-properties of numbers, such as $1 \plus 1 = 2$.  The \textsf{pureᵒI}
-function is a proof constructor, which we discuss in
-Section~\ref{sec:proof-rules}.
+properties of numbers, such as $1 \plus 1 = 2$.
 
 \begin{code}
-_ : Setᵒ [] []
+_ : Set⁰
 _ = (1 + 1 ≡ 2)ᵒ
 \end{code}
 
@@ -77,10 +87,10 @@ The ``true'' formula in SIL is written ⊤ᵒ and
 the ``false'' formula is ⊥ᵒ.
 
 \begin{code}
-_ : Setᵒ [] []
+_ : Set⁰
 _ = ⊤ᵒ
 
-_ : Setᵒ [] []
+_ : Set⁰
 _ = ⊥ᵒ
 \end{code}
 
@@ -88,13 +98,13 @@ _ = ⊥ᵒ
 disjunction, and implication.
 
 \begin{code}
-_ : Setᵒ [] [] → Setᵒ [] [] → Setᵒ [] []
+_ : Set⁰ → Set⁰ → Set⁰
 _ = _×ᵒ_
 
-_ : Setᵒ [] [] → Setᵒ [] [] → Setᵒ [] []
+_ : Set⁰ → Set⁰ → Set⁰
 _ = _⊎ᵒ_
 
-_ : Setᵒ [] [] → Setᵒ [] [] → Setᵒ [] []
+_ : Set⁰ → Set⁰ → Set⁰
 _ = _→ᵒ_
 \end{code}
 
@@ -114,7 +124,7 @@ quantification.  So the ``for all'' quantifier ∀ᵒ has the following
 type.
 
 \begin{code}
-_ : (A → Setᵒ [] []) → Setᵒ [] []
+_ : (A → Set⁰) → Set⁰
 _ = ∀ᵒ
 \end{code}
 
@@ -122,8 +132,8 @@ _ = ∀ᵒ
 for any $x$, $2x = x \plus x$.
 
 \begin{code}
-_ : Setᵒ [] []
-_ = ∀ᵒ λ x → (2 * x ≡ x + (x + 0))ᵒ
+_ : Set⁰
+_ = ∀ᵒ λ x → (2 * x ≡ x + x)ᵒ
 \end{code}
 
 \noindent SIL provides alternate notation for universal
@@ -131,26 +141,24 @@ quantification, replacing the λ with a pair of brackets around the
 bound variable.
 
 \begin{code}
-_ : Setᵒ [] []
-_ = ∀ᵒ[ x ⦂ ℕ ] (2 * x ≡ x + (x + 0))ᵒ
+_ : Set⁰
+_ = ∀ᵒ[ x ⦂ ℕ ] (2 * x ≡ x + x)ᵒ
 \end{code}
 
 For the existential quantifier of SIL, we also use Agda functions for
-quantification. However, for technical reasons we require the type $A$
-to be inhabited, which we express using an implicit instance argument
-to avoid cluttering the uses of ∃ᵒ.
+quantification.
 
 \begin{code}
-_ : (A → Setᵒ [] []) → Setᵒ [] []
+_ : (A → Set⁰) → Set⁰
 _ = ∃ᵒ
 \end{code}
 
 \noindent The following formula shows an example use of the
-existential in SIL to state that there exists an $x$ such that
+existential in SIL to state that there exists a number $x$ such that
 $2x =6$.
 
 \begin{code}
-_ : Setᵒ [] []
+_ : Set⁰
 _ = ∃ᵒ[ x ] (2 * x ≡ 6)ᵒ
 \end{code}
 
@@ -158,7 +166,7 @@ _ = ∃ᵒ[ x ] (2 * x ≡ 6)ᵒ
 \label{sec:intro-recursive-predicates}
 
 The central feature of SIL is user-defined recursive predicates, via
-the μᵒ operator. To present a familiar example, we shall define the
+the μᵒ operator. To present a familiar example, we define the
 even numbers in SIL. Recall that in Agda we could define the even
 numbers as follows using a \textsf{data} definition.
 
@@ -173,18 +181,18 @@ a function from the predicate's domain to a SIL formula. Here's the
 definition of \textsf{Even}′ in SIL, which we explain in detail below.
 
 \begin{code}
-Even′ : ℕ → Setᵒ [] []
-Even′ = μᵒ λ n → (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ recᵒ))
+Even⁰ : ℕ → Set⁰
+Even⁰ = μᵒ λ n → (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ recᵒ))
 \end{code}
 
 \noindent The formula \textsf{recᵒ} stands for ``this recursive
 predicate``.  So $m ∈ \mathsf{rec}ᵒ$ is morally equivalent to saying
-$m ∈ \mathsf{Even}′$.  More precisely, \textsf{rec}ᵒ refers to the
+$m ∈ \mathsf{Even}⁰$.  More precisely, \textsf{rec}ᵒ refers to the
 nearest enclosing μᵒ.
 
 The use of the ``later'' operator ▷ᵒ in $▷ᵒ (m ∈ \mathsf{rec}ᵒ)$
 serves to guard the recursion to ensure that the recursive definition
-is well defined. The presense of the ▷ᵒ operator means that SIL is a
+is well defined. The addition of the ▷ᵒ operator to SIL make it a
 temporal logic, and more broadly, a modal logic. We discuss the rules
 for conducting proofs involving the ▷ᵒ operator in
 Section~\ref{sec:proof-rules}.
@@ -201,16 +209,17 @@ variable Γ : Context
 
 \noindent The second parameter of \textsf{Set}ᵒ tracks the usage time
 (\textsf{Now} or \textsf{Later}) for each recursive predicate that is
-in scope.
+in scope. Let Δ range over a list of usage times.
 
 \begin{code}
 variable Δ Δ₁ Δ₂ : Times Γ
 \end{code}
 
-\noindent When SIL sees the use of a recursive predicate, such as
-$\mathsf{rec}ᵒ$, it clasifies that the predicate as being used
-\textsf{Now}. (The \textsf{laters} function creates a list of the same
-length as Γ whose elements are all \textsf{Later}.)
+\noindent When SIL sees the use of a recursive predicate (such as
+$\mathsf{rec}ᵒ$ for the predicate with de Bruijn index zero), SIL
+clasifies that predicate as being used \textsf{Now}. (The
+\textsf{laters} function creates a list of the same length as Γ whose
+elements are all \textsf{Later}.)
 
 \begin{code}
 _ : A → Setᵒ (A ∷ Γ) (Now ∷ laters Γ)
@@ -220,11 +229,12 @@ _ = _∈ recᵒ
 In the unlikely event that you have multiple nested μᵒ in a formula,
 you can replace \textsf{recᵒ} with a natural number (a de Bruijn index
 built from \textsf{zero}ᵒ and \textsf{suc}ᵒ) that specifies which μᵒ
-you want to refer to.  (\textsf{recᵒ} is just defined to be the de
-Bruijn index \textsf{zero}ᵒ.) In general, the membership connective
-$a ∈ x$ has the following type, where the \textsf{var-now} function
-assigns variable $x$ the time \textsf{Now} and all the other variables
-in $Γ$ are assigned \textsf{Later}.
+you want to refer to. Each de Bruijn index has a type of the form Γ ∋
+A, where \textsf{A} is the domain type of the predicate and Γ is the
+current context.  The membership connective $a ∈ x$ has the following
+type, where the \textsf{var-now} function assigns variable $x$ the
+time \textsf{Now} and all the other variables in $Γ$ are assigned
+\textsf{Later}.
 
 \begin{code}
 _ : A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
@@ -253,17 +263,18 @@ _ = μᵒ
 \subsection{The Proof Language of SIL}
 \label{sec:proof-rules}
 
+Next we discuss how to conduct proofs in SIL. 
 Let 𝒫 range over lists of propositions.
 
 \begin{code}
-variable 𝒫 : List (Setᵒ [] [])
+variable 𝒫 : List (Set⁰)
 \end{code}
 
 \noindent We write $𝒫 ⊢ᵒ ϕ$ for entailment, which means that ϕ is true when
 the list of formulas in 𝒫 are true.
 
 \begin{code}
-_ : List (Setᵒ [] []) → Setᵒ [] [] → Prop
+_ : List (Set⁰) → Set⁰ → Prop
 _ = _⊢ᵒ_
 \end{code}
 
@@ -293,10 +304,10 @@ _ : [] ⊢ᵒ ((1 + 1 ≡ 2)ᵒ)
 _ = pureᵒI refl
 \end{code}
 
-If instead you have a proof of $pᵒ$ and have some goal χ to prove,
-then you can assume that $p$ is true while proving χ.  That is,
-$\mathsf{pure}ᵒE\, ϕ\, F$ is a proof of χ if ϕ is a proof of pᵒ and $F$ is a
-function from $p$ to a proof of χ.
+If instead you already have a proof of $pᵒ$ and have some other goal χ
+to prove, then you can assume $p$ is true while proving χ.  That is,
+$\mathsf{pure}ᵒE\, ϕ\, F$ is a proof of χ if ϕ is a proof of pᵒ and
+$F$ is a function from $p$ to a proof of χ.
 
 \begin{code}
 _ : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ χ)  →  𝒫 ⊢ᵒ χ
@@ -315,7 +326,7 @@ _ = λ x y x=yᵒ → pureᵒE x=yᵒ λ {refl → pureᵒI refl}
 
 For the propositional connectives, many of the proof rules are the
 same as those in Agda but with a superscript ``o''.  For example, the
-introduction rule for ⊤ in Agda is \textsf{tt} so in SIL it's
+introduction rule for ⊤ in Agda is \textsf{tt} so in SIL it is
 \textsf{tt}ᵒ.
 
 \begin{code}
@@ -337,11 +348,11 @@ _ : 𝒫 ⊢ᵒ ϕ ×ᵒ ψ  →  𝒫 ⊢ᵒ ψ
 _ = proj₂ᵒ
 \end{code}
 
-\noindent As an example use of the rules for conjuction, here's one
+\noindent As an example use of the rules for conjuction, here is one
 direction of the associativity of conjunction.
 
 \begin{code}
-_ : 𝒫 ⊢ᵒ ϕ ×ᵒ (ψ ×ᵒ χ) → 𝒫 ⊢ᵒ (ϕ ×ᵒ ψ) ×ᵒ χ
+_ : 𝒫 ⊢ᵒ ϕ ×ᵒ (ψ ×ᵒ χ)  →  𝒫 ⊢ᵒ (ϕ ×ᵒ ψ) ×ᵒ χ
 _ = λ ϕ×[ψ×χ] → (proj₁ᵒ ϕ×[ψ×χ] ,ᵒ (proj₁ᵒ (proj₂ᵒ ϕ×[ψ×χ]))) ,ᵒ proj₂ᵒ (proj₂ᵒ ϕ×[ψ×χ])
 \end{code}
 
@@ -357,7 +368,7 @@ _ = inj₂ᵒ
 \end{code}
 
 \noindent Agda uses its builtin pattern-matching to eliminate
-disjunction. So for SIL, we must instead define the following
+disjunction. So for SIL, we instead define the following
 \textsf{case} rule. If you have a proof of $ϕ ⊎ᵒ ψ$ and would like to
 prove χ, then it suffices to prove two cases: 1) assuming ϕ show χ and
 2) assuming ψ show χ.
@@ -394,22 +405,32 @@ _ : 𝒫 ⊢ᵒ ϕ ⊎ᵒ ψ  →  𝒫 ⊢ᵒ ψ ⊎ᵒ ϕ
 _ = λ ϕ⊎ψ → caseᵒ ϕ⊎ψ (inj₂ᵒ Zᵒ) (inj₁ᵒ Zᵒ)
 \end{code}
 
-Implication is introduced by λᵒ.
+Implication is introduced by →ᵒI. To prove the implication ϕ →ᵒ ψ, it
+suffices to prove ψ while assuming ϕ.
 
 \begin{code}
-_ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ → ϕ ∷ 𝒫 ⊢ᵒ ψ)  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
+_ : (ϕ ∷ 𝒫 ⊢ᵒ ψ)  →  (𝒫 ⊢ᵒ ϕ →ᵒ ψ)
+_ = →ᵒI
+\end{code}
+
+\noindent To streamline the usual combination of →ᵒI and Zᵒ, SIL
+provides λᵒ, which uses an Agda function to quantifier over the
+assumption.
+
+\begin{code}
+_ : ∀ ϕ → (ϕ ∷ 𝒫 ⊢ᵒ ϕ  →  ϕ ∷ 𝒫 ⊢ᵒ ψ)  →  𝒫 ⊢ᵒ ϕ →ᵒ ψ
 _ = λᵒ
 \end{code}
 
-\noindent For example, the following is the trivial proof that ϕ implies ϕ.
+\noindent For example, here is a proof that ϕ implies ϕ.
 
 \begin{code}
 _ : ∀ ϕ →  [] ⊢ᵒ ϕ →ᵒ ϕ
 _ = λ ϕ →  λᵒ ϕ λ x → x
 \end{code}
 
-\noindent SIL provides an alternative syntax that replaces the extra λ
-with brackets.
+\noindent SIL provides the following alternative syntax for λᵒ that
+replaces the extra λ with brackets.
 
 \begin{code}
 _ : ∀ ϕ →  [] ⊢ᵒ ϕ →ᵒ ϕ
@@ -427,19 +448,19 @@ elimination rules for implication to prove that implication is
 transitive.
 
 \begin{code}
-_ : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ψ →ᵒ χ  →  𝒫 ⊢ᵒ ϕ →ᵒ χ
-_ = λ ϕ→ψ ψ→χ → →ᵒI (→ᵒE (Sᵒ ψ→χ) (→ᵒE (Sᵒ ϕ→ψ) Zᵒ))
+_ : (𝒫 ⊢ᵒ ϕ →ᵒ ψ)  →  (𝒫 ⊢ᵒ ψ →ᵒ χ)  →  (𝒫 ⊢ᵒ ϕ →ᵒ χ)
+_ = λ ϕ→ψ ψ→χ → λᵒ[ x ⦂ _ ] ((→ᵒE (Sᵒ ψ→χ) (→ᵒE (Sᵒ ϕ→ψ) x)))
 \end{code}
 
 \subsubsection{Reasoning in First-Order Logic}
 
-Moving on to the proof rules for universal and existential
+Next we consider the proof rules for universal and existential
 quantifiers.  The universal quantifier is introduced by Λᵒ. So to
 prove $∀ᵒ[ a ⦂ A ]\, ϕᵃ\, a$, you apply Λᵒ to an Agda function that,
 given an arbitrary $a$, produces a proof of $ϕᵃ\, a$.
 
 \begin{code}
-_ : {ϕᵃ : A → Setᵒ [] []} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ[ a ⦂ A ] ϕᵃ a
+_ : {ϕᵃ : A → Set⁰} → (∀ a → 𝒫 ⊢ᵒ ϕᵃ a)  →  𝒫 ⊢ᵒ ∀ᵒ[ a ⦂ A ] ϕᵃ a
 _ = Λᵒ
 \end{code}
 
@@ -454,12 +475,12 @@ use of ∀ᵒ and Λᵒ, we state and prove that addition is commutative.
 \noindent The universal quantifier is eliminated by ∀ᵒE.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ [] []} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
+_ : ∀{ϕᵃ : A → Set⁰} → 𝒫 ⊢ᵒ ∀ᵒ ϕᵃ  →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a
 _ = ∀ᵒE
 \end{code}
 
-\noindent For example, the following proves that $x = x + 0$ using the
-above fact about the commutativity of addition.
+\noindent For example, the following proves that $x = x \plus 0$ using the
+above proof of the commutativity of addition.
 
 \begin{code}
 _ : ∀ (x : ℕ) → [] ⊢ᵒ (x ≡ x + 0)ᵒ
@@ -470,10 +491,10 @@ The existential quantifier of SIL is introduced by the rule ∃ᵒI and
 eliminated by the rule unpackᵒ.
 
 \begin{code}
-_ : ∀{ϕᵃ : A → Setᵒ [] []} →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
+_ : ∀{ϕᵃ : A → Set⁰} →  (a : A)  →  𝒫 ⊢ᵒ ϕᵃ a  →  𝒫 ⊢ᵒ ∃ᵒ ϕᵃ
 _ = ∃ᵒI
 
-_ : ∀{ϕᵃ : A → Setᵒ [] []}{χ : Setᵒ [] []}
+_ : ∀{ϕᵃ : A → Set⁰}{χ : Set⁰}
      → 𝒫 ⊢ᵒ ∃ᵒ ϕᵃ  →  (∀ a  →  ϕᵃ a ∷ 𝒫 ⊢ᵒ ϕᵃ a  →  ϕᵃ a ∷ 𝒫 ⊢ᵒ χ)  →  𝒫 ⊢ᵒ χ
 _ = unpackᵒ
 \end{code}
@@ -482,7 +503,7 @@ _ = unpackᵒ
 yields an even number.
 
 \begin{code}
-private variable i j k m n : ℕ
+private variable n : ℕ
 \end{code}
 
 \begin{code}
@@ -493,13 +514,13 @@ _ = λ n-even → unpackᵒ n-even λ x n=2xᵒ →
 
 \subsubsection{Reasoning about ``later''}
 
-As briefly mentioned above, SIL is a temporal logic and the ▷ᵒ
+As mentioned above, SIL is a temporal logic and the ▷ᵒ
 operator means ``later''. Furthermore, SIL is designed so that if a
 formula is true now, then it remains true in the future. The following
 \textsf{monoᵒ} (for monotonic) proof rule exhibits this invariant.
 
 \begin{code}
-_ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
+_ : (𝒫 ⊢ᵒ ϕ)  →  (𝒫 ⊢ᵒ  ▷ᵒ ϕ)
 _ = monoᵒ
 \end{code}
 
@@ -524,6 +545,7 @@ reasoning for proofs in SIL. You have a proof of $▷ᵒ\, ϕ$
 and you know that ϕ implies ψ, and you need to prove
 that $▷ᵒ\, ψ$. Can you think of how to prove this using
 \textsf{monoᵒ}, \textsf{▷ᵒ}, \textsf{→ᵒI}, and \textsf{→ᵒE}?
+If not that's OK, just use the following derived rule.
 
 \begin{code}
 _ : 𝒫 ⊢ᵒ ▷ᵒ ϕ  →  ϕ ∷ 𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ▷ᵒ ψ
@@ -550,6 +572,10 @@ _ = refl
 ▷ᵒ for each $k$.
 
 \begin{code}
+private variable k : ℕ
+\end{code}
+
+\begin{code}
 _ : ◇ᵒ (suc k) ϕ ≡ ◇ᵒ k (▷ᵒ ϕ)
 _ = refl
 \end{code}
@@ -563,7 +589,8 @@ _ = ▷◇⇒◇▷
 
 Perhaps one of the surprising things about SIL is that the ``later''
 and ``eventually'' operators ultimately do not matter. If you can show
-that a formula ϕ is eventually true, then its just plain true.
+that a formula ϕ is eventually true (with no assumptions), then it is
+just plain true.
 
 \begin{code}
 _ : [] ⊢ᵒ ▷ᵒ ϕ → [] ⊢ᵒ ϕ
@@ -573,8 +600,8 @@ _ : ∀ k → [] ⊢ᵒ ◇ᵒ k ϕ → [] ⊢ᵒ ϕ
 _ = ◇ϕ⇒ϕ
 \end{code}
 
-\noindent (The corresponding rule with non-empty assumptions, 
-$𝒫 ⊢ᵒ ▷ᵒ ϕ → 𝒫 ⊢ᵒ ϕ$, would be unsound. The sound generalization is
+\noindent (The corresponding rule with some assumptions, 
+$(𝒫 ⊢ᵒ ▷ᵒ ϕ) → (𝒫 ⊢ᵒ ϕ)$, would be unsound. The sound generalization is
 the Weak-▷ rule of \citet{Dreyer:2009aa}:
 $𝒫 ⊢ᵒ ▷ᵒ ϕ → ◁ 𝒫 ⊢ᵒ ϕ$ where ◁ is the ``earlier'' operator.)
 
@@ -585,15 +612,15 @@ rule involves a new operator named \textsf{let}ᵒ that we discuss
 below.
 
 \begin{code}
-_ : ∀{𝒫} (Sᵃ : A → Setᵒ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)  →  𝒫 ⊢ᵒ μᵒ Sᵃ a
+_ : (Sᵃ : A → Setᵒ (A ∷ []) (Later ∷ [])) (a : A) →  (𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a))  →  (𝒫 ⊢ᵒ μᵒ Sᵃ a)
 _ = foldᵒ
 \end{code}
 
 As an example use of \textsf{fold}ᵒ, we prove that $0$ is even.
-Recall that we defined \textsf{Even}′ as follows.
+Recall that we defined \textsf{Even}⁰ as follows.
 
 \begin{code}
-_ : Even′  ≡  μᵒ λ n → (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ recᵒ))
+_ : Even⁰  ≡  μᵒ λ n → (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (m ∈ recᵒ))
 _ = refl
 \end{code}
 
@@ -612,7 +639,7 @@ the proof that $0$ is even, with more discussion of \textsf{even-z} in
 the next paragraph.
 
 \begin{code}
-even-zero : [] ⊢ᵒ Even′ 0
+even-zero : [] ⊢ᵒ Even⁰ 0
 even-zero = foldᵒ Evenᵒ 0 even-z
   where
   even-z : [] ⊢ᵒ ((0 ≡ zero) ᵒ) ⊎ᵒ (∃ᵒ[ m ] (0 ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (μᵒ Evenᵒ m))
@@ -621,12 +648,11 @@ even-zero = foldᵒ Evenᵒ 0 even-z
 
 Looking back at the type of \textsf{fold}ᵒ, there seems to be a
 mismatch between the type of the third parameter of \textsf{fold}ᵒ,
-which involves \textsf{let}ᵒ, and the type of \textsf{even-z}. What's
-going on here is that SIL defines a bunch of rewrite rules that
-automatically propagate the \textsf{let}ᵒ down into the formula until
-it reaches the membership operator $a ∈ x$, at which point the $x$ is
-replaced by the right-hand side of the \textsf{let}ᵒ.  In this
-example, the relevant rewrite is:
+which involves \textsf{let}ᵒ, and the type of \textsf{even-z}, which
+does not.  SIL defines rewrite rules that automatically propagate the
+\textsf{let}ᵒ down into the formula until it reaches the membership
+operator $a ∈ x$, at which point the $x$ is replaced by the right-hand
+side of the \textsf{let}ᵒ.  In this example, the relevant rewrite is:
 
 \begin{code}
 _ : ∀ {m} → letᵒ (μᵒ Evenᵒ) (m ∈ recᵒ)  ≡  μᵒ Evenᵒ m
@@ -636,17 +662,18 @@ _ = refl
 The eleminiation rule for μᵒ is \textsf{unfold}ᵒ.
 
 \begin{code}
-_ : ∀{𝒫} (Sᵃ : A → Setᵒ (A ∷ []) (Later ∷ [])) (a : A) →  𝒫 ⊢ᵒ μᵒ Sᵃ a  →  𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
+_ : ∀{𝒫} (Sᵃ : A → Setᵒ (A ∷ []) (Later ∷ [])) (a : A) →  (𝒫 ⊢ᵒ μᵒ Sᵃ a)  →  (𝒫 ⊢ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a))
 _ = unfoldᵒ
 \end{code}
 
-\noindent For example, if we unfold $μᵒ Evenᵒ 1$, we obtain that
-either $1 = 0$ or $1 = 2 \plus m$ for some $m$. Either case is
-impossible, so we conclude false.
+\noindent As an example, consider the fact that $1$ is not even.  We
+can prove this by unfolding $μᵒ\, Evenᵒ\, 1$, from which we obtain
+that either $1 = 0$ or $1 = 2 \plus m$ for some $m$. Either case is
+impossible, so we have a contradiction.
 
 \begin{code}
-not-even-one : [] ⊢ᵒ μᵒ Evenᵒ 1 → [] ⊢ᵒ ⊥ᵒ
-not-even-one even-one =
+one-not-even : [] ⊢ᵒ μᵒ Evenᵒ 1 → [] ⊢ᵒ ⊥ᵒ
+one-not-even even-one =
   (caseᵒ (unfoldᵒ Evenᵒ 1 even-one)
     (pureᵒE Zᵒ λ{()})
     (unpackᵒ Zᵒ λ m [0=2+m]×[even-m] → pureᵒE (proj₁ᵒ [0=2+m]×[even-m]) λ{()}))
@@ -655,7 +682,7 @@ not-even-one even-one =
 In addition to \textsf{foldᵒ} and \textsf{unfoldᵒ}, one often needs to
 use induction when reasoning about recursive defintions. For example,
 in plain old Agda, we can prove that \textsf{Even n} implies that $n$
-is a multiple of $2$ by defining the recursive function
+is a multiple of $2$ by defining the following recursive function named
 \textsf{even-mul2}.
 
 \begin{code}
@@ -674,22 +701,22 @@ _ : ▷ᵒ ϕ ∷ 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ϕ
 _ = lobᵒ
 \end{code}
 
-\noindent At first the \textsf{lobᵒ} rule may seem somewhat
-mysterious, so let's see its use in an example. Let's prove that
-\textsf{Even′ n} implies that $n$ is a multiple of $2$.  When we use
-the \textsf{lobᵒ} rule, we must state the property entirely within
-SIL, so in the following proof we restate our goal with the definition
-of \textsf{aux}. If you look closely at the type of \textsf{aux},
-you'll see that we inserted \textsf{◇ᵒ n} in the conclusion.  The
-reason is that the \textsf{lobᵒ} rules inserts another ▷ᵒ around the
-conclusion every time we use the induction hypothesis. We use the ◇ᵒ
-operator to collect them into one connective, and then we apply the
-◇ϕ⇒ϕ rule at the end of the proof to get rid of them.
+\noindent At first the \textsf{lobᵒ} rule may seem mysterious, so let
+us see its use in an example. We shall prove that \textsf{Even⁰ n}
+implies that $n$ is a multiple of $2$.  When we use the \textsf{lobᵒ}
+rule, we must state the property entirely within SIL, so in the
+following proof we restate our goal with the definition of
+\textsf{aux}. Looking closely at the type of \textsf{aux}, 
+note that we inserted \textsf{◇ᵒ n} in the conclusion.  The reason is
+that the \textsf{lobᵒ} rules inserts another ▷ᵒ around the conclusion
+every time we use the induction hypothesis. We use the ◇ᵒ operator to
+collect them into one connective, and then we apply the ◇ϕ⇒ϕ rule at
+the end of the proof to get rid of it.
 
 \begin{minipage}{\textwidth}
 \begin{code}
-even′-mul2 : ∀ n → [] ⊢ᵒ Even′ n → [] ⊢ᵒ (Σ[ m ∈ ℕ ] n ≡ 2 * m)ᵒ
-even′-mul2 n even-n = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE aux n) even-n) where
+even0-mul2 : ∀ n → [] ⊢ᵒ Even⁰ n → [] ⊢ᵒ (Σ[ m ∈ ℕ ] n ≡ 2 * m)ᵒ
+even0-mul2 n even-n = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE aux n) even-n) where
   aux : [] ⊢ᵒ ∀ᵒ[ n ⦂ ℕ ] (μᵒ Evenᵒ n) →ᵒ ◇ᵒ n ((∃[ m ] n ≡ 2 * m)ᵒ)
   aux = lobᵒ (Λᵒ[ n ] λᵒ[ even-n ⦂ μᵒ Evenᵒ n ]
           caseᵒ (unfoldᵒ Evenᵒ n even-n)
@@ -705,20 +732,20 @@ even′-mul2 n even-n = ◇ϕ⇒ϕ n (→ᵒE (∀ᵒE aux n) even-n) where
 \end{code}
 \end{minipage}
 
-Comparing \textsf{even-mul2} to \textsf{even′-mul2}, we see that the
+Comparing \textsf{even-mul2} to \textsf{even0-mul2}, we see that the
 proof in SIL is considerably more verbose than in plain Agda.  Thus,
 we only recommend using SIL to define recursive predicates that can't
 easily be defined in plain old Agda, such as step-indexed logical
 relations.
 
 
-\subsection{Encoding Mutually Recursive Predicates in SIL}
+\subsubsection{Encoding Mutually Recursive Predicates in SIL}
 \label{sec:mutually-recursive}
 
 In our case study in Section~\ref{sec:log-rel}, we define two mutually
 recursive predicates 𝒱 and ℰ, so here we introduce how to encode
 mutual recursion using a more familiar example. We define the even and
-odd numbers in SIL. Here's the equivalent definition in Agda.
+odd numbers in SIL. Here is the equivalent definition in Agda.
 
 \begin{code}
 data Evens : ℕ → Set 
@@ -735,19 +762,19 @@ data Odds where
 The technique that we use for encoding mutual recursion is to merge
 the two predicates into a single predicate whose domain is the sum of
 the domains of the two predicates. In this case, the first injection
-indicate a request to test if the number is even and the second
+indicates a request to test if the number is even and the second
 injection indicates a request to test if the number is odd.
 
 \begin{code}
 Evens⊎Odds : ℕ ⊎ ℕ → Setᵒ ((ℕ ⊎ ℕ) ∷ []) (Later ∷ [])
-Evens⊎Odds (inj₁ n) = (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ suc m)ᵒ ×ᵒ ▷ᵒ (inj₂ m ∈ zeroᵒ))
-Evens⊎Odds (inj₂ n) = ∃ᵒ[ m ] (n ≡ suc m)ᵒ ×ᵒ ▷ᵒ (inj₁ m ∈ zeroᵒ)
+Evens⊎Odds (inj₁ n) = (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ suc m)ᵒ ×ᵒ ▷ᵒ (inj₂ m ∈ recᵒ))
+Evens⊎Odds (inj₂ n) = ∃ᵒ[ m ] (n ≡ suc m)ᵒ ×ᵒ ▷ᵒ (inj₁ m ∈ recᵒ)
 \end{code}
 
-Now that in the first line of \textsf{Evens⊎Odds}, we write
-$\mathsf{inj}₂ m ∈ \mathsf{zero}ᵒ$ to test whether $m$ is odd.
+In the first line of \textsf{Evens⊎Odds}, we write
+$\mathsf{inj}₂\, m ∈ \mathsf{rec}ᵒ$ to test whether $m$ is odd.
 In the second line of \textsf{Evens⊎Odds}, we write 
-$\mathsf{inj}₁ m ∈ \mathsf{zero}ᵒ$ to test whether $m$ is even.
+$\mathsf{inj}₁\, m ∈ \mathsf{rec}ᵒ$ to test whether $m$ is even.
 
 We apply the μᵒ connective to \textsf{Evens⊎Odds} to define
 \textsf{Evens}′ and then \textsf{Odds}′, using \textsf{inj₁ n} for the
@@ -763,5 +790,63 @@ Odds′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₂ n)
 \end{code}
 
 
-TODO: discuss equality ≡ᵒ, substᵒ, and fixpointᵒ!
+\subsubsection{Reasoning about Equivalent Step-indexed Formulas}
+\label{sec:}
+
+SIL expresses the equivalence of two step-indexed formulas with the ≡ᵒ
+operator.
+
+\begin{code}
+_ : Setᵒ Γ Δ → Setᵒ Γ Δ → Prop₁
+_ = _≡ᵒ_
+\end{code}
+
+\noindent For example, we can express that conjunction is commutative
+using the ≡ᵒ operator as follows.
+
+\begin{code}
+_ : Set⁰ → Set⁰ → Prop₁
+_ = λ ϕ ψ → ϕ ×ᵒ ψ ≡ᵒ ψ ×ᵒ ϕ
+\end{code}
+
+\noindent The ≡ᵒ operator is an equivalence relation; it is reflexive,
+symmetric, and transitive.
+
+\begin{code}
+_ : ϕ ≡ ψ → ϕ ≡ᵒ ψ
+_ = ≡ᵒ-refl
+
+_ : ϕ ≡ᵒ ψ → ψ ≡ᵒ ϕ
+_ = ≡ᵒ-sym
+
+_ : ϕ ≡ᵒ ψ → ψ ≡ᵒ χ → ϕ ≡ᵒ χ
+_ = ≡ᵒ-trans
+\end{code}
+
+The \textsf{subst}ᵒ rule says that if ϕ ≡ᵒ ψ, then proving ϕ suffices to prove ψ.
+(Similar to the \textsf{subst} rule in Agda.)
+
+\begin{code}
+_ : ϕ ≡ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
+_ = substᵒ
+\end{code}
+
+The \textsf{fixpoint}ᵒ rule says that a recursive predicate is
+equivalent to its unfolding.
+
+\begin{code}
+_ : ∀{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
+     → (μᵒ Sᵃ) a ≡ᵒ letᵒ (μᵒ Sᵃ) (Sᵃ a)
+_ = fixpointᵒ
+\end{code}
+
+\noindent For example, we have the following equivalence between
+\textsf{Even}⁰ and its unfolding.
+
+\begin{code}
+_ : ∀ n → Even⁰ n ≡ᵒ (n ≡ zero)ᵒ ⊎ᵒ (∃ᵒ[ m ] (n ≡ 2 + m)ᵒ ×ᵒ ▷ᵒ (Even⁰ m))
+_ = λ n → fixpointᵒ Evenᵒ n
+\end{code}
+
+
 
