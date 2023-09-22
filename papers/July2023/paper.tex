@@ -394,15 +394,19 @@ interested in both approaches, as there are tradeoffs that should be
 evaluated. For example, using Cubical Agda comes with the down-side of
 losing Uniqueness of Identity Proofs (UIP) but on the other hand
 Guarded Cubical Agda provides a more ergonomic user-interface for
-step-indexed reasoning than an embedded logic. The authors chose to
-first investigate the embedding approach, which we describe in this
-paper.
+step-indexed reasoning than what's possible in an embedded logic. The
+authors chose to first investigate the embedding approach.
 
 This paper shows how to embed a step-indexed logic in Agda, developing
 a system that we abbreviate as SIL. This paper is a literate Agda
 file; all of the definitions and proofs have been checked with Agda
 2.6.2.2.
 
+We describe SIL from the user perspective in
+§\ref{sec:SIL-intro}, including what kinnds of formulas can be
+written in SIL and how to conduct proofs in SIL. As a step-indexed
+logic, SIL supports user-defined recursive predicates and a ``later''
+operator.
 
 %% Our goal is to define an operator for recursive predicates and relations
 %% with syntax that is something like $μᵒ x. R$, where $x$ is the name of the
@@ -415,9 +419,7 @@ file; all of the definitions and proofs have been checked with Agda
 %% \]
 %% where $δ$ is an environment mapping variables to predicates.
 
-UNDER CONSTRUCTION
-
-To evaluate the utility of SIL, Section~\ref{sec:STLC} presents a case
+To evaluate the utility of SIL, §\ref{sec:STLC} presents a case
 study of proving semantic type safety for the Simply Typed Lambda
 Calculus extended with recursive functions. We find that SIL
 streamlines the definition of logical relations and is helpful in many
@@ -425,12 +427,12 @@ of the proofs, but there is room for improvement regarding the
 ergonomics of interactive proof development using SIL.  Limitations in
 Agda's inference algorithm sometimes leads to verbosity in SIL proofs.
 
+TODO: roadmap for the implementation of SIL
 
 \input{latex/July2023/SILIntro.tex}
 
 \input{latex/July2023/STLC2.tex}
 \input{latex/July2023/LogRel2.tex}
-\input{latex/July2023/STLCDeterministic2.tex}
 \input{latex/July2023/STLCBind2.tex}
 \input{latex/July2023/STLCSafe2.tex}
 \input{latex/July2023/STLCTypeSafe.tex}
@@ -478,16 +480,16 @@ constructors).  We discuss this problem and its remedy in sections
 \ref{sec:appel-mcallester} and \ref{sec:open-propositions}.
 
 We organize the rest of the article as follows. We review Appel an
-McAllester's work in Section~\ref{sec:appel-mcallester}, then
+McAllester's work in §\ref{sec:appel-mcallester}, then
 introduce our representation of step-indexed propositions and
 predicates in Agda in Sections \ref{sec:propositions} and
 \ref{sec:predicates}.  We formalize several important concepts in
-Section~\ref{sec:fun-approx-iter}: functionals, approximation, and
+§\ref{sec:fun-approx-iter}: functionals, approximation, and
 iteration, and prove some basic results about them.  We construct all
 of the logical connectives of SIL in
-Section~\ref{sec:open-propositions}, including the definition of
+§\ref{sec:open-propositions}, including the definition of
 recursive predicates and their fixpoint theorem.  The proof theory of
-SIL is developed in Section~\ref{sec:proofs}, where we construct the
+SIL is developed in §\ref{sec:proofs}, where we construct the
 proof rules of this modal logic.
 
 
@@ -503,6 +505,8 @@ proof rules of this modal logic.
 \appendix
 \addcontentsline{toc}{section}{Appendix}
 \section*{Appendix}
+
+\input{latex/July2023/STLCDeterministic2.tex}
 
 
 \end{document}

@@ -67,7 +67,8 @@ compatible-sucⱽ {Γ}{V} ⊨V γ = substᵒ (≡ᵒ-sym 𝒱-suc) (⊨V γ)
 \end{code}
 
 A lambda abstraction is well-behaved if it has a well-behaved body.
-Here we make use of an important substitution lemma from the ABT library, that
+Here we make silent use of the \textsf{exts-sub-cons} substitution lemma
+from the ABT library, that
 \[
     (⟪ ext\, γ ⟫ N) [ W ] = ⟪ W • γ ⟫ N
 \]
@@ -80,12 +81,13 @@ compatible-λ {Γ}{A}{B}{N} ⊨N γ = substᵒ (≡ᵒ-sym 𝒱-fun) (Λᵒ[ W ]
   ▷𝓔N[W] {W} = →ᵒE (Sᵒ (▷→ (monoᵒ (→ᵒI (⊨N (W • γ)))))) Zᵒ
 \end{code}
 
-A fixpoint value is well-behaved if the underlying value is well-behaved.
-The proof of this compatibility lemma is interesting because it goes by
-\textsf{lobᵒ} induction. To prove that $𝒱⟦ A ⇒ B⟧ \, μ V'$ where $V' = ⟪ γ ⟫ V$,
-we need to prove that $▷ᵒ 𝒱⟦ A ⇒ B ⟧ \, V'[ μ V' ]$. Again, using the
-subtitution lemma from the ABT, this is equivalent to 
-$▷ᵒ 𝒱⟦ A ⇒ B ⟧ \, ⟪ μ V' • γ ⟫ V$. The later we obtain by noting that
+A fixpoint value is well-behaved if the underlying value is
+well-behaved.  The proof of this compatibility lemma is interesting
+because it goes by \textsf{lobᵒ} induction. To prove that $𝒱⟦ A ⇒ B⟧
+\, μ V'$ where $V' = ⟪ γ ⟫ V$, we need to prove that $▷ᵒ 𝒱⟦ A ⇒ B ⟧ \,
+V'[ μ V' ]$. This is equivalent to $▷ᵒ 𝒱⟦ A ⇒ B ⟧ \, ⟪ μ V' • γ ⟫ V$,
+using the substitution lemma again from the ABT.
+We obtain this later fact by noting that
 $V$ is well-behaved and that $μ V' • γ$ is a well-behaved substitution,
 which follows from the fact that $μ V'$ is well behaved (by the induction hypothesis)
 and that γ is well-behaved.
@@ -116,11 +118,11 @@ compatible-var {Γ}{A}{x} ∋x γ rewrite sub-var γ x = 𝒱⇒ℰ (lookup-𝓖
   lookup-𝓖 (B ∷ Γ) γ {A} {suc y} ∋y = Sᵒ (lookup-𝓖 Γ (λ x → γ (suc x)) ∋y) 
 \end{code}
 
-The successor of a term $M$ is well-behaved if $M$ is well-behaved.
-Here we use the \textsf{ℰ-bind} lemma to exhange $M$ for some
-well-behaved value $V$ that it reduces to. We obtain
-$𝒱⟦ `ℕ ⟧ (`suc \, V)$ from $𝒱⟦ `ℕ ⟧ V$ and then note again that a
-well-behaved value is also a well-behaved term.
+The next compatibility lemma says that the successor of a term $M$ is
+well-behaved if $M$ is well-behaved.  Here we use the \textsf{ℰ-bind}
+lemma to exhange $M$ for some well-behaved value $V$ that it reduces
+to. We obtain $𝒱⟦ `ℕ ⟧ (`suc \, V)$ from $𝒱⟦ `ℕ ⟧ V$ and then note
+again that a well-behaved value is also a well-behaved term.
 
 \begin{code}
 compatible-suc : ∀{Γ}{M} → Γ ⊨ M ⦂ `ℕ  →  Γ ⊨ `suc M ⦂ `ℕ
@@ -130,26 +132,17 @@ compatible-suc {Γ}{M} ⊨M γ = ℰ-bind {F = suc□} (⊨M γ) (Λᵒ[ V ] →
   ⊢ℰsucV {V} = 𝒱⇒ℰ (substᵒ (≡ᵒ-sym 𝒱-suc) Zᵒ)
 \end{code}
 
-The term \textsf{case L M N} is well-behaved when its subterms are.
+The term \textsf{(case L M N)} is well-behaved when its subterms are.
 The proof of this compatibility lemma is given in
 Figure~\ref{fig:compatible-case}.  We apply the \textsf{ℰ-bind} lemma
 to obtain a well-behaved value $V$ that $L$ reduces to. Using the
-following inversion lemma, we splits our proof into two cases
+\textsf{𝒱-ℕ-case} lemma, we split our proof into two cases
 where $V = \mathsf{zero}$ or $V = \mathsf{suc}\,V′$.
 
-\begin{code}
-{-
-𝒱ℕ-inv : ∀{n}{Cont : Set} → #(𝒱⟦ `ℕ ⟧ V) (suc n) → (V ≡ `zero → Cont)
-  → (∀ V′ → V ≡ `suc V′ → Cont) → Cont
-𝒱ℕ-inv {`zero}{n}{Cont} 𝒱V contz conts = contz refl
-𝒱ℕ-inv {`suc V′}{n}{Cont} 𝒱V contz conts = conts V′ refl
--}
-\end{code}
-
-The term \textsf{case zero M N} satisfies progress by rule \textsf{β-zero}.
+The term \textsf{(case zero M N)} satisfies progress by rule \textsf{β-zero}.
 It satisfies preservation because of the premise that $M$ is well behaved.
 (The proof of \textsf{deterministic} is in the Appendix.)
-The term \textsf{case (suc V′) M N} satisfies progress by rule \textsf{β-suc}
+The term \textsf{(case (suc V′) M N)} satisfies progress by rule \textsf{β-suc}
 and it satisfies preservation because $N$ is well-behaved and so is $V′$.
 
 \begin{figure}[tbp]
@@ -230,7 +223,7 @@ WBApp A B = ∀ᵒ[ V ] ∀ᵒ[ W ] (𝒱⟦ A ⇒ B ⟧ V →ᵒ 𝒱⟦ A ⟧ 
 \end{code}
 
 \noindent We pass the induction hypothesis $▷ᵒ \,WBApp\, A\, B$ to this lemma.
-The term $μ V′ · W$ satisfies progress by rule $β-μ$.
+The term $μ V′ · W$ satisfies progress by rule β-μ.
 To prove preservation, we need to show that $V′ [ μ V′ ] · W$ is well behaved.
 We apply the induction hypothesis, and we know that $W$ is well behaved,
 so it suffices to show that $V′ [ μ V′ ]$ is well behaved.
@@ -252,8 +245,8 @@ apply-μ {A = A}{B}{W}{V′}{𝒫} IH ⊢𝒱V v ⊢𝒱W w =
         →ᵒE (▷→ (→ᵒE (▷→ (∀ᵒE (▷∀ (∀ᵒE{ϕᵃ = P} (▷∀ (Sᵒ IH)) (V′ [ μ V′ ]))) W)) ▷𝒱V[μV]))
              (monoᵒ (Sᵒ ⊢𝒱W)) in
   let ▷ℰN : ∀ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N)
-      ▷ℰN N = let-pureᵒ[ r ] Zᵒ within
-               substₚ (λ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N))
+      ▷ℰN N = pureᵒE Zᵒ λ r →
+              substₚ (λ N → (μ V′ · W —→ N)ᵒ ∷ 𝒫 ⊢ᵒ ▷ᵒ (ℰ⟦ B ⟧ N))
                      (≐-sym (≐-refl (β-μ-inv (Value-μ-inv v) w r))) ▷ℰV[μV]·W in
   let pres : 𝒫 ⊢ᵒ preservation B (μ V′ · W)
       pres = Λᵒ[ N ] →ᵒI (▷ℰN N) in
@@ -281,7 +274,7 @@ compatible-app : ∀{Γ}{A}{B}{L}{M} →  Γ ⊨ L ⦂ (A ⇒ B)  →  Γ ⊨ M 
 compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ℰ-bind {F = □· (⟪ γ ⟫ M)} (⊨L γ) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVM))
   where
   ⊢ℰVM : ∀{V} → 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ B ⟧ (V · ⟪ γ ⟫ M)
-  ⊢ℰVM {V} = let-pureᵒ[ v ] (𝒱⇒Value (A ⇒ B) V Zᵒ) within
+  ⊢ℰVM {V} = pureᵒE (𝒱⇒Value (A ⇒ B) V Zᵒ) λ v →
              ℰ-bind {F = v ·□} (Sᵒ (Sᵒ (⊨M γ))) (Λᵒ[ V ] →ᵒI (→ᵒI ⊢ℰVW))
     where
     𝒫₂ = λ V W → 𝒱⟦ A ⟧ W ∷ (⟪ γ ⟫ M —↠ W)ᵒ ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ (⟪ γ ⟫ L —↠ V)ᵒ ∷ 𝓖⟦ Γ ⟧ γ
@@ -290,8 +283,8 @@ compatible-app {Γ}{A}{B}{L}{M} ⊨L ⊨M γ = ℰ-bind {F = □· (⟪ γ ⟫ M
       aux : ∀{V}{W} → 𝒱⟦ A ⟧ W ∷ 𝒱⟦ A ⇒ B ⟧ V ∷ ▷ᵒ (WBApp A B) ∷ 𝒫₂ V′ W′ ⊢ᵒ ℰ⟦ B ⟧ (V · W)
       aux {V}{W} =
         let ⊢𝒱V = Sᵒ Zᵒ in let ⊢𝒱W = Zᵒ in
-        let-pureᵒ[ v ] (𝒱⇒Value (A ⇒ B) V ⊢𝒱V) within
-        let-pureᵒ[ w ] (𝒱⇒Value A W ⊢𝒱W) within
+        pureᵒE (𝒱⇒Value (A ⇒ B) V ⊢𝒱V) λ v → 
+        pureᵒE (𝒱⇒Value A W ⊢𝒱W) λ w →
         𝒱-fun-case ⊢𝒱V (λ { N′ refl → apply-λ ⊢𝒱V ⊢𝒱W w })
                         (λ { V′ refl → apply-μ (Sᵒ (Sᵒ Zᵒ)) ⊢𝒱V v ⊢𝒱W w })
     ⊢ℰVW : ∀{V W} → 𝒫₂ V W ⊢ᵒ ℰ⟦ B ⟧ (V · W)
@@ -309,14 +302,13 @@ compatible-value : ∀{Γ V A} → Γ ⊨ⱽ V ⦂ A  →  Γ ⊨ V ⦂ A
 compatible-value {Γ}{V}{A} ⊨V γ = 𝒱⇒ℰ (⊨V γ) 
 \end{code}
 
-\clearpage
-
 \subsection{Fundamental Lemma}
 \label{sec:fundamental}
 
-The Fundamental Lemma(s) follow immediately from the compatibility
-lemmas of the last section. So a well-typed value is also a
-well-behaved value, and similarly for terms.
+The two Fundamental Lemma follow immediately from the compatibility
+lemmas of the last section. The first lemma says that a well-typed
+value is a well-behaved value. The second lemma says that a well-typed
+term is a well-behaved term.
 
 \begin{code}
 fundamentalⱽ : ∀ {Γ W A} → (Γ ⊢ⱽ W ⦂ A) → (Γ ⊨ⱽ W ⦂ A)

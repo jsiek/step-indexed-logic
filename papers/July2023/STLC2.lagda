@@ -50,15 +50,15 @@ otherwise one does not need step-indexed logical relations; logical
 relations that are only indexed by types are sufficient.  The next few
 subsections give the definition of this variant of the STLC (syntax in
 §\ref{sec:STLC-syntax}, reduction semantics in
-§\ref{sec:STLC-reduction}, type system in
+§\ref{sec:STLC-reduction}, and type system in
 §\ref{sec:STLC-type-system}). We then define the step-indexed logical
-relation in Section~\ref{sec:log-rel} and use it to define semantic
-type safety in Section~\ref{sec:sem-type-safety}. The rest of the
+relation in §\ref{sec:log-rel} and use it to define semantic
+type safety in §\ref{sec:sem-type-safety}. The rest of the
 subsections give the proof of semantic type safety, starting with the
 Bind Lemma (§\ref{sec:bind-lemma}), then the many Compatibility Lemmas
 (§\ref{sec:compatibility-lemmas}) that lead up to the Fundamental
 Lemma (§\ref{sec:fundamental}).  We conclude with the proof of
-semantic type safety in Section~\ref{sec:proof-sem-safety}.
+semantic type safety in §\ref{sec:proof-sem-safety}.
 
 \subsection{Syntax of STLC with Recursive Functions}
 \label{sec:STLC-syntax}
@@ -100,8 +100,7 @@ of the STLC, the terms include lambda abstraction, application, the
 zero numeral, the successor operation, case analysis on natural
 numbers, and a recursive fixpoint operator. The ABT library
 automatically includes a constructor for variables (de Bruijn
-indices), so we do not need a constructor for variables in
-\textsf{Op}.
+indices).
 
 \begin{code}
 data Op : Set where
@@ -145,7 +144,7 @@ variable L L′ M M′ N N′ V V′ W W′ : Term
 \end{code}
 
 The notation for constructing terms from the ABT library is rather
-verbose, so we define the following shorthand notations use Agda's
+verbose, so we define the following shorthand notations using Agda's
 \textsf{pattern} facility.
 
 \begin{code}
@@ -162,28 +161,21 @@ pattern case L M N = op-case ⦅ cons (ast L) (cons (ast M) (cons (bind (ast N))
 pattern μ N = op-rec ⦅ cons (bind (ast N)) nil ⦆
 \end{code}
 
+
+
 The ABT library defines a bracket notation for substitution. For example, the
-follow substitution replaces the de Bruijn index zero with the term $N$.
+following substitution replaces the de Bruijn index zero with the term $N$.
 \begin{code}
 _ : (` 0) [ N ] ≡ N
 _ = refl
 \end{code}
 
-\noindent When substitution is applied to a non-zero variable, its de
-Bruijn index is decreased by one. The reason for this is that one
-typically performs substitution when removing a variable binding, as
-we shall see in the β-ƛ reduction rule in the next section.
-
-\begin{code}
-_ = eg where
-  eg : ∀ N → (` 1) [ N ] ≡ ` 0
-  eg N rewrite sub-var (N • id) 1 = refl
-\end{code}
-
-The ABT library also defines parallel substitution, which takes a function σ from natural
-numbers to terms, and applies it to a term $M$ by replacing all the free variables in $M$
-according to σ, written $⟪ σ ⟫ M$. We refer to a function from natural numbers to terms
-as a \emph{substitution}. The identity substitution is named \textsf{id}.
+\noindent The ABT library defines substitution using parallel
+substitution, written $⟪ σ ⟫ M$, which takes a function σ from natural
+numbers to terms, and applies it to a term $M$ by replacing all the
+free variables in $M$ according to σ. We refer to a function from
+natural numbers to terms as a \emph{substitution}. The identity
+substitution is named \textsf{id}.
 
 \begin{code}
 _ : ⟪ id ⟫ (` 0) ≡ ` 0
@@ -192,7 +184,10 @@ _ = refl
 
 \noindent The ABT library defines a cons-like operator on
 substitutions, written $M • σ$, that maps $0$ to $M$ and any other
-variable $x$ to $σ\, (x \minus 1)$. Here are a few example that
+variable $x$ to $σ\, (x \minus 1)$.
+The reason for subtracting one is that we typically perform
+substitution when removing a variable binding.
+Here are a few examples that
 demonstrate the application of the substitution $M • N • \mathsf{id}$
 to several different variables.
 
@@ -205,6 +200,14 @@ _ = eg where eg : ∀ M N → ⟪ M • N • id ⟫ (` 1) ≡ N
 
 _ = eg where eg : ∀ M N → ⟪ M • N • id ⟫ (` 2) ≡ ` 0
              eg M N rewrite sub-var (M • N • id) 2 = refl
+\end{code}
+
+\noindent The \textsf{sub-var} lemma from the ABT library just says
+that applying a substitution to a variable (as a term) is equivalent
+to applying the substitution to the variable's de Bruijn index.
+\begin{code}
+_ : ∀ σ x → ⟪ σ ⟫ (` x) ≡ σ x
+_ = λ σ x → sub-var σ x
 \end{code}
 
 \noindent The ↑ operator increments the de Bruijn indices.
@@ -232,11 +235,30 @@ _ : ∀ σ N → ⟪ σ ⟫ (ƛ N) ≡ ƛ (⟪ ext σ ⟫ N)
 _ = λ σ N → refl
 \end{code}
 
-\noindent The \textsf{ext} operator is equivalent to 
+\noindent The \textsf{ext} operator maps zero to zero and every
+other variable x to $↑ (σ (x \minus 1))$.
 
 \begin{code}
 _ : ∀ σ → ext σ ≡ ` 0 • (σ ⨟ ↑)
 _ = λ σ → refl
+\end{code}
+
+The substitution of term \textsf{M} for index zero in \textsf{N} is
+defined as follows.
+
+\begin{code}
+_ : N [ M ] ≡ ⟪ M • id ⟫ N
+_ = refl
+\end{code}
+
+\noindent When substitution is applied to a non-zero variable, its de
+Bruijn index is decreased by one, as specified by the definition of the
+• operator.
+
+\begin{code}
+_ = eg where
+  eg : ∀ N → (` 1) [ N ] ≡ ` 0
+  eg N rewrite sub-var (N • id) 1 = refl
 \end{code}
 
 \noindent The following is the substitution lemma that we shall need
@@ -260,13 +282,12 @@ This rule involves the substitution of an arbitrary term (not a
 value). Unfortunately, the usual formulation of logical relations for
 call-by-value languages requires that substitutions map variables to
 values. We therefore use an alternative reduction semantics in which
-$μx.V$ is categorized as a value and replace the above reduction
+$μx.V$ is categorized as a value and we replace the above reduction
 rule with the following one.
 \[
 (μx.V) \app W \longrightarrow V[x ↦ μx.V] \app W
 \]
-To that end, we begin with the following definition of the
-\textsf{Value} predicate.
+To that end, we define \textsf{Value} as follows.
 
 \begin{code}
 data Value : Term → Set where
@@ -284,7 +305,7 @@ value : Value V → Term
 value {V} v = V
 \end{code}
 
-\noindent The following lemma is the inversion principle for a
+\noindent The next lemma is the inversion principle for a
 fixpoint value.
 
 \begin{code}
@@ -327,7 +348,7 @@ suc□ ⟦ M ⟧          = `suc M
 (case□ M N) ⟦ L ⟧   = case L M N
 \end{code}
 
-The reduction relation for this STLC are defined as follows.  
+We define the reduction relation for this language as follows.  
 
 \begin{minipage}{\textwidth}
 \begin{code}
@@ -349,7 +370,7 @@ shorthand.
 pattern ξ F M—→N = ξξ F refl refl M—→N
 \end{code}
 
-We define \textsf{reducible} in the standard way.
+We define the \textsf{reducible} predicate in the standard way.
 
 \begin{code}
 reducible : (M : Term) → Set

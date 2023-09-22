@@ -413,9 +413,11 @@ abstract
   pureᵖE[] : ∀{p : Prop} → [] ⊢ᵒ p ᵖ  → p
   pureᵖE[] ⊢pᵖ = ⊢pᵖ 0 (squash tt)
 
+{-
 pureᵒE-syntax = pureᵒE
 infix 1 pureᵒE-syntax
 syntax pureᵒE-syntax pᵒ (λ p → ⊢þ) = let-pureᵒ[ p ] pᵒ within ⊢þ
+-}
 
 abstract
   _,ᵒ_ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ  →  𝒫 ⊢ᵒ ϕ ×ᵒ ψ

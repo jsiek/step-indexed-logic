@@ -37,16 +37,17 @@ open import July2023.STLCDeterministic2
 \subsection{Bind Lemma}
 \label{sec:bind-lemma}
 
-In the next subsection we prove a compatibility lemma for every term
-constructor in the STLC. Many of those term constructors
-(\textsf{suc}, application, and \textsf{case}) have subexpressions
-that must reduce to a value prior to the reduction of the term.  The
-reasoning about those subexpressions is repetative, so we take the
-standard approach of proving the following ``bind'' lemma.
-It says that if one wants to prove that some term $F ⟦ M ⟧$ is
-well behaved, and if the subexpression $M$ is well-behaved,
-then it suffices to show that $F ⟦ V ⟧$ is well-behaved
-assuming that $M$ reduces to $V$ and $V$ is a well-behaved value.
+In section~\ref{sec:compatibility-lemmas} we prove a compatibility
+lemma for every term constructor in the STLC. Many of those term
+constructors (\textsf{suc}, application, and \textsf{case}) have
+subexpressions that must reduce to a value prior to the reduction of
+the term.  The reasoning about those subexpressions is repetative, so
+we take the standard approach of proving the following ``bind'' lemma.
+It says that if one wants to prove that the result of plugging a term
+$M$ into a frame $F$ is a well behaved term, and if the subexpression
+$M$ is well-behaved, then it suffices to show that for a well-behaved
+value $V$ that $M$ reduces to, plugging $V$ into $F$ produces a
+well-behaved term.
 
 \begin{code}
 ℰ-bind : ∀{𝒫}{A}{B}{F}{M}
@@ -55,22 +56,22 @@ assuming that $M$ reduces to $V$ and $V$ is a well-behaved value.
    → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ (F ⟦ M ⟧)
 \end{code}
 
-We shall need to refer to the second premise of the \textsf{ℰ-bind}
-lemma many times, so we define the following shorthand for it.
+We need to refer to the second premise of the \textsf{ℰ-bind} lemma
+many times, so we define the following shorthand for it.
 
 \begin{code}
 Prem2 : Type → Type → Frame → Term → Setᵒ [] []
 Prem2 A B F M = ∀ᵒ[ V ] (M —↠ V)ᵒ →ᵒ 𝒱⟦ B ⟧ V →ᵒ ℰ⟦ A ⟧ (F ⟦ V ⟧)
 \end{code}
 
-\noindent This property is preserved by reduction. 
+\noindent The \textsf{Prem2} property is preserved by reduction. 
 
 \begin{code}
 Prem2-reduction : ∀{𝒫}{A}{B}{F}{M}{M′} →  M —→ M′  →  𝒫 ⊢ᵒ Prem2 A B F M
    → 𝒫 ⊢ᵒ Prem2 A B F M′
 Prem2-reduction {𝒫}{A}{B}{F}{M}{M′} M→M′ Prem2[M] =
    Λᵒ[ V ] λᵒ[ ⊢M′→V ⦂ (M′ —↠ V)ᵒ  ] λᵒ[ ⊢𝒱V ⦂ 𝒱⟦ B ⟧ V ]
-     let-pureᵒ[ M′→V ] (Sᵒ ⊢M′→V) within
+     pureᵒE (Sᵒ ⊢M′→V) λ M′→V → 
      let M—↠V = pureᵒI (M —→⟨ M→M′ ⟩ M′→V) in
      let M→V→ℰFV = ∀ᵒE (Sᵒ (Sᵒ Prem2[M])) V in
      →ᵒE (→ᵒE M→V→ℰFV M—↠V) ⊢𝒱V     
@@ -100,7 +101,7 @@ it can reduce. In the case $M$ is a value, we conclude immediately by
 applying the second premise, noting that $M$ reduces in zero steps to
 itself. In case $M$ reduces to some $M′$, we need to prove that $F ⟦ M ⟧$ satisfies
 progress and preservation and is therefore well behaved. The progress
-part is easy because $F ⟦ M ⟧$ reduces by rule $ξ$. Regarding preservation,
+part is easy because $F ⟦ M ⟧$ reduces to $F ⟦ M′ ⟧$ by rule $ξ$. Regarding preservation,
 we may assume $F ⟦ M ⟧$ takes a step to some $N$ and need to prove that $▷ᵒ \,ℰ⟦ A ⟧ \, N$.
 By the \textsf{frame-inv} lemma (in the Appendix), we have $N = F ⟦ M′ ⟧$.
 So we need to show that $▷ᵒ \,ℰ⟦ A ⟧ \, F ⟦ M′ ⟧$.
@@ -153,9 +154,7 @@ other logical connectives.
           ▷ℰFM′ = let ϕᵃ = λ M → ℰ-bind-M A B F M in
                   →ᵒE(▷→ (→ᵒE(▷→ (∀ᵒE(▷∀{ϕᵃ = ϕᵃ} IH) M′)) ▷ℰM′)) ▷M′→V→𝒱V→ℰFV in
       substₚ (λ N → 𝒫′ ⊢ᵒ ▷ᵒ (ℰ⟦ A ⟧ N)) (≐-sym (≐-refl N≡F[M′])) ▷ℰFM′
-\end{code}
 
-\begin{code}
 ℰ-bind {𝒫}{A}{B}{F}{M} ⊢ℰM ⊢𝒱V→ℰFV =
   →ᵒE (→ᵒE (∀ᵒE{ϕᵃ = λ M → ℰ-bind-M A B F M} ℰ-bind-aux M) ⊢ℰM) ⊢𝒱V→ℰFV
 \end{code}

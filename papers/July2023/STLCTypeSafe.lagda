@@ -45,7 +45,7 @@ well behaved and multi-step reduces to $N$, then $N$ is well behaved.
   ℰ-multi-preserve M′—↠N (▷ϕ⇒ϕ ▷ℰM′)
 \end{code}
 
-\noindent The Type Safety theorem follows from \textsf{fundamental}
+\noindent The Type Safety theorem follows from the \textsf{fundamental} lemma
 followed by \textsf{ℰ-multi-preserve}.
 
 \begin{code}

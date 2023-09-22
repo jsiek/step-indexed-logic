@@ -50,7 +50,7 @@ The logical relation is comprised of two mutually recursive
 predicates, 𝒱 for values and ℰ for terms. The intuitive meaning
 of the predicates is that, for a given type $A$, 
 $𝒱⟦ A ⟧\, V$ means that value $V$ is well behaved according to type $A$
-and $ℰ⟦ A ⟧\, M$ means that $M$ is well behaved according to type $A$.
+and $ℰ⟦ A ⟧\, M$ means that term $M$ is well behaved according to type $A$.
 
 As we discussed in Section~\ref{sec:mutually-recursive}, SIL does not
 directly support mutual recursion but we can merge the two predicates
@@ -58,7 +58,7 @@ into one predicate using a sum type, which here we name 𝒱⊎ℰ.  We
 define 𝒱⊎ℰ by an application of μᵒ, so we first need to define the
 non-recursive version of 𝒱⊎ℰ, which we call \textsf{pre}-𝒱⊎ℰ, defined
 below. It simply dispatches to the non-recursive \textsf{pre}-𝒱 and
-\textsf{pre}-ℰ functions which we get to shortly.
+\textsf{pre}-ℰ functions which we define shortly.
 
 \begin{code}
 Γ₁ : Context
@@ -95,14 +95,14 @@ these recursive references to 𝒱 and ℰ.
 ℰᵒ⟦ A ⟧ M = inj₂ (A , M) ∈ recᵒ
 \end{code}
 
-The definition of \textsf{pre-ℰ}, i.e., what it means for a term to be
-well behaved, is essentially a statement of what we'd like to prove:
-``progress'' and ``preservation''. In particular, the progress part
-says that either $M$ is a well-behaved value or it is reducible. The
-preservation part says that if $M$ reduces to $N$, then $N$ is also
-well behaved. Note that we insert the ▷ᵒ operator in front of the
-recursive use of ℰ to satisfy SIL's rules for well formed recursive
-definitions.
+The definition of \textsf{pre-ℰ} (where we define what it means for a
+term to be well behaved) is essentially a statement of what we'd like
+to prove: ``progress'' and ``preservation''. In particular, the
+progress part says that either $M$ is a well-behaved value or it is
+reducible. The preservation part says that if $M$ reduces to $N$, then
+$N$ is also well behaved. Note that we insert the ▷ᵒ operator in front
+of the recursive use of ℰ to satisfy SIL's rules for well formed
+recursive definitions.
 
 \begin{code}
 pre-ℰ A M = (pre-𝒱 A M ⊎ᵒ (reducible M)ᵒ) ×ᵒ (∀ᵒ[ N ] (M —→ N)ᵒ →ᵒ ▷ᵒ (ℰᵒ⟦ A ⟧ N))
@@ -113,7 +113,7 @@ well-behaved value according to a given type. For type ℕ, the value
 must be the literal for zero or be the successor of a well-behaved
 value at type ℕ. For function types, the value must be either a lambda
 abstraction or fixpoint. For a lambda abstraction, given an arbitrary
-well-behaved values $W$, substituting it into the lambda's body $N$
+well-behaved value $W$, substituting it into the lambda's body $N$
 produces a well-behaved term.  For a fixpoint $μ\,V$, the term $V$
 must be a value (syntactically) and substituting the whole fixpoint
 into $V$ produces a well-behaved value. We insert the ▷ᵒ operator
@@ -156,8 +156,8 @@ to fold the definition of 𝒱.
   progress A M ×ᵒ preservation A M           ∎
 \end{code}
 
-\noindent The following introduction rule for ℰ is a directly
-corollary of the above.
+\noindent The following introduction and elimination rules for ℰ are a
+directly corollary of the above.
 
 \begin{code}
 ℰ-intro : ∀ {𝒫}{A}{M} → 𝒫 ⊢ᵒ progress A M → 𝒫 ⊢ᵒ preservation A M → 𝒫 ⊢ᵒ ℰ⟦ A ⟧ M
@@ -169,20 +169,12 @@ corollary of the above.
 ℰ-elim 𝒫⊢ℰ = substᵒ ℰ-stmt 𝒫⊢ℰ
 \end{code}
 
-Next we turn several uses of the fixpoint theorem for 𝒱.
+Next we turn to several uses of the fixpoint theorem for 𝒱.
 The \textsf{zero} literal is well-behaved at type ℕ.
 
 \begin{code}
 𝒱-zero : 𝒱⟦ `ℕ ⟧ `zero ≡ᵒ ⊤ᵒ
-𝒱-zero = let X = inj₁ (`ℕ , `zero) in
-    𝒱⟦ `ℕ ⟧ `zero
-  ⩦⟨ ≡ᵒ-refl refl ⟩
-    𝒱⊎ℰ X
-  ⩦⟨ fixpointᵒ pre-𝒱⊎ℰ X ⟩
-    letᵒ (μᵒ pre-𝒱⊎ℰ) (pre-𝒱⊎ℰ X)
-  ⩦⟨ ≡ᵒ-refl refl ⟩
-    ⊤ᵒ
-  ∎
+𝒱-zero = fixpointᵒ pre-𝒱⊎ℰ (inj₁ (`ℕ , `zero))
 \end{code}
 
 \noindent The successor of a value is well-behaved at type ℕ
@@ -213,31 +205,15 @@ well-behaved at $A$.
 
 \begin{code}
 𝒱-fun : ∀{A B}{N} → 𝒱⟦ A ⇒ B ⟧ (ƛ N) ≡ᵒ (∀ᵒ[ W ] ((▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))))
-𝒱-fun {A}{B}{N} = let X = (inj₁ (A ⇒ B , ƛ N)) in
-     𝒱⟦ A ⇒ B ⟧ (ƛ N)
-   ⩦⟨ ≡ᵒ-refl refl ⟩
-     𝒱⊎ℰ X
-   ⩦⟨ fixpointᵒ pre-𝒱⊎ℰ X ⟩
-     letᵒ (μᵒ pre-𝒱⊎ℰ) (pre-𝒱⊎ℰ X)
-   ⩦⟨ ≡ᵒ-refl refl ⟩ 
-     (∀ᵒ[ W ] ((▷ᵒ (𝒱⟦ A ⟧ W)) →ᵒ (▷ᵒ (ℰ⟦ B ⟧ (N [ W ])))))
-   ∎
+𝒱-fun {A}{B}{N} = fixpointᵒ pre-𝒱⊎ℰ (inj₁ (A ⇒ B , ƛ N))
 \end{code}
 
-\noindent A fixpoint value $μ\,V$ is well-behaved at type $A ⇒ B$ if-and-only-if $V$ is
-a value and $V[μ\, V]$ is well behaved at $A ⇒ B$.
+\noindent A fixpoint value $μ\,V$ is well-behaved at type $A ⇒ B$
+if-and-only-if $V$ is a value and $V[μ\, V]$ is well behaved at $A ⇒ B$.
 
 \begin{code}
 𝒱-μ : ∀{A B}{V} → 𝒱⟦ A ⇒ B ⟧ (μ V) ≡ᵒ (Value V)ᵒ ×ᵒ (▷ᵒ (𝒱⟦ A ⇒ B ⟧ (V [ μ V ])))
-𝒱-μ {A}{B}{V} = let X = (inj₁ (A ⇒ B , μ V)) in
-     𝒱⟦ A ⇒ B ⟧ (μ V)
-   ⩦⟨ ≡ᵒ-refl refl ⟩
-     𝒱⊎ℰ X
-   ⩦⟨ fixpointᵒ pre-𝒱⊎ℰ X ⟩
-     letᵒ (μᵒ pre-𝒱⊎ℰ) (pre-𝒱⊎ℰ X)
-   ⩦⟨ ≡ᵒ-refl refl ⟩ 
-     (Value V)ᵒ ×ᵒ (▷ᵒ (𝒱⟦ A ⇒ B ⟧ (V [ μ V ])))
-   ∎
+𝒱-μ {A}{B}{V} = fixpointᵒ pre-𝒱⊎ℰ (inj₁ (A ⇒ B , μ V))
 \end{code}
 
 If we have a well-behaved value at type $ℕ$, then it must either be
@@ -326,10 +302,9 @@ then it must either be a lambda abstraction or a fixpoint value.
 The predicates 𝒱 and ℰ characterize well-behaved terms without any
 free variables, that is, closed terms. (Note that the definition of
 \textsf{pre-𝒱} does not include a case for variables.)  However, we
-shall also need to handle terms with free variables, i.e., open
-terms.  The standard approach is to apply a substitution,
-mapping variables to closed values, to turn the open term into a
-closed term.
+also need to handle terms with free variables, that is, open terms.
+The standard approach is to apply a substitution, mapping variables to
+closed values, to turn an open term into a closed term.
 
 The following defines a well-behaved substitution, that is, a
 substitution that maps variables to well-behaved values.
@@ -340,7 +315,7 @@ substitution that maps variables to well-behaved values.
 𝓖⟦ A ∷ Γ ⟧ σ = (𝒱⟦ A ⟧ (σ 0)) ∷ 𝓖⟦ Γ ⟧ (λ x → σ (suc x))
 \end{code}
 
-\noindent A term $V$ is a well-behaved open value at type $A$ in type
+\noindent A value $V$ is a well-behaved open value at type $A$ in type
 environment Γ if, for any well-behaved substitution γ, $⟪ γ ⟫\, V$ is
 a well behaved value.
 
@@ -360,7 +335,7 @@ _⊨_⦂_ : List Type → Term → Type → Prop
 Γ ⊨ M ⦂ A = ∀ (γ : Subst) → 𝓖⟦ Γ ⟧ γ ⊢ᵒ ℰ⟦ A ⟧ (⟪ γ ⟫ M)
 \end{code}
 
-The proof of semantic type safety will make use of the Fundamental
+The proof of semantic type safety makes use of the Fundamental
 Lemma for this logical relation, which states that a well-typed term
 is also a well-behaved open term. More formally, $Γ ⊢ M ⦂ A$ implies
 $Γ ⊨ M ⦂ A$ (and likewise for well-typed values).  The proof will be

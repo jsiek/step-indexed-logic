@@ -28,7 +28,7 @@ open import PropP
 \end{code}
 \end{comment}
 
-\section{Introduction to Step-Indexed Logic for PL Mechanizers}
+\section{How to Use a Step-Indexed Logic}
 \label{sec:SIL-intro}
 
 The first thing to know about SIL is that it is a logic that emulates
