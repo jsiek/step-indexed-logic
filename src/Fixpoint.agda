@@ -33,7 +33,7 @@ lemma15b-env-fun : ∀{Γ}{Δ}{A}{δ : RecEnv Γ}{P : Predₒ A}
   → j ≤ₚ k → ((⟅ Sᵃ ⟆ δ) ^ j) P a ≡ₒ[ j ] ((⟅ Sᵃ ⟆ δ) ^ k) P a
 lemma15b-env-fun {Γ}{Δ}{A}{δ}{P} k j Sᵃ a j≤k =
   lemma15b k j (⟅ Sᵃ ⟆ δ) a j≤k
-  (λ a P k → strong (Sᵃ a) zeroᵒ (P , δ) k k (≤-reflₚ{k}))
+  (λ a P k → wellformed (Sᵃ a) zeroᵒ (P , δ) k k (≤-reflₚ{k}))
   (λ P=Q a → congr (Sᵃ a) (P=Q ,ₚ ≡ᵈ-refl{_}{δ}))
 
 lemma18a : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (δ : RecEnv Γ)
@@ -51,11 +51,11 @@ lemma18b : ∀{Γ}{Δ : Times Γ}{A} (k : ℕ) (Sᵃ : A → Setᵒ (A ∷ Γ) (
      → # (Sᵃ a) (mu Sᵃ δ , δ) ≡ₒ[ 1 + k ] ((⟅ Sᵃ ⟆ δ) ^ (1 + k)) (λ a k → ⊤ₚ) a
 lemma18b {A}{Γ}{Δ} k Sᵃ a δ =
        ↓ (1 + k) (# (Sᵃ a) (mu Sᵃ δ , δ))
-   ⩦⟨ strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , δ) k k (≤-reflₚ{k}) ⟩
+   ⩦⟨ wellformed (Sᵃ a) zeroᵒ (mu Sᵃ δ , δ) k k (≤-reflₚ{k}) ⟩
        ↓ (1 + k) (# (Sᵃ a) (↓ᵖ k (mu Sᵃ δ) , δ))
    ⩦⟨ cong-approxᵖ{k = 1 + k} (λ a → congr (Sᵃ a) ((λ a → lemma18a k Sᵃ a δ) ,ₚ ≡ᵈ-refl)) a ⟩
        ↓ (1 + k) (# (Sᵃ a) (↓ᵖ k (((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤ₚ)) , δ))
-   ⩦⟨ ≡ₒ-sym (strong (Sᵃ a) zeroᵒ ((((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤ₚ)) , δ) k k (≤-reflₚ{k})) ⟩
+   ⩦⟨ ≡ₒ-sym (wellformed (Sᵃ a) zeroᵒ ((((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤ₚ)) , δ) k k (≤-reflₚ{k})) ⟩
        ↓ (1 + k) (# (Sᵃ a) (((⟅ Sᵃ ⟆ δ) ^ k) (λ a k → ⊤ₚ) , δ))
    ⩦⟨ ≡ₒ-refl refl ⟩
        ↓ (1 + k) (((⟅ Sᵃ ⟆ δ) ^ (suc k)) (λ a k → ⊤ₚ) a)

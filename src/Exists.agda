@@ -25,15 +25,15 @@ cong-∃ {A} {P} {Q} P=Q i = (λ {(a ,ₚ b) → a ,ₚ proj₁ₚ (P=Q a i) b})
 nonexpansive-∃ : ∀ k → ∀{A : Set} → (P : Predₒ A) → (∃ₒ[ a ⦂ A ] P a) ≡ₒ[ k ] (∃ₒ[ a ⦂ A ] ↓ k (P a))
 nonexpansive-∃ k {A} P i = (λ {(a ,ₚ (b ,ₚ c)) → a ,ₚ (b ,ₚ (a ,ₚ c))}) ,ₚ λ { (a ,ₚ b ,ₚ c) → a ,ₚ b ,ₚ proj₂ₚ c}
 
-strong-exists : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ)
-  → strong-fun Δ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
-strong-exists {A}{Γ}{Δ} P x
+wellformed-exists : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ)
+  → wellformed-fun Δ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
+wellformed-exists {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
         ↓ k (∃ₒ[ a ⦂ A ] # (P a) δ)
       ⩦⟨ nonexpansive-∃ k (λ a → # (P a) δ)⟩
         ↓ k (∃ₒ[ a ⦂ A ] ↓ k (# (P a) δ))
-      ⩦⟨ cong-approx k (cong-∃ λ a → strong-now⇒nonexpansive (strong (P a) x) time-x δ j k k≤j) ⟩
+      ⩦⟨ cong-approx k (cong-∃ λ a → wellformed-now⇒nonexpansive (wellformed (P a) x) time-x δ j k k≤j) ⟩
         ↓ k (∃ₒ[ a ⦂ A ] ↓ k (# (P a) (↓ᵈ j x δ)))
       ⩦⟨ ≡ₒ-sym (nonexpansive-∃ k (λ a → # (P a) (↓ᵈ j x δ)))⟩
         ↓ k (∃ₒ[ a ⦂ A ] # (P a) (↓ᵈ j x δ))
@@ -42,7 +42,7 @@ strong-exists {A}{Γ}{Δ} P x
         ↓ (suc k) (∃ₒ[ a ⦂ A ] # (P a) δ)
       ⩦⟨ nonexpansive-∃ (suc k) (λ a → # (P a) δ) ⟩
         ↓ (suc k) (∃ₒ[ a ⦂ A ] ↓ (suc k) (# (P a) δ))
-      ⩦⟨ cong-approx (suc k) (cong-∃ (λ a → strong-later⇒contractive (strong (P a) x) time-x δ j k k≤j)) ⟩
+      ⩦⟨ cong-approx (suc k) (cong-∃ (λ a → wellformed-later⇒contractive (wellformed (P a) x) time-x δ j k k≤j)) ⟩
         ↓ (suc k) (∃ₒ[ a ⦂ A ] ↓ (suc k) (# (P a) (↓ᵈ j x δ)))
       ⩦⟨ ≡ₒ-sym (nonexpansive-∃ (suc k) (λ a → # (P a) (↓ᵈ j x δ))) ⟩
         ↓ (suc k) (∃ₒ[ a ⦂ A ] # (P a) (↓ᵈ j x δ))

@@ -40,5 +40,5 @@ nonexpansive-→ k {ϕ}{ψ} i =
      proj₂ₚ ↓ϕj}})
 
 open import BinaryConnective _→ₒ_ cong-→ₒ nonexpansive-→
-  using () renaming (strong-connective to strong-implication) public
+  using () renaming (wellformed-connective to wellformed-implication) public
 

@@ -22,20 +22,13 @@ infix 2 _≡ₒ_
 _≡ₒ_ : Setₒ → Setₒ → Prop
 S ≡ₒ T = ∀ k → S k ⇔ T k
 
-≡ₒ-refl : ∀{S T : Setₒ}
-  → S ≡ T
-  → S ≡ₒ T
+≡ₒ-refl : ∀{S T : Setₒ} → S ≡ T → S ≡ₒ T
 ≡ₒ-refl refl i = ⩦-refl refl
 
-≡ₒ-sym : ∀{S T : Setₒ}
-  → S ≡ₒ T
-  → T ≡ₒ S
+≡ₒ-sym : ∀{S T : Setₒ} → S ≡ₒ T → T ≡ₒ S
 ≡ₒ-sym ST i = ⩦-sym (ST i)
 
-≡ₒ-trans : ∀{S T R : Setₒ}
-  → S ≡ₒ T
-  → T ≡ₒ R
-  → S ≡ₒ R
+≡ₒ-trans : ∀{S T R : Setₒ} → S ≡ₒ T → T ≡ₒ R → S ≡ₒ R
 ≡ₒ-trans ST TR i = ⩦-trans (ST i) (TR i)
 
 instance

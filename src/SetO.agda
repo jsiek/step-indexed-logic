@@ -22,17 +22,17 @@ record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setₒ
     down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
-    strong : strong-fun Δ #
+    wellformed : wellformed-fun Δ #
     congr : congruent #
 
 open Setᵒ public
 
 make-Setᵒ : ∀{Γ}{Δ} → (sem : RecEnv Γ → Setₒ)
   → (∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ))
-  → (strong-fun Δ sem)
+  → (wellformed-fun Δ sem)
   → (congruent sem)
   → Setᵒ Γ Δ
-make-Setᵒ sem dc s c = record { # = sem ; down = dc ; strong = s ; congr = c}
+make-Setᵒ sem dc s c = record { # = sem ; down = dc ; wellformed = s ; congr = c}
 
 private variable Γ : Context
 private variable Δ : Times Γ

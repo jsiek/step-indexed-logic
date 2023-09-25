@@ -37,5 +37,5 @@ nonexpansive-⊎ k {ϕ}{ψ} i = (λ { (i<k ,ₚ inj₁ₚ ϕi) → i<k ,ₚ (inj
                                    ; (i<k ,ₚ inj₂ₚ (_ ,ₚ ψi)) → i<k ,ₚ inj₂ₚ ψi})
 
 open import BinaryConnective _⊎ₒ_ cong-⊎ₒ nonexpansive-⊎
-  using () renaming (strong-connective to strong-disjunction) public
+  using () renaming (wellformed-connective to wellformed-disjunction) public
 

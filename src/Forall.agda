@@ -32,14 +32,14 @@ nonexpansive-∀ : ∀ k → ∀{A} (P : A → Setₒ) → (∀ₒ[ a ⦂ A ] P 
 nonexpansive-∀ k P i = (λ {(i<k ,ₚ ∀Pi) → i<k ,ₚ λ a → i<k ,ₚ ∀Pi a})
                        ,ₚ (λ {(i<k ,ₚ ↓k∀Pi) → i<k ,ₚ λ a → proj₂ₚ (↓k∀Pi a)})
 
-strong-all : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ) → strong-fun Δ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
-strong-all {A}{Γ}{Δ} P x
+wellformed-all : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ) → wellformed-fun Δ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
+wellformed-all {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →
       ↓ k (∀ₒ[ a ⦂ A ] # (P a) δ)
     ⩦⟨ nonexpansive-∀ k (λ a → # (P a) δ) ⟩
       ↓ k (∀ₒ[ a ⦂ A ] ↓ k (# (P a) δ))
-    ⩦⟨ cong-approx k (cong-∀ λ a → strong-now⇒nonexpansive (strong (P a) x) time-x δ j k k≤j) ⟩
+    ⩦⟨ cong-approx k (cong-∀ λ a → wellformed-now⇒nonexpansive (wellformed (P a) x) time-x δ j k k≤j) ⟩
       ↓ k (∀ₒ[ a ⦂ A ] ↓ k (# (P a) (↓ᵈ j x δ)))
     ⩦⟨ ≡ₒ-sym (nonexpansive-∀ k (λ a → # (P a) (↓ᵈ j x δ))) ⟩
       ↓ k (∀ₒ[ a ⦂ A ] # (P a) (↓ᵈ j x δ))
@@ -48,7 +48,7 @@ strong-all {A}{Γ}{Δ} P x
       ↓ (suc k) (∀ₒ[ a ⦂ A ] # (P a) δ)
     ⩦⟨ nonexpansive-∀ (suc k) (λ a → # (P a) δ) ⟩
       ↓ (suc k) (∀ₒ[ a ⦂ A ] ↓ (suc k) (# (P a) δ))
-    ⩦⟨ cong-approx (suc k) (cong-∀ (λ a → strong-later⇒contractive (strong (P a) x) time-x δ j k k≤j)) ⟩
+    ⩦⟨ cong-approx (suc k) (cong-∀ (λ a → wellformed-later⇒contractive (wellformed (P a) x) time-x δ j k k≤j)) ⟩
       ↓ (suc k) (∀ₒ[ a ⦂ A ] ↓ (suc k) (# (P a) (↓ᵈ j x δ)))
     ⩦⟨ ≡ₒ-sym (nonexpansive-∀ (suc k) (λ a → # (P a) (↓ᵈ j x δ))) ⟩
       ↓ (suc k) (∀ₒ[ a ⦂ A ] # (P a) (↓ᵈ j x δ))

@@ -34,4 +34,4 @@ nonexpansive-× k {ϕ}{ψ} i = (λ {(i<k ,ₚ (ϕi ,ₚ ψi)) → i<k ,ₚ (i<k 
                              ,ₚ λ { (i<k ,ₚ (_ ,ₚ ϕi) ,ₚ (_ ,ₚ ψi)) → i<k ,ₚ ϕi ,ₚ ψi}
 
 open import BinaryConnective _×ₒ_ cong-×ₒ nonexpansive-×
-  using () renaming (strong-connective to strong-conjunction) public
+  using () renaming (wellformed-connective to wellformed-conjunction) public

@@ -21,33 +21,33 @@ module BinaryConnective
   (nonexpansive-⊕ : ∀ k {ϕ ψ : Setₒ} → ϕ ⊕ ψ ≡ₒ[ k ] (↓ k ϕ) ⊕ (↓ k ψ))
   where
 
-strong-connective : ∀{Γ}{Δ₁ Δ₂ : Times Γ} → (S : Setᵒ Γ Δ₁) (T : Setᵒ Γ Δ₂)
-  → strong-fun (combine Δ₁ Δ₂) (λ δ → # S δ ⊕ # T δ)
-strong-connective {Γ}{Δ₁}{Δ₂} S T {A} x
+wellformed-connective : ∀{Γ}{Δ₁ Δ₂ : Times Γ} → (S : Setᵒ Γ Δ₁) (T : Setᵒ Γ Δ₂)
+  → wellformed-fun (combine Δ₁ Δ₂) (λ δ → # S δ ⊕ # T δ)
+wellformed-connective {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
     with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
 ... | Now | Now = λ δ j k k≤j →
-    let strongS = strong-now⇒nonexpansive (strong S x) time-x1 δ j k k≤j in
-    let strongT = strong-now⇒nonexpansive (strong T x) time-x2 δ j k k≤j in
+    let wellformedS = wellformed-now⇒nonexpansive (wellformed S x) time-x1 δ j k k≤j in
+    let wellformedT = wellformed-now⇒nonexpansive (wellformed T x) time-x2 δ j k k≤j in
       ↓ k (# S δ ⊕ # T δ)
     ⩦⟨ nonexpansive-⊕ k ⟩ 
       ↓ k (↓ k (# S δ) ⊕ ↓ k (# T δ))
-    ⩦⟨ cong-approx k (cong-⊕ strongS (≡ₒ-refl refl)) ⟩ 
+    ⩦⟨ cong-approx k (cong-⊕ wellformedS (≡ₒ-refl refl)) ⟩ 
       ↓ k (↓ k (# S (↓ᵈ j x δ)) ⊕ ↓ k (# T δ))
-    ⩦⟨ cong-approx k (cong-⊕ (≡ₒ-refl refl) strongT) ⟩ 
+    ⩦⟨ cong-approx k (cong-⊕ (≡ₒ-refl refl) wellformedT) ⟩ 
       ↓ k (↓ k (# S (↓ᵈ j x δ)) ⊕ ↓ k (# T (↓ᵈ j x δ)))
     ⩦⟨ ≡ₒ-sym (nonexpansive-⊕ k) ⟩
       ↓ k (# S (↓ᵈ j x δ) ⊕ # T (↓ᵈ j x δ))
     ∎
 ... | Now | Later = λ δ j k k≤j →
-    let strongS = strong-now⇒nonexpansive (strong S x) time-x1 δ j k k≤j in
-    let strongT = strong-later⇒contractive (strong T x) time-x2 δ j k k≤j in
+    let wellformedS = wellformed-now⇒nonexpansive (wellformed S x) time-x1 δ j k k≤j in
+    let wellformedT = wellformed-later⇒contractive (wellformed T x) time-x2 δ j k k≤j in
       ↓ k (# S δ ⊕ # T δ)
     ⩦⟨ ≡ₒ-sym (lemma17 k) ⟩ 
       ↓ k (↓ (1 + k) (# S δ ⊕ # T δ))
     ⩦⟨ cong-approx k (nonexpansive-⊕ (1 + k)) ⟩ 
       ↓ k (↓ (1 + k) (↓ (1 + k) (# S δ) ⊕ ↓ (1 + k) (# T δ)))
-    ⩦⟨ cong-approx k (cong-approx (1 + k) (cong-⊕ (≡ₒ-refl refl) strongT)) ⟩ 
+    ⩦⟨ cong-approx k (cong-approx (1 + k) (cong-⊕ (≡ₒ-refl refl) wellformedT)) ⟩ 
       ↓ k (↓ (1 + k) (↓ (1 + k) (# S δ) ⊕ ↓ (1 + k) (# T (↓ᵈ j x δ))))
     ⩦⟨ ≡ₒ-sym (cong-approx k (nonexpansive-⊕ (1 + k))) ⟩ 
       ↓ k (↓ (1 + k) (# S δ ⊕ # T (↓ᵈ j x δ)))
@@ -55,20 +55,20 @@ strong-connective {Γ}{Δ₁}{Δ₂} S T {A} x
       ↓ k (# S δ ⊕ # T (↓ᵈ j x δ))
     ⩦⟨ nonexpansive-⊕ k ⟩ 
       ↓ k (↓ k (# S δ) ⊕ ↓ k (# T (↓ᵈ j x δ)))
-    ⩦⟨ cong-approx k (cong-⊕ strongS (≡ₒ-refl refl)) ⟩ 
+    ⩦⟨ cong-approx k (cong-⊕ wellformedS (≡ₒ-refl refl)) ⟩ 
       ↓ k (↓ k (# S (↓ᵈ j x δ)) ⊕ ↓ k (# T (↓ᵈ j x δ)))
     ⩦⟨ ≡ₒ-sym (nonexpansive-⊕ k) ⟩ 
       ↓ k (# S (↓ᵈ j x δ) ⊕ # T (↓ᵈ j x δ))
     ∎
 ... | Later | Now = λ δ j k k≤j →
-    let strongS = strong-later⇒contractive (strong S x) time-x1 δ j k k≤j in
-    let strongT = strong-now⇒nonexpansive (strong T x) time-x2 δ j k k≤j in
+    let wellformedS = wellformed-later⇒contractive (wellformed S x) time-x1 δ j k k≤j in
+    let wellformedT = wellformed-now⇒nonexpansive (wellformed T x) time-x2 δ j k k≤j in
       ↓ k (# S δ ⊕ # T δ)
     ⩦⟨ ≡ₒ-sym (lemma17 k) ⟩ 
       ↓ k (↓ (1 + k) (# S δ ⊕ # T δ))
     ⩦⟨ cong-approx k (nonexpansive-⊕ (1 + k)) ⟩ 
       ↓ k (↓ (1 + k) (↓ (1 + k) (# S δ) ⊕ ↓ (1 + k) (# T δ)))
-    ⩦⟨ cong-approx k (cong-approx (1 + k) (cong-⊕ strongS (≡ₒ-refl refl))) ⟩ 
+    ⩦⟨ cong-approx k (cong-approx (1 + k) (cong-⊕ wellformedS (≡ₒ-refl refl))) ⟩ 
       ↓ k (↓ (1 + k) (↓ (1 + k) (# S (↓ᵈ j x δ)) ⊕ ↓ (1 + k) (# T δ)))
     ⩦⟨ ≡ₒ-sym (cong-approx k (nonexpansive-⊕ (1 + k))) ⟩ 
       ↓ k (↓ (1 + k) (# S (↓ᵈ j x δ) ⊕ # T δ))
@@ -76,18 +76,18 @@ strong-connective {Γ}{Δ₁}{Δ₂} S T {A} x
       ↓ k (# S (↓ᵈ j x δ) ⊕ # T δ)
     ⩦⟨ nonexpansive-⊕ k ⟩ 
       ↓ k (↓ k (# S (↓ᵈ j x δ)) ⊕ ↓ k (# T δ))
-    ⩦⟨ cong-approx k (cong-⊕ (≡ₒ-refl refl) strongT) ⟩ 
+    ⩦⟨ cong-approx k (cong-⊕ (≡ₒ-refl refl) wellformedT) ⟩ 
       ↓ k (↓ k (# S (↓ᵈ j x δ)) ⊕ ↓ k (# T (↓ᵈ j x δ)))
     ⩦⟨ ≡ₒ-sym (nonexpansive-⊕ k) ⟩ 
       ↓ k (# S (↓ᵈ j x δ) ⊕ # T (↓ᵈ j x δ))
     ∎
 ... | Later | Later = λ δ j k k≤j →
-    let strongS = strong-later⇒contractive (strong S x) time-x1 δ j k k≤j in
-    let strongT = strong-later⇒contractive (strong T x) time-x2 δ j k k≤j in
+    let wellformedS = wellformed-later⇒contractive (wellformed S x) time-x1 δ j k k≤j in
+    let wellformedT = wellformed-later⇒contractive (wellformed T x) time-x2 δ j k k≤j in
       ↓ (1 + k) (# S δ ⊕ # T δ)
     ⩦⟨ nonexpansive-⊕ (1 + k) ⟩ 
       ↓ (1 + k) (↓ (1 + k) (# S δ) ⊕ ↓ (1 + k) (# T δ))
-    ⩦⟨ cong-approx (1 + k) (cong-⊕ strongS strongT) ⟩ 
+    ⩦⟨ cong-approx (1 + k) (cong-⊕ wellformedS wellformedT) ⟩ 
       ↓ (1 + k) (↓ (1 + k) (# S (↓ᵈ j x δ)) ⊕ ↓ (1 + k) (# T (↓ᵈ j x δ)))
     ⩦⟨ ≡ₒ-sym (nonexpansive-⊕ (1 + k)) ⟩ 
       ↓ (1 + k) (# S (↓ᵈ j x δ) ⊕ # T (↓ᵈ j x δ))

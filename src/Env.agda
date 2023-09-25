@@ -39,24 +39,24 @@ _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ₒ Q a) ×ₚ δ �
 congruent : ∀{Γ : Context} → (RecEnv Γ → Setₒ) → Prop₁
 congruent S = ∀{δ δ′} → δ ≡ᵈ δ′ → (S δ) ≡ₒ (S δ′)
 
-strongly-nonexpansive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Prop₁
-strongly-nonexpansive x F = ∀ δ j k → k ≤ₚ j → F δ ≡ₒ[ k ] F (↓ᵈ j x δ)
+nonexpansive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Prop₁
+nonexpansive x F = ∀ δ j k → k ≤ₚ j → F δ ≡ₒ[ k ] F (↓ᵈ j x δ)
 
-strongly-contractive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Prop₁
-strongly-contractive x F = ∀ δ j k → k ≤ₚ j → F δ ≡ₒ[ suc k ] F (↓ᵈ j x δ)
+contractive : ∀{Γ}{A} → (x : Γ ∋ A) → (RecEnv Γ → Setₒ) → Prop₁
+contractive x F = ∀ δ j k → k ≤ₚ j → F δ ≡ₒ[ suc k ] F (↓ᵈ j x δ)
 
-strong-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Prop₁
-strong-var x Now F = strongly-nonexpansive x F
-strong-var x Later F = strongly-contractive x F
+wellformed-var : ∀{Γ}{A} → (x : Γ ∋ A) → Time → (RecEnv Γ → Setₒ) → Prop₁
+wellformed-var x Now F = nonexpansive x F
+wellformed-var x Later F = contractive x F
 
-strong-now⇒nonexpansive : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setₒ}
-   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Now → strongly-nonexpansive x F
-strong-now⇒nonexpansive gF eq rewrite eq = gF
+wellformed-now⇒nonexpansive : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setₒ}
+   → wellformed-var x (timeof x Δ) F → timeof x Δ ≡ Now → nonexpansive x F
+wellformed-now⇒nonexpansive gF eq rewrite eq = gF
 
-strong-later⇒contractive : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setₒ}
-   → strong-var x (timeof x Δ) F → timeof x Δ ≡ Later → strongly-contractive x F
-strong-later⇒contractive gF eq rewrite eq = gF
+wellformed-later⇒contractive : ∀{Γ}{A}{x : Γ ∋ A}{Δ : Times Γ}{F : RecEnv Γ → Setₒ}
+   → wellformed-var x (timeof x Δ) F → timeof x Δ ≡ Later → contractive x F
+wellformed-later⇒contractive gF eq rewrite eq = gF
 
-strong-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Prop₁
-strong-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → strong-var x (timeof x Δ) F
+wellformed-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Prop₁
+wellformed-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → wellformed-var x (timeof x Δ) F
 

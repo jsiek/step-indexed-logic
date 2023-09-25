@@ -55,12 +55,12 @@ mu-nonexpansive {Γ} {Δ} {A}{B} Sᵃ a x time-x δ (suc k′) j k≤j =
       ↓ (suc k′) (mu Sᵃ (↓ᵈ j x δ) a)
   ∎
   where
-  nonexpansive-Sa-sx = strong-now⇒nonexpansive{x = sucᵒ x}{Δ = Later ∷ Δ}
-                    (strong (Sᵃ a) (sucᵒ x)) time-x (mu Sᵃ δ , δ) j (suc k′) k≤j
-  contractive-Sa-z-δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k′ k′ (≤-reflₚ{k′})
+  nonexpansive-Sa-sx = wellformed-now⇒nonexpansive{x = sucᵒ x}{Δ = Later ∷ Δ}
+                    (wellformed (Sᵃ a) (sucᵒ x)) time-x (mu Sᵃ δ , δ) j (suc k′) k≤j
+  contractive-Sa-z-δ = wellformed (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k′ k′ (≤-reflₚ{k′})
   IH : ∀ a → ↓ k′ (mu Sᵃ δ a) ≡ₒ ↓ k′ (mu Sᵃ (↓ᵈ j x δ) a)
   IH a = mu-nonexpansive Sᵃ a x time-x δ k′ j (≤-transₚ{k′}{suc k′}{j} (n≤1+nₚ k′) k≤j)
-  contractive-Sa-z-↓δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ (≤-reflₚ{k′})
+  contractive-Sa-z-↓δ = wellformed (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k′ k′ (≤-reflₚ{k′})
 
 mu-contractive : ∀{A}{Γ}{Δ}{B} → (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) (x : Γ ∋ B)
    → timeof x Δ ≡ Later → (δ : RecEnv Γ) (k j : ℕ) → (k ≤ₚ j)
@@ -81,17 +81,17 @@ mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ k j k≤j =
       ↓ (suc k) (mu Sᵃ (↓ᵈ j x δ) a)
   ∎
   where
-  contractive-Sᵃ-sx = strong-later⇒contractive {A = B}{sucᵒ x}{Δ = Later ∷ Δ}
-                       (strong (Sᵃ a) (sucᵒ x)) time-x (mu Sᵃ δ , δ) j k k≤j 
-  contractive-Sa-z-δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k k (≤-reflₚ{k})
+  contractive-Sᵃ-sx = wellformed-later⇒contractive {A = B}{sucᵒ x}{Δ = Later ∷ Δ}
+                       (wellformed (Sᵃ a) (sucᵒ x)) time-x (mu Sᵃ δ , δ) j k k≤j 
+  contractive-Sa-z-δ = wellformed (Sᵃ a) zeroᵒ (mu Sᵃ δ , ↓ᵈ j x δ) k k (≤-reflₚ{k})
   IH : ∀ k → k ≤ₚ j → ∀ a → ↓ k (mu Sᵃ δ a) ≡ₒ ↓ k (mu Sᵃ (↓ᵈ j x δ) a)
   IH zero  k≤j a = ≡ₒ[0]
   IH (suc k) k≤j a = mu-contractive Sᵃ a x time-x δ k j (≤-transₚ{k}{suc k}{j} (n≤1+nₚ k) k≤j)
-  contractive-Sa-z-↓δ = strong (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k (≤-reflₚ{k})
+  contractive-Sa-z-↓δ = wellformed (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k (≤-reflₚ{k})
 
-strong-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
-   → strong-fun Δ (λ δ → mu Sᵃ δ a)
-strong-mu {Γ} {Δ} {A} Sᵃ a x
+wellformed-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
+   → wellformed-fun Δ (λ δ → mu Sᵃ δ a)
+wellformed-mu {Γ} {Δ} {A} Sᵃ a x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → mu-nonexpansive Sᵃ a x time-x δ k j k≤j
 ... | Later = λ δ j k k≤j → mu-contractive Sᵃ a x time-x δ k j k≤j

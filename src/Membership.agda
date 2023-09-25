@@ -49,28 +49,28 @@ timeof-var-now : ∀{Γ}{A} → (x : Γ ∋ A) → timeof x (var-now Γ x) ≡ N
 timeof-var-now {B ∷ Γ} zeroᵒ = refl
 timeof-var-now {B ∷ Γ} (sucᵒ x) = timeof-var-now x
 
-strong-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → strong-fun (var-now Γ x) (λ δ → lookup x δ a)
-strong-lookup {a = a} zeroᵒ zeroᵒ = NE where
-  NE : strongly-nonexpansive zeroᵒ (λ {(P , δ) → P a})
+wellformed-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → wellformed-fun (var-now Γ x) (λ δ → lookup x δ a)
+wellformed-lookup {a = a} zeroᵒ zeroᵒ = NE where
+  NE : nonexpansive zeroᵒ (λ {(P , δ) → P a})
   NE (P , δ) j k k≤j  = ≡ₒ-sym (j≤k⇒↓kϕ≡[j]ϕ{j = k} (P a) k≤j)
-strong-lookup {a = a} zeroᵒ (sucᵒ y) rewrite timeof-later y = C
+wellformed-lookup {a = a} zeroᵒ (sucᵒ y) rewrite timeof-later y = C
   where
-  C : strongly-contractive (sucᵒ y) (λ {(P , δ) → P a})
+  C : contractive (sucᵒ y) (λ {(P , δ) → P a})
   C (P , δ) j k k≤j = ≡ₒ-refl refl
-strong-lookup {a = a} (sucᵒ x) zeroᵒ = C
+wellformed-lookup {a = a} (sucᵒ x) zeroᵒ = C
   where
-  C : strongly-contractive zeroᵒ (λ (P , δ) → lookup x δ a)
+  C : contractive zeroᵒ (λ (P , δ) → lookup x δ a)
   C (P , δ) j k k≤j = ≡ₒ-refl refl
-strong-lookup {B ∷ Γ}{A}{a} (sucᵒ x) (sucᵒ y)
+wellformed-lookup {B ∷ Γ}{A}{a} (sucᵒ x) (sucᵒ y)
     with timeof y (var-now Γ x) in eq-y
 ... | Now = SNE where
-    SNE : strongly-nonexpansive (sucᵒ y) (λ {(P , δ) → lookup x δ a})
+    SNE : nonexpansive (sucᵒ y) (λ {(P , δ) → lookup x δ a})
     SNE (P , δ) j k k≤j = ↓-lookup{k = k} x y k≤j 
 ... | Later = SC where
     timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≡ Now → timeof y Δ ≡ Later
        → timeof x Δ ≢ timeof y Δ
     timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
-    SC : strongly-contractive (sucᵒ y) (λ {(P , δ) → lookup x δ a})
+    SC : contractive (sucᵒ y) (λ {(P , δ) → lookup x δ a})
     SC (P , δ) j k k≤j =
       let eq = (lookup-diff{Γ}{δ = δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
       subst (λ X → (lookup x δ a) ≡ₒ[ suc k ] (X a)) (≐-sym (≐-refl eq)) (≡ₒ-refl refl)

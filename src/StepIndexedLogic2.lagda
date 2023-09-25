@@ -67,21 +67,12 @@ open import Let
 \end{comment}
 
 \begin{code}
-record Inhabited (A : Set) : Set where
-  field
-    elt : A
-open Inhabited {{...}} public
-
-instance
-  ℕ-Inhabited : Inhabited ℕ
-  ℕ-Inhabited = record { elt = zero }
-
 abstract
 
  {---------------------- Membership in Recursive Predicate ---------------------}
 
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
-  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup (strong-lookup x) (congruent-lookup x a)
+  a ∈ x = make-Setᵒ (λ δ → (lookup x δ) a) down-lookup (wellformed-lookup x) (congruent-lookup x a)
 
   #∈≡ : ∀{Γ}{A} → (a : A) → (x : Γ ∋ A) → # (a ∈ x) ≡ λ δ → (lookup x δ) a
   #∈≡ a x = refl
@@ -92,7 +83,7 @@ abstract
      → Setᵒ Γ Δ
        -----------------
      → Setᵒ Γ (laters Γ)
-  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ → ▷ ((# S) δ)) (down-later S) (strong-▷ S) (λ δ=δ′ → cong-▷ (congr S δ=δ′))
+  ▷ᵒ {Γ}{Δ} S = make-Setᵒ (λ δ → ▷ ((# S) δ)) (down-later S) (wellformed-▷ S) (λ δ=δ′ → cong-▷ (congr S δ=δ′))
 
   #▷ᵒ≡ : ∀{Γ}{Δ}{ϕ : Setᵒ Γ Δ} → # (▷ᵒ ϕ) ≡ λ δ → ▷ (# ϕ δ)
   #▷ᵒ≡ {Γ}{Δ}{ϕ} = let x = # (▷ᵒ ϕ) in refl
@@ -109,7 +100,7 @@ abstract
   μᵒ : ∀{Γ}{Δ : Times Γ}{A}
      → (A → Setᵒ (A ∷ Γ) (Later ∷ Δ))
      → (A → Setᵒ Γ Δ)
-  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) (strong-mu Sᵃ a) (congruent-mu Sᵃ a)
+  μᵒ {Γ}{Δ}{A} Sᵃ a = make-Setᵒ (λ δ → mu Sᵃ δ a) (down-mu Sᵃ a) (wellformed-mu Sᵃ a) (congruent-mu Sᵃ a)
 
   #μᵒ≡ : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A) → ∀ δ k
      → # (μᵒ Sᵃ a) δ k ≡ mu Sᵃ δ a k
@@ -122,7 +113,7 @@ abstract
      → Setᵒ Γ Δ
   ∀ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
                             (λ δ dc-δ n Pδn k k≤n a → down (P a) δ dc-δ n (Pδn a) k k≤n)
-                            (strong-all P)
+                            (wellformed-all P)
                             (λ δ=δ′ → cong-∀ λ a → congr (P a) δ=δ′)
 
   #∀ᵒ≡ : ∀{Γ}{Δ : Times Γ}{A : Set}{Sᵃ : A → Setᵒ Γ Δ}{δ}{k}
@@ -136,7 +127,7 @@ abstract
      → Setᵒ Γ Δ
   ∃ᵒ{Γ}{Δ}{A} P = make-Setᵒ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
                             (λ δ dc-δ n a×Paδn k k≤n → match a×Paδn λ a Pa → a ,ₚ (down (P a) δ dc-δ n Pa k k≤n))
-                            (strong-exists P)
+                            (wellformed-exists P)
                             (λ δ=δ′ → cong-∃ λ a → congr (P a) δ=δ′)
 
   #∃ᵒ≡ : ∀{Γ}{Δ : Times Γ}{A : Set}{Sᵃ : A → Setᵒ Γ Δ}{δ}{k}
@@ -147,7 +138,7 @@ abstract
 {---------------------- Pure (Set) ------------------------------------}
 
   _ᵒ : ∀{Γ} → Set → Setᵒ Γ (laters Γ)
-  p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (strong-pure p) (λ δ=δ′ → ≡ₒ-refl refl)
+  p ᵒ = make-Setᵒ (λ δ → p ₒ) (λ δ dc-δ n p k k≤n → p) (wellformed-pure p) (λ δ=δ′ → ≡ₒ-refl refl)
 
   #pureᵒ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵒ) δ k ≡ Squash p
   #pureᵒ≡ = refl
@@ -155,7 +146,7 @@ abstract
 {---------------------- Pure (Prop) -----------------------------------}
 
   _ᵖ : ∀{Γ} → Prop → Setᵒ Γ (laters Γ)
-  p ᵖ = make-Setᵒ (λ δ → p ₚ) (λ δ dc-δ n p k k≤n → p) (strong-pure-prop p) (λ δ=δ′ → ≡ₒ-refl refl)
+  p ᵖ = make-Setᵒ (λ δ → p ₚ) (λ δ dc-δ n p k k≤n → p) (wellformed-pure-prop p) (λ δ=δ′ → ≡ₒ-refl refl)
 
   #pureᵖ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵖ) δ (suc k) ≡ p
   #pureᵖ≡ = refl
@@ -188,7 +179,7 @@ abstract
                      (λ δ dc-δ n Sδn×Tδn k k≤n →
                        (down S δ dc-δ n (proj₁ₚ Sδn×Tδn) k k≤n)
                        ,ₚ (down T δ dc-δ n (proj₂ₚ Sδn×Tδn) k k≤n))
-                     (strong-conjunction S T)
+                     (wellformed-conjunction S T)
                      (λ δ=δ′ → cong-×ₒ (congr S δ=δ′) (congr T δ=δ′))
 
   #×ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
@@ -215,7 +206,7 @@ abstract
   S ⊎ᵒ T = make-Setᵒ (λ δ → (# S δ) ⊎ₒ (# T δ))
                      (λ {δ dc-δ n (inj₁ₚ Sn) k k≤n → inj₁ₚ (down S δ dc-δ n Sn k k≤n);
                          δ dc-δ n (inj₂ₚ Tn) k k≤n → inj₂ₚ (down T δ dc-δ n Tn k k≤n)})
-                     (strong-disjunction S T)
+                     (wellformed-disjunction S T)
                      λ δ=δ′ → cong-⊎ₒ (congr S δ=δ′) (congr T δ=δ′)
 
   #⊎ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
@@ -243,7 +234,7 @@ abstract
   S →ᵒ T = make-Setᵒ (λ δ → (# S δ) →ₒ (# T δ))
                      (λ δ dc-δ n ∀j<n,Sj→Tj k k≤n j j≤k Sj →
                         ∀j<n,Sj→Tj j (≤-transₚ{j}{k}{n} j≤k k≤n) Sj)
-                     (strong-implication S T)
+                     (wellformed-implication S T)
                      (λ δ=δ′ → cong-→ₒ (congr S δ=δ′) (congr T δ=δ′))
                      
   #→ᵒ≡ : ∀{Γ}{Δ₁ Δ₂ : Times Γ}{ϕ : Setᵒ Γ Δ₁}{ψ : Setᵒ Γ Δ₂}{δ}{k}
@@ -258,7 +249,7 @@ abstract
                               down T ((λ a k → # (Sᵃ a) δ k) ,ᵃ δ)
                                      ((λ a → down (Sᵃ a) δ dc-δ) ,ₚ dc-δ)
                                      n Tn k k≤n)
-                        (strong-let T Sᵃ)
+                        (wellformed-let T Sᵃ)
                         λ δ=δ′ → congr T ((λ a → congr (Sᵃ a) δ=δ′) ,ₚ δ=δ′)
                         
   #letᵒ≡ : ∀{A}{Γ}{Δ}{t} (P : A → Setᵒ Γ Δ) (ϕ : Setᵒ (A ∷ Γ) (t ∷ Δ)) → ∀ δ k
@@ -562,6 +553,16 @@ abstract
   ▷∀ : ∀{ϕᵃ : A → Setᵏ} → 𝒫 ⊢ᵒ ▷ᵒ (∀ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∀ᵒ λ a → ▷ᵒ (ϕᵃ a))
   ▷∀ 𝒫⊢▷∀ϕᵃ n ⊨𝒫sn a j j< = 𝒫⊢▷∀ϕᵃ n ⊨𝒫sn j j< a
 
+record Inhabited (A : Set) : Set where
+  field
+    elt : A
+open Inhabited {{...}} public
+
+instance
+  ℕ-Inhabited : Inhabited ℕ
+  ℕ-Inhabited = record { elt = zero }
+
+abstract
   ▷∃ : ∀{ϕᵃ : A → Setᵏ}{{_ : Inhabited A}} → 𝒫 ⊢ᵒ ▷ᵒ (∃ᵒ ϕᵃ)  →  𝒫 ⊢ᵒ (∃ᵒ λ a → ▷ᵒ (ϕᵃ a))
   ▷∃ 𝒫⊢▷∃ϕᵃ zero ⊨𝒫k = elt ,ₚ (λ j ())
   ▷∃ {ϕᵃ = ϕᵃ} 𝒫⊢▷∃ϕᵃ (suc k) ⊨𝒫sk 

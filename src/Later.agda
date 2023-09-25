@@ -28,16 +28,16 @@ contractive-▷ {k} S zero = (λ _ → ttₚ ,ₚ (λ x ())) ,ₚ (λ _ → tt�
 contractive-▷ {k} S (suc i) = (λ { (x ,ₚ x₁) → x ,ₚ (λ j x₂ → ≤-transₚ{suc j}{suc i}{k} x₂ x ,ₚ (x₁ j x₂))})
      ,ₚ λ { (x ,ₚ ▷↓kSsi) → x ,ₚ (λ j x₂ → let xx = ▷↓kSsi j x₂ in proj₂ₚ xx)}
 
-strong-▷ : ∀{Γ}{Δ : Times Γ}(S : Setᵒ Γ Δ) → strong-fun (laters Γ) (λ δ → ▷ (# S δ))
-strong-▷ {Γ}{Δ} S x
-    with strong S x
-... | strongS
+wellformed-▷ : ∀{Γ}{Δ : Times Γ}(S : Setᵒ Γ Δ) → wellformed-fun (laters Γ) (λ δ → ▷ (# S δ))
+wellformed-▷ {Γ}{Δ} S x
+    with wellformed S x
+... | wellformedS
     with timeof x Δ
 ... | Now rewrite timeof-later{Γ} x = λ δ j k k≤j →
       ↓ (suc k) (▷ (# S δ))
     ⩦⟨ contractive-▷ (# S δ) ⟩
       ↓ (suc k) (▷ (↓ k (# S δ)))
-    ⩦⟨ cong-approx (suc k) (cong-▷ (strongS δ j k k≤j)) ⟩
+    ⩦⟨ cong-approx (suc k) (cong-▷ (wellformedS δ j k k≤j)) ⟩
       ↓ (suc k) (▷ (↓ k (# S (↓ᵈ j x δ))))
     ⩦⟨ ≡ₒ-sym (contractive-▷ (# S (↓ᵈ j x δ))) ⟩
       ↓ (suc k) (▷ (# S (↓ᵈ j x δ)))
@@ -48,7 +48,7 @@ strong-▷ {Γ}{Δ} S x
       ↓ (suc k) (↓ (2 + k) (▷ (# S δ)))
     ⩦⟨ cong-approx (suc k) (contractive-▷ (# S δ)) ⟩
       ↓ (suc k) (↓ (2 + k) (▷ (↓ (suc k) (# S δ))))
-    ⩦⟨ cong-approx (suc k) (cong-approx (2 + k) (cong-▷ (strongS δ j k k≤j))) ⟩
+    ⩦⟨ cong-approx (suc k) (cong-approx (2 + k) (cong-▷ (wellformedS δ j k k≤j))) ⟩
       ↓ (suc k) (↓ (2 + k) (▷ (↓ (suc k) ((# S) (↓ᵈ j x δ)))))
     ⩦⟨ ≡ₒ-sym (cong-approx (suc k) (contractive-▷ (# S (↓ᵈ j x δ)))) ⟩
       ↓ (suc k) (↓ (2 + k) (▷ (# S (↓ᵈ j x δ))))
