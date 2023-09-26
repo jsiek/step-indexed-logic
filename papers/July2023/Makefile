@@ -4,7 +4,7 @@ SRCTEX = $(SRCDIR)/latex
 PAPERTEX = latex/July2023
 
 #  latex/July2023/SILReference.tex
-paper.pdf: paper.tex $(SRCTEX)/RawSetO.tex $(SRCTEX)/EquivalenceRelation.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
+paper.pdf: paper.tex $(SRCTEX)/RawSetO.tex $(SRCTEX)/Approx.tex $(SRCTEX)/EquivalenceRelation.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper
@@ -25,7 +25,10 @@ $(SRCTEX)/EquivalenceRelation.tex: $(SRCDIR)/EquivalenceRelation.lagda
 $(SRCTEX)/RawSetO.tex: $(SRCDIR)/RawSetO.lagda
 	cd $(SRCDIR) ; agda --latex RawSetO.lagda
 
-$(SRCTEX)/StepIndexedLogic2.tex: $(SRCDIR)/StepIndexedLogic2.lagda
+$(SRCTEX)/Approx.tex: $(SRCDIR)/Approx.lagda
+	cd $(SRCDIR) ; agda --latex Approx.lagda
+
+$(SRCTEX)/StepIndexedLogic2.tex: $(SRCDIR)/RawSetO.lagda $(SRCDIR)/Approx.lagda $(SRCDIR)/StepIndexedLogic2.lagda
 	cd $(SRCDIR) ; agda --latex StepIndexedLogic2.lagda
 
 $(PAPERTEX)/SILIntro.tex: SILIntro.lagda $(SRCDIR)/StepIndexedLogic2.lagda

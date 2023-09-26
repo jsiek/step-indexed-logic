@@ -1,6 +1,7 @@
 \begin{comment}
 \begin{code}
-module July2024.OFE where
+{-# OPTIONS --without-K --rewriting --prop #-}
+module July2023.OFE where
 
 open import Data.Empty using (⊥; ⊥-elim)
 open import Data.List using (List; []; _∷_)
@@ -18,8 +19,8 @@ open Eq using (_≡_; _≢_; refl; sym; trans; cong; cong₂; cong-app; subst)
 open import Relation.Nullary using (¬_)
 open import Function using (id; _∘_)
 open import Level using (Lift)
-open import EquivalenceRelation public
-open import July2024.StepIndexedLogic hiding (_≡[_]_)
+--open import EquivalenceRelation public
+open import StepIndexedLogic2 -- hiding (_≡[_]_)
 
 postulate ex-mid : ∀ (P : Set) → P ⊎ ¬ P
 
