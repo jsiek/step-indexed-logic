@@ -3,7 +3,7 @@
 {-# OPTIONS --without-K --prop #-}
 
 open import Data.Nat using (ℕ)
-open import EquivalenceRelationProp using (EquivalenceRelation; _⇔_; ⩦-refl; ⩦-sym; ⩦-trans)
+open import EquivalenceRelationProp using (EquivalenceRelation; _⇔_; ⇔-refl; ⇔-sym; ⇔-trans)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl)
 
@@ -47,13 +47,13 @@ _≡ₒ_ : Setₒ → Setₒ → Prop
 S ≡ₒ T = ∀ k → S k ⇔ T k
 
 ≡ₒ-refl : ∀{S T : Setₒ} → S ≡ T → S ≡ₒ T
-≡ₒ-refl refl i = ⩦-refl refl
+≡ₒ-refl refl i = ⇔-refl refl
 
 ≡ₒ-sym : ∀{S T : Setₒ} → S ≡ₒ T → T ≡ₒ S
-≡ₒ-sym ST i = ⩦-sym (ST i)
+≡ₒ-sym ST i = ⇔-sym (ST i)
 
 ≡ₒ-trans : ∀{S T R : Setₒ} → S ≡ₒ T → T ≡ₒ R → S ≡ₒ R
-≡ₒ-trans ST TR i = ⩦-trans (ST i) (TR i)
+≡ₒ-trans ST TR i = ⇔-trans (ST i) (TR i)
 \end{code}
 
 \noindent We create an instance of \textsf{EquivalenceRelation}
@@ -62,8 +62,7 @@ S ≡ₒ T = ∀ k → S k ⇔ T k
 \begin{code}
 instance
   SIL-Eqₒ : EquivalenceRelation Setₒ
-  SIL-Eqₒ = record { _⩦_ = _≡ₒ_ ; ⩦-refl = ≡ₒ-refl
-                   ; ⩦-sym = ≡ₒ-sym ; ⩦-trans = ≡ₒ-trans }
+  SIL-Eqₒ = record { _⩦_ = _≡ₒ_ ; ⩦-refl = ≡ₒ-refl ; ⩦-sym = ≡ₒ-sym ; ⩦-trans = ≡ₒ-trans }
 \end{code}
 
 A SIL predicate is embedded into Agda as a function from any type \textsf{A}
@@ -80,6 +79,23 @@ Predₒ A = A → Setₒ
 downClosedᵖ : ∀{A} (P : Predₒ A) → Prop
 downClosedᵖ {A} P = ∀ (a : A) → downClosed (P a)
 \end{code}
+
+\noindent The always-true predicate is defined as follows.
+
+\begin{code}
+⊤ᵖ : ∀{A} → Predₒ A
+⊤ᵖ = λ _ _ → ⊤ₚ
+\end{code}
+
+\noindent The following lemma is handy for showing that when two
+predicates are equal, applying them to the same argument produces
+equivalent propositions.
+
+\begin{code}
+≡ᵖ-refl : ∀{A}{P Q : Predₒ A} → P ≡ Q → ∀ {a} → P a ≡ₒ Q a
+≡ᵖ-refl refl {a} = ≡ₒ-refl refl
+\end{code}
+
 
 To define recursive predicates, we introduce the notion of a
 \emph{functional}, which is a function whose input and output are
@@ -110,12 +126,3 @@ congruentᵖ F = ∀ {P Q} → (∀ a → P a ≡ₒ Q a) → ∀ b → (F P b) 
 
 
 
-\begin{code}
-≡ᵖ-refl : ∀{A}{P Q : Predₒ A} → P ≡ Q → ∀ {a} → P a ≡ₒ Q a
-≡ᵖ-refl refl {a} = ≡ₒ-refl refl
-\end{code}
-
-\begin{code}
-⊤ᵖ : ∀{A} → Predₒ A
-⊤ᵖ = λ _ _ → ⊤ₚ
-\end{code}

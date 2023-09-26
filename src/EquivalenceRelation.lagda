@@ -88,13 +88,18 @@ P ⇔ Q = (P → Q) × (Q → P)
   → Q ⇔ P
 ⇔-sym = λ {(ab , ba) → ba , ab}
 
+⇔-trans : ∀{ℓ}{P Q R : Set ℓ}
+  → P ⇔ Q
+  → Q ⇔ R
+  → P ⇔ R
+⇔-trans = λ {(ab , ba) (bc , cb) → (λ x → bc (ab x)) , (λ x → ba (cb x))}
+
 instance
   IffEq : ∀{ℓ} → EquivalenceRelation (Set ℓ)
   IffEq = record { _⩦_ = λ P Q → P ⇔ Q
                  ; ⩦-refl = ⇔-refl
                  ; ⩦-sym = ⇔-sym
-                 ; ⩦-trans = λ {(ab , ba) (bc , cb) →
-                               (λ x → bc (ab x)) , (λ x → ba (cb x))}
+                 ; ⩦-trans = ⇔-trans
                  }
 
 module Examples where
