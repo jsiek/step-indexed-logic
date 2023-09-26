@@ -15,6 +15,7 @@ module Approx where
 \end{comment}
 
 \subsection{Approximation}
+\label{sec:approx}
 
 The proof of the \textsf{fixpoint}ᵒ theorem is inspired by the
 fixpoint theorem of \citet{Appel:2001aa}. Their proof relies on a
@@ -111,4 +112,14 @@ We extend the approximation operator to predicates as follows.
 cong-approxᵖ : ∀{A}{k : ℕ} → congruentᵖ{A}{A} (↓ᵖ k)
 cong-approxᵖ {A} {k} {P} {Q} eq a i =
   (λ {(i<k ,ₚ Pa) → i<k ,ₚ proj₁ₚ (eq a i) Pa}) ,ₚ λ {(i<k ,ₚ Qa) → i<k ,ₚ proj₂ₚ (eq a i) Qa}
+\end{code}
+
+We say that a functional is \emph{contractive} if applying
+k-approximation to the input predicate does not change the function's
+result with respect to $k \plus 1$ steps. That is to say, a
+contractive function doesn't use its input predicate now, only later.
+
+\begin{code}
+contractiveᵖ : ∀ {A} → (f : Funₒ A A) → Prop₁
+contractiveᵖ f = ∀ a P k → f P a ≡ₒ[ suc k ] f (↓ᵖ k P) a
 \end{code}
