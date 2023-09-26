@@ -791,7 +791,7 @@ Odds′ n = [] ⊢ᵒ μᵒ Evens⊎Odds (inj₂ n)
 
 
 \subsubsection{Reasoning about Equivalent Step-indexed Formulas}
-\label{sec:}
+\label{sec:formula-equivalence}
 
 SIL expresses the equivalence of two step-indexed formulas with the ≡ᵒ
 operator.

@@ -1,3 +1,5 @@
+\begin{comment}
+\begin{code}
 {-# OPTIONS --without-K #-}
 
 module EquivalenceRelation where
@@ -8,6 +10,10 @@ open import Data.Unit using (tt; ⊤)
 open import Agda.Primitive using (Level; lzero; lsuc; _⊔_)
 open import Relation.Binary.PropositionalEquality using (_≡_; refl; sym; trans)
 
+\end{code}
+\end{comment}
+
+\begin{code}
 record EquivalenceRelation {ℓ ℓ′ : Level} (A : Set ℓ) : Set (ℓ ⊔ lsuc ℓ′) where
   field
     _⩦_ : A → A → Set ℓ′
@@ -105,3 +111,4 @@ module Examples where
        ⊤ × ⊤          ⩦⟨ (λ _ → tt , tt , tt) , (λ _ → tt , tt) ⟩
        ⊤ × ⊤ × ⊤      ∎
 
+\end{code}

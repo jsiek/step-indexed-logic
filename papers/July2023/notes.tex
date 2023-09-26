@@ -1,0 +1,52 @@
+Most of the challenge in defining a step-indexed logic is in the
+definition of recursive predicates and their fixpoint theorem. The
+step-indexed models of \citet{Appel:2001aa} rely on an approximation
+operator, here written as $↓_n$, to define the semantic criteria for
+valid recursive definitions.  For example, they define a nonexpansive
+function to be one that satisfies
+\[
+  ↓_n f(x) = ↓_n f(↓_n x)
+\]
+The step-indexed models of \citet{JUNG:2018aa} instead rely on
+a step-indexed notion of equality. For example, they define a
+nonexpansive function as one that satisfies
+\[
+  x \stackrel{n}{=} y \text{ implies } f(x) \stackrel{n}{=} f(y)
+\]
+We are not aware of any inherent reason to prefer one approach to the
+other, so we choose the approach of \citet{Appel:2001aa} because they
+provide perspicuous proofs of their fixpoint theorem.  So our approach
+to SIL can be seen as an implementation of the LSLR logic of
+\citet{Dreyer:2011wl} using the foundations of
+\citet{Appel:2001aa}. In particular, SIL defines the recursive
+predicate of SIL using function iteration, like this:
+\[
+  ⟦ μ F ⟧ \, x \, n = F^{n\plus 1}\, \top \, x \, n
+\]
+whereas LSLR uses substitution in the semantics of recursive types:
+\[
+   ⟦ μ r. R ⟧ \, x \, n = ⟦ R[μr.R/r] ⟧\,x\,n
+\]
+
+However, adapting the work of \citet{Appel:2001aa} to our setting was
+nontrivial because (1) their model is for recursive types, not a modal
+logic, and (2) their proofs were incomplete (which we learned part way
+through our development of SIL). To enable the nesting of recursive
+types inside other recursive types, one must prove that the $μ$ type
+constructor is nonexpansive and well founded, but \citet{Appel:2001aa}
+does not prove this (they prove those properties for the other type
+constructors).  We discuss this problem and its remedy in sections
+\ref{sec:appel-mcallester} and \ref{sec:open-propositions}.
+
+We organize the rest of the article as follows. We review Appel an
+McAllester's work in §\ref{sec:appel-mcallester}, then
+introduce our representation of step-indexed propositions and
+predicates in Agda in Sections \ref{sec:propositions} and
+\ref{sec:predicates}.  We formalize several important concepts in
+§\ref{sec:fun-approx-iter}: functionals, approximation, and
+iteration, and prove some basic results about them.  We construct all
+of the logical connectives of SIL in
+§\ref{sec:open-propositions}, including the definition of
+recursive predicates and their fixpoint theorem.  The proof theory of
+SIL is developed in §\ref{sec:proofs}, where we construct the
+proof rules of this modal logic.

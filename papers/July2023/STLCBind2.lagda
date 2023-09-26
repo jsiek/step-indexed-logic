@@ -163,4 +163,4 @@ other logical connectives.
 \end{figure}
 
 
-\clearpage
+

@@ -46,8 +46,9 @@ well behaved and multi-step reduces to $N$, then $N$ is well behaved.
 \end{code}
 
 \noindent The Type Safety theorem follows from the \textsf{fundamental} lemma
-followed by \textsf{ℰ-multi-preserve}.
+and \textsf{ℰ-multi-preserve}.
 
+\begin{minipage}{\textwidth}
 \begin{code}
 type-safety {M}{N}{A} ⊢M M—↠N =
    let ℰM = fundamental ⊢M id in
@@ -58,3 +59,4 @@ type-safety {M}{N}{A} ⊢M M—↠N =
                (pureᵒE Zᵒ λ (N′ , N→N′) → pureᵒI (inj₂ (N′ , N→N′))) in
    pureᵒE[] prog
 \end{code}
+\end{minipage}

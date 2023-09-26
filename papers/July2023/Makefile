@@ -4,7 +4,7 @@ SRCTEX = $(SRCDIR)/latex
 PAPERTEX = latex/July2023
 
 #  latex/July2023/SILReference.tex
-paper.pdf: paper.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
+paper.pdf: paper.tex $(SRCTEX)/RawSetO.tex $(SRCTEX)/EquivalenceRelation.tex $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper
@@ -18,6 +18,12 @@ texclean:
 clean:
 	rm -f paper.out paper.aux paper.bbl paper.blg $(PAPERTEX)/* $(SRCTEX)/*
 
+
+$(SRCTEX)/EquivalenceRelation.tex: $(SRCDIR)/EquivalenceRelation.lagda
+	cd $(SRCDIR) ; agda --latex EquivalenceRelation.lagda
+
+$(SRCTEX)/RawSetO.tex: $(SRCDIR)/RawSetO.lagda
+	cd $(SRCDIR) ; agda --latex RawSetO.lagda
 
 $(SRCTEX)/StepIndexedLogic2.tex: $(SRCDIR)/StepIndexedLogic2.lagda
 	cd $(SRCDIR) ; agda --latex StepIndexedLogic2.lagda
