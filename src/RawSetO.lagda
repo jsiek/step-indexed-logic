@@ -120,7 +120,7 @@ functions with respect to equivalence. That is, a functional should
 map equivalent inputs to equivalent outputs.
 
 \begin{code}
-congruentᵖ : ∀{A}{B} (F : Predₒ A → Predₒ B) → Prop₁
+congruentᵖ : ∀{A}{B} (F : Funₒ A B) → Prop₁
 congruentᵖ F = ∀ {P Q} → (∀ a → P a ≡ₒ Q a) → ∀ b → (F P b) ≡ₒ (F Q b)
 \end{code}
 
