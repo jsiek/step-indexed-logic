@@ -38,23 +38,24 @@ down-iter zero F dc-F = λ a n _ k _ → ttₚ
 down-iter (suc i) F dc-F = λ a → dc-F ((F ^ i) (λ _ _ → ⊤ₚ)) a (down-iter i F dc-F)
 \end{code}
 
-Suppose k is greater or equal to j. Then iterating k times is equivalent
-to iterator $k - j$ times and then $j$ times.
+How does iteration relate to subtraction?  Suppose k is greater or
+equal to j. Then iterating k times is equivalent to iterator $k - j$
+times and then $j$ times.
 
 \begin{code}
 iter-subtract : ∀{ℓ}{A : Set ℓ}{a : A} (f : A → A) (j k : ℕ) → j ≤ₚ k
   → (f ^ j) ((f ^ (k ∸ j)) a) ≡ (f ^ k) a
 iter-subtract {A = A} {a} f zero k z≤n = refl
-iter-subtract {A = A} {a} f (suc j) (suc k) j≤k
-  rewrite iter-subtract{A = A}{a} f j k j≤k  = refl
+iter-subtract {A = A} {a} f (suc j) (suc k) j≤k rewrite iter-subtract{A = A}{a} f j k j≤k  = refl
 \end{code}
 
-Next we prove two lemmas regarding iteration and $k$-equivalence.  They
-are adaptations of Lemma 15 of \citet{Appel:2001aa}.  The first lemma
-says that if one iterates a functional $j$ times starting with
+Next we prove two lemmas regarding iteration and $k$-equivalence.
+They are adaptations of Lemma 15 of \citet{Appel:2001aa}.  The first
+lemma says that if a functional is iterated $j$ times starting with
 possibly-different predicates $P$ and $Q$, the results will always be
-$j$-equivalent (the $P$ and $Q$ don't matter).
+$j$-equivalent, that is, the $P$ and $Q$ do not matter.
 
+\begin{minipage}{\textwidth}
 \begin{code}
 lemma15a : ∀ {A}{P Q : Predₒ A} j → (f : Funₒ A A) (a : A) → contractiveᵖ f → congruentᵖ f
   → (f ^ j) P a ≡ₒ[ j ] (f ^ j) Q a
@@ -69,13 +70,17 @@ lemma15a {A} {P} {Q} (suc j) f a contr-f congr-f =
     ↓ (suc j) (f ((f ^ j) Q) a)
   ∎
 \end{code}
+\end{minipage}
 
-The second lemma says that when reasoning up to $j$-equivalence, it doesn't matter if
-you iterate more than $j$ times. In particular, if $k$ is greater or equal to $j$,
-then $f^j\;P \; a$ is $j$-equivalent to $f^k\;P \; a$.
+The second lemma says that when reasoning up to $j$-equivalence, it
+does not matter if you iterate more than $j$ times. In particular, if
+$k$ is greater or equal to $j$, then $f^j\;P \; a$ is $j$-equivalent
+to $f^k\;P \; a$.
 
+\begin{minipage}{\textwidth}
 \begin{code}
-lemma15b : ∀{A}{P : Predₒ A} (k j : ℕ) (f : Funₒ A A) (a : A) → j ≤ₚ k → contractiveᵖ f → congruentᵖ f
+lemma15b : ∀{A}{P : Predₒ A} (k j : ℕ) (f : Funₒ A A) (a : A)
+   → j ≤ₚ k → contractiveᵖ f → congruentᵖ f
    → (f ^ j) P a ≡ₒ[ j ] (f ^ k) P a
 lemma15b {A}{P} k j f a j≤k wf-f cong-f =
     ↓ j ((f ^ j) P a)
@@ -85,4 +90,4 @@ lemma15b {A}{P} k j f a j≤k wf-f cong-f =
     ↓ j ((f ^ k) P a)
   ∎
 \end{code}
-
+\end{minipage}

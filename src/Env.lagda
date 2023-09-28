@@ -1,3 +1,5 @@
+\begin{comment}
+\begin{code}
 {-# OPTIONS --without-K --prop #-}
 
 open import Data.List using (List; []; _∷_)
@@ -15,7 +17,10 @@ open import Iteration
 open import Variables
 
 module Env where
+\end{code}
+\end{comment}
 
+\begin{code}
 RecEnv : Context → Set₁
 RecEnv [] = topᵖ 
 RecEnv (A ∷ Γ) = (Predₒ A) × RecEnv Γ
@@ -59,4 +64,5 @@ wellformed-later⇒contractive gF eq rewrite eq = gF
 
 wellformed-fun : ∀{Γ} → Times Γ → (RecEnv Γ → Setₒ) → Prop₁
 wellformed-fun {Γ} Δ F = ∀{A} (x : Γ ∋ A) → wellformed-var x (timeof x Δ) F
+\end{code}
 

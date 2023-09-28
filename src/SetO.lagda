@@ -1,3 +1,5 @@
+\begin{comment}
+\begin{code}
 {-# OPTIONS --without-K --prop #-}
 
 open import Data.List using (List; []; _∷_)
@@ -17,7 +19,11 @@ open import Variables
 open import Env
 
 module SetO where
+\end{code}
+\end{comment}
 
+
+\begin{code}
 record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setₒ
@@ -26,14 +32,9 @@ record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
     congr : congruent #
 
 open Setᵒ public
+\end{code}
 
-make-Setᵒ : ∀{Γ}{Δ} → (sem : RecEnv Γ → Setₒ)
-  → (∀ (δ : RecEnv Γ) → downClosedᵈ δ → downClosed (sem δ))
-  → (wellformed-fun Δ sem)
-  → (congruent sem)
-  → Setᵒ Γ Δ
-make-Setᵒ sem dc s c = record { # = sem ; down = dc ; wellformed = s ; congr = c}
-
+\begin{code}
 private variable Γ : Context
 private variable Δ : Times Γ
 private variable ϕ ψ þ : Setᵒ Γ Δ
@@ -72,3 +73,4 @@ instance
   SIL-Eqᵒ : ∀{Γ}{Δ} → EquivalenceRelation (Setᵒ Γ Δ)
   SIL-Eqᵒ = record { _⩦_ = _≡ᵒ_ ; ⩦-refl = ≡ᵒ-refl
                    ; ⩦-sym = ≡ᵒ-sym ; ⩦-trans = ≡ᵒ-trans }
+\end{code}

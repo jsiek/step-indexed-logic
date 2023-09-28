@@ -36,7 +36,7 @@ Agda's logic. For example, the type of a logical formula in Agda is
 \textsf{Set} and in SIL it is \textsf{Set}ᵒ. To distinguish SIL from
 Agda, we add a superscript ``o'' to most names. Unlike \textsf{Set},
 the \textsf{Set}ᵒ type is parameterized by two lists that enable SIL
-to ensure that recursively-defined predicates are well defined.
+to ensure that recursively-defined predicates are well formed.
 We discuss recursively-defined predicates in Section~\ref{sec:intro-recursive-predicates}.
 For now, we use empty lists and define \textsf{Set}⁰ as short-hand
 for \textsf{Setᵒ [] []}.
@@ -192,13 +192,13 @@ nearest enclosing μᵒ.
 
 The use of the ``later'' operator ▷ᵒ in $▷ᵒ (m ∈ \mathsf{rec}ᵒ)$
 serves to guard the recursion to ensure that the recursive definition
-is well defined. The addition of the ▷ᵒ operator to SIL make it a
+is well formed. The addition of the ▷ᵒ operator to SIL make it a
 temporal logic, and more broadly, a modal logic. We discuss the rules
 for conducting proofs involving the ▷ᵒ operator in
 Section~\ref{sec:proof-rules}.
 
 SIL uses the two parameters of \textsf{Set}ᵒ to enforce the
-well-definedness of recursive definitions. The first parameter is a
+well-formedness of recursive definitions. The first parameter is a
 list of the domain types for all the recursive predicates in scope
 (often just zero or one). We refer to such as list as a
 \textsf{Context}. Let Γ range over contexts.
