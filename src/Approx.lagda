@@ -117,9 +117,9 @@ cong-approxᵖ {A} {k} {P} {Q} eq a i =
 We say that a functional is \emph{contractive} if applying
 k-approximation to the input predicate does not change the function's
 result with respect to $k \plus 1$ steps. That is to say, a
-contractive function doesn't use its input predicate now, only later.
+contractive functional doesn't use its input predicate now, only later.
 
 \begin{code}
-contractiveᵖ : ∀ {A} → (f : Funₒ A A) → Prop₁
-contractiveᵖ f = ∀ a P k → f P a ≡ₒ[ suc k ] f (↓ᵖ k P) a
+contractive-fun : ∀ {A} → (f : Funₒ A A) → Prop₁
+contractive-fun f = ∀ a P k → f P a ≡ₒ[ suc k ] f (↓ᵖ k P) a
 \end{code}

@@ -57,7 +57,7 @@ $j$-equivalent, that is, the $P$ and $Q$ do not matter.
 
 \begin{minipage}{\textwidth}
 \begin{code}
-lemma15a : ∀ {A}{P Q : Predₒ A} j → (f : Funₒ A A) (a : A) → contractiveᵖ f → congruentᵖ f
+lemma15a : ∀ {A}{P Q : Predₒ A} j → (f : Funₒ A A) (a : A) → contractive-fun f → congruentᵖ f
   → (f ^ j) P a ≡ₒ[ j ] (f ^ j) Q a
 lemma15a {A} {P} {Q} zero f a contr-f congr-f = ≡ₒ[0]
 lemma15a {A} {P} {Q} (suc j) f a contr-f congr-f =
@@ -80,7 +80,7 @@ to $f^k\;P \; a$.
 \begin{minipage}{\textwidth}
 \begin{code}
 lemma15b : ∀{A}{P : Predₒ A} (k j : ℕ) (f : Funₒ A A) (a : A)
-   → j ≤ₚ k → contractiveᵖ f → congruentᵖ f
+   → j ≤ₚ k → contractive-fun f → congruentᵖ f
    → (f ^ j) P a ≡ₒ[ j ] (f ^ k) P a
 lemma15b {A}{P} k j f a j≤k wf-f cong-f =
     ↓ j ((f ^ j) P a)

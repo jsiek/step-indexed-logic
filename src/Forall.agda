@@ -32,7 +32,7 @@ nonexpansive-∀ : ∀ k → ∀{A} (P : A → Setₒ) → (∀ₒ[ a ⦂ A ] P 
 nonexpansive-∀ k P i = (λ {(i<k ,ₚ ∀Pi) → i<k ,ₚ λ a → i<k ,ₚ ∀Pi a})
                        ,ₚ (λ {(i<k ,ₚ ↓k∀Pi) → i<k ,ₚ λ a → proj₂ₚ (↓k∀Pi a)})
 
-wellformed-all : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ) → wellformed-fun Δ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
+wellformed-all : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ) → wellformed-prop Δ (λ δ → ∀ₒ[ a ⦂ A ] # (P a) δ)
 wellformed-all {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →

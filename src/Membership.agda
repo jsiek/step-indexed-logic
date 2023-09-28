@@ -49,7 +49,7 @@ timeof-var-now : ∀{Γ}{A} → (x : Γ ∋ A) → timeof x (var-now Γ x) ≡ N
 timeof-var-now {B ∷ Γ} zeroᵒ = refl
 timeof-var-now {B ∷ Γ} (sucᵒ x) = timeof-var-now x
 
-wellformed-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → wellformed-fun (var-now Γ x) (λ δ → lookup x δ a)
+wellformed-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → wellformed-prop (var-now Γ x) (λ δ → lookup x δ a)
 wellformed-lookup {a = a} zeroᵒ zeroᵒ = NE where
   NE : nonexpansive zeroᵒ (λ {(P , δ) → P a})
   NE (P , δ) j k k≤j  = ≡ₒ-sym (j≤k⇒↓kϕ≡[j]ϕ{j = k} (P a) k≤j)

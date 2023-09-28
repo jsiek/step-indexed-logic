@@ -90,7 +90,7 @@ mu-contractive {A} {Γ} {Δ} {B} Sᵃ a x time-x δ k j k≤j =
   contractive-Sa-z-↓δ = wellformed (Sᵃ a) zeroᵒ (mu Sᵃ (↓ᵈ j x δ) , ↓ᵈ j x δ) k k (≤-reflₚ{k})
 
 wellformed-mu : ∀{Γ}{Δ : Times Γ}{A} (Sᵃ : A → Setᵒ (A ∷ Γ) (Later ∷ Δ)) (a : A)
-   → wellformed-fun Δ (λ δ → mu Sᵃ δ a)
+   → wellformed-prop Δ (λ δ → mu Sᵃ δ a)
 wellformed-mu {Γ} {Δ} {A} Sᵃ a x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j → mu-nonexpansive Sᵃ a x time-x δ k j k≤j

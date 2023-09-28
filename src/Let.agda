@@ -17,7 +17,7 @@ open import EquivalenceRelationProp
 module Let where
 
 wellformed-let : ∀{Γ}{Δ : Times Γ}{A}{t} (T : Setᵒ (A ∷ Γ) (t ∷ Δ)) (Sᵃ : A → Setᵒ Γ Δ)
-   → wellformed-fun Δ (λ δ → # T ((λ a → # (Sᵃ a) δ) , δ))
+   → wellformed-prop Δ (λ δ → # T ((λ a → # (Sᵃ a) δ) , δ))
 wellformed-let {Γ}{Δ}{A}{Now} T Sᵃ x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →

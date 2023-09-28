@@ -60,11 +60,11 @@ data Times : Context → Set₁ where
 \end{code}
 
 A number of auxilliary operations regarding contexts and times are
-needed to express the well-formedness rules of SIL, which we describe
-next. The \textsf{laters} function constructs a list of times for a
-given context, where all the times are \textsf{Later}. This function
-is used for atomic formula that are not variables. So when a variable
-is not used at all in a formula, the variable is categorized as
+needed to express the well-formedness rules of SIL. The
+\textsf{laters} function constructs a list of times for a given
+context, where all the times are \textsf{Later}. This function is used
+for atomic formula that are not variables. So when a variable is not
+used at all in a formula, the variable is categorized as
 \textsf{Later}.
 
 \begin{code}

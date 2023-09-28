@@ -28,7 +28,7 @@ record Setᵒ (Γ : Context) (Δ : Times Γ) : Set₁ where
   field
     # : RecEnv Γ → Setₒ
     down : ∀ δ → downClosedᵈ δ → downClosed (# δ)
-    wellformed : wellformed-fun Δ #
+    wellformed : wellformed-prop Δ #
     congr : congruent #
 
 open Setᵒ public

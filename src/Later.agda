@@ -28,7 +28,7 @@ contractive-▷ {k} S zero = (λ _ → ttₚ ,ₚ (λ x ())) ,ₚ (λ _ → tt�
 contractive-▷ {k} S (suc i) = (λ { (x ,ₚ x₁) → x ,ₚ (λ j x₂ → ≤-transₚ{suc j}{suc i}{k} x₂ x ,ₚ (x₁ j x₂))})
      ,ₚ λ { (x ,ₚ ▷↓kSsi) → x ,ₚ (λ j x₂ → let xx = ▷↓kSsi j x₂ in proj₂ₚ xx)}
 
-wellformed-▷ : ∀{Γ}{Δ : Times Γ}(S : Setᵒ Γ Δ) → wellformed-fun (laters Γ) (λ δ → ▷ (# S δ))
+wellformed-▷ : ∀{Γ}{Δ : Times Γ}(S : Setᵒ Γ Δ) → wellformed-prop (laters Γ) (λ δ → ▷ (# S δ))
 wellformed-▷ {Γ}{Δ} S x
     with wellformed S x
 ... | wellformedS

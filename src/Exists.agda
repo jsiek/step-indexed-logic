@@ -26,7 +26,7 @@ nonexpansive-∃ : ∀ k → ∀{A : Set} → (P : Predₒ A) → (∃ₒ[ a ⦂
 nonexpansive-∃ k {A} P i = (λ {(a ,ₚ (b ,ₚ c)) → a ,ₚ (b ,ₚ (a ,ₚ c))}) ,ₚ λ { (a ,ₚ b ,ₚ c) → a ,ₚ b ,ₚ proj₂ₚ c}
 
 wellformed-exists : ∀{A : Set}{Γ}{Δ : Times Γ} → (P : A → Setᵒ Γ Δ)
-  → wellformed-fun Δ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
+  → wellformed-prop Δ (λ δ → ∃ₒ[ a ⦂ A ] # (P a) δ)
 wellformed-exists {A}{Γ}{Δ} P x
     with timeof x Δ in time-x
 ... | Now = λ δ j k k≤j →

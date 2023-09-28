@@ -22,7 +22,7 @@ module BinaryConnective
   where
 
 wellformed-connective : ∀{Γ}{Δ₁ Δ₂ : Times Γ} → (S : Setᵒ Γ Δ₁) (T : Setᵒ Γ Δ₂)
-  → wellformed-fun (combine Δ₁ Δ₂) (λ δ → # S δ ⊕ # T δ)
+  → wellformed-prop (combine Δ₁ Δ₂) (λ δ → # S δ ⊕ # T δ)
 wellformed-connective {Γ}{Δ₁}{Δ₂} S T {A} x
     rewrite timeof-combine {Γ}{Δ₁}{Δ₂}{A}{x}
     with timeof x Δ₁ in time-x1 | timeof x Δ₂ in time-x2
