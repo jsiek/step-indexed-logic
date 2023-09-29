@@ -124,6 +124,15 @@ timeof-later {B ∷ Γ} zeroᵒ = refl
 timeof-later {B ∷ Γ} (sucᵒ x) = timeof-later x
 \end{code}
 
+Applying \textsf{timeof} $x$ to the result of \textsf{var-now} of $x$
+always produces \textsf{Now}.
+
+\begin{code}
+timeof-var-now : ∀{Γ}{A} → (x : Γ ∋ A) → timeof x (var-now Γ x) ≡ Now
+timeof-var-now {B ∷ Γ} zeroᵒ = refl
+timeof-var-now {B ∷ Γ} (sucᵒ x) = timeof-var-now x
+\end{code}
+
 \noindent Applying \textsf{timeof} to the result of \textsf{combine}
 is the same as first applying \textsf{timeof} to both lists and then
 applying \textsf{choose}.

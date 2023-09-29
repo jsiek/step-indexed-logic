@@ -74,7 +74,7 @@ _≡ᵈ_ {A ∷ Γ} (P , δ) (Q , δ′) = (∀ a → P a ≡ₒ Q a) ×ₚ δ �
 \end{code}
 
 
-\subsection{Formula Representation, Contractive, Nonexpansive, Congruent}
+\subsection{Semantic Representation, Contractive, Nonexpansive, and Congruent}
 
 With the definition of \textsf{RecEnv} in hand, we next define the type
 of the semantics of a SIL proposition. For a given context Γ, the
@@ -100,7 +100,9 @@ notion of of well founded functional of \citet{Appel:2001aa} to the
 type \textsf{RSetₒ}. However, \citet{Appel:2001aa} fix $j=k$ instead
 of allowing $k ≤ j$ as we do here. This generalization is necessary to
 allow nesting of recursive predicates, which was overlooked by
-\citet{Appel:2001aa}.
+\citet{Appel:2001aa}. Our definition of contractive is different but
+equivalent to the notion of contractive for Ordered Families of
+Equalities~\citep{Di-Gianantonio:2003aa,JUNG:2018aa}.
 
 A SIL proposition $P$ is \textit{nonexpansive} with respect to
 variable $x$ if for any environment δ, $P \; δ$ is $k$-equivalent to

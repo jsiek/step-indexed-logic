@@ -69,7 +69,7 @@ open import Let
 \begin{code}
 abstract
 
- {---------------------- Membership in Recursive Predicate ---------------------}
+ {---------------------- Membership in Recursive Predicate --------------------}
 
   _∈_ : ∀{Γ}{A} → A → (x : Γ ∋ A) → Setᵒ Γ (var-now Γ x)
   a ∈ x = record { # = (λ δ → (lookup x δ) a) ; down = down-lookup ; wellformed = (wellformed-lookup x) ; congr = (congruent-lookup x a) }
@@ -189,12 +189,12 @@ abstract
   #×ᵒ≡ {Γ}{Δ₁}{Δ₂}{ϕ}{ψ}{δ}{k} = refl
 
   cong-×ᵒ : ∀{Γ}{Δ}{ϕ ϕ′ ψ ψ′ : Setᵒ Γ Δ} → ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ ×ᵒ ψ ≡ᵒ ϕ′ ×ᵒ ψ′
-  cong-×ᵒ {Γ}{Δ}{ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ δ k → ⇔-intro to fro)
+  cong-×ᵒ {Γ}{Δ}{ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ⇔⇒≡ᵒ (λ δ k → ⇔-intro to fro)
     where
     to : ∀{δ}{k} → # (ϕ ×ᵒ ψ) δ k → # (ϕ′ ×ᵒ ψ′) δ k
-    to {δ}{k} (ϕk ,ₚ ψk) = (⇔-to (≡ᵒ-elim ϕ=ϕ′) ϕk) ,ₚ (⇔-to (≡ᵒ-elim ψ=ψ′) ψk)
+    to {δ}{k} (ϕk ,ₚ ψk) = (⇔-to (≡ᵒ⇒⇔ ϕ=ϕ′) ϕk) ,ₚ (⇔-to (≡ᵒ⇒⇔ ψ=ψ′) ψk)
     fro  : ∀{k}{δ} → # (ϕ′ ×ᵒ ψ′) δ k → #(ϕ ×ᵒ ψ) δ k
-    fro {δ}{k} (ϕ′k ,ₚ ψ′k) = (⇔-fro (≡ᵒ-elim ϕ=ϕ′) ϕ′k) ,ₚ (⇔-fro (≡ᵒ-elim ψ=ψ′) ψ′k)
+    fro {δ}{k} (ϕ′k ,ₚ ψ′k) = (⇔-fro (≡ᵒ⇒⇔ ϕ=ϕ′) ϕ′k) ,ₚ (⇔-fro (≡ᵒ⇒⇔ ψ=ψ′) ψ′k)
 
 
 {---------------------- Disjunction -----------------------------------------}
@@ -216,14 +216,14 @@ abstract
   #⊎ᵒ≡ {Γ}{Δ₁}{Δ₂}{ϕ}{ψ}{δ}{k} = refl
 
   cong-⊎ᵒ : ∀{Γ}{Δ}{ϕ ϕ′ ψ ψ′ : Setᵒ Γ Δ} → ϕ ≡ᵒ ϕ′ → ψ ≡ᵒ ψ′ → ϕ ⊎ᵒ ψ ≡ᵒ ϕ′ ⊎ᵒ ψ′
-  cong-⊎ᵒ {Γ}{Δ}{ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ≡ᵒ-intro (λ δ k → ⇔-intro to fro)
+  cong-⊎ᵒ {Γ}{Δ}{ϕ}{ϕ′}{ψ}{ψ′} ϕ=ϕ′ ψ=ψ′ = ⇔⇒≡ᵒ (λ δ k → ⇔-intro to fro)
     where
     to : ∀{δ}{k} → # (ϕ ⊎ᵒ ψ) δ k → # (ϕ′ ⊎ᵒ ψ′) δ k
-    to (inj₁ₚ x) = inj₁ₚ (proj₁ₚ (≡ᵒ-elim ϕ=ϕ′) x)
-    to (inj₂ₚ y) = inj₂ₚ (proj₁ₚ (≡ᵒ-elim ψ=ψ′) y)
+    to (inj₁ₚ x) = inj₁ₚ (proj₁ₚ (≡ᵒ⇒⇔ ϕ=ϕ′) x)
+    to (inj₂ₚ y) = inj₂ₚ (proj₁ₚ (≡ᵒ⇒⇔ ψ=ψ′) y)
     fro  : ∀{δ}{k} → #(ϕ′ ⊎ᵒ ψ′) δ k → #(ϕ ⊎ᵒ ψ) δ k
-    fro (inj₁ₚ x) = inj₁ₚ (proj₂ₚ (≡ᵒ-elim ϕ=ϕ′) x)
-    fro (inj₂ₚ y) = inj₂ₚ (proj₂ₚ (≡ᵒ-elim ψ=ψ′) y)
+    fro (inj₁ₚ x) = inj₁ₚ (proj₂ₚ (≡ᵒ⇒⇔ ϕ=ϕ′) x)
+    fro (inj₂ₚ y) = inj₂ₚ (proj₂ₚ (≡ᵒ⇒⇔ ψ=ψ′) y)
 
 {---------------------- Implication -----------------------------------------}
 
@@ -475,7 +475,7 @@ abstract
 
 abstract
   iffᵒ : ([] ⊢ᵒ ϕ  →ᵒ ψ) → ([] ⊢ᵒ ψ  →ᵒ ϕ) → ϕ ≡ᵒ ψ
-  iffᵒ ϕ→ψ ψ→ϕ = ≡ᵒ-intro λ δ k →
+  iffᵒ ϕ→ψ ψ→ϕ = ⇔⇒≡ᵒ λ δ k →
          (λ ϕk → ϕ→ψ k (squash tt) k (≤-reflₚ {k}) ϕk)
       ,ₚ (λ ψk → ψ→ϕ k (squash tt) k (≤-reflₚ {k}) ψk)
 
