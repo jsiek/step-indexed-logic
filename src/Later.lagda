@@ -84,8 +84,8 @@ Therefore we have
    ↓_{k\plus 1} ▷ (S \; δ) & ≡ₒ ↓_{k\plus 1} ↓_{k \plus 2} ▷ (S \; δ) \\
    & ≡ₒ ↓_{k\plus 1} ↓_{k \plus 2} ▷ ↓_{k\plus 1} (S \; δ) \\
    & ≡ₒ ↓_{k\plus 1} ↓_{k \plus 2} ▷ ↓_{k\plus 1} (S \; (↓ᵈ_j x δ)) \\
-  & ≡ₒ ↓_{k\plus 1} ↓_{k \plus 2} ▷ (S \; (↓ᵈ j x δ)) \\
-  & ≡ₒ ↓_{k\plus 1} ▷ (S \; (↓ᵈ j x δ))
+  & ≡ₒ ↓_{k\plus 1} ↓_{k \plus 2} ▷ (S \; (↓ᵈ_j x δ)) \\
+  & ≡ₒ ↓_{k\plus 1} ▷ (S \; (↓ᵈ_j x δ))
 \end{align*}
 
 \noindent The following proof in Agda provides the justification for each step.
