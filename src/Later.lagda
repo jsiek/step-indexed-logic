@@ -16,7 +16,7 @@ module Later where
 \end{code}
 \end{comment}
 
-\subsection{Later Connective: Semantics and Lemmas}
+\subsection{Later: Semantics and Lemmas}
 
 The following ▷ function defines the semantics of the later operator
 in SIL.  It says that a proposition ϕ is true later when it is true at
