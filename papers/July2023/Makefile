@@ -4,7 +4,7 @@ SRCTEX = $(SRCDIR)/latex
 PAPERTEX = latex/July2023
 
 #  latex/July2023/SILReference.tex
-paper.pdf: paper.tex $(SRCTEX)/RawSetO.tex $(SRCTEX)/Approx.tex $(SRCTEX)/Iteration.tex $(SRCTEX)/EquivalenceRelation.tex $(SRCTEX)/Variables.tex $(SRCTEX)/Env.tex $(SRCTEX)/SetO.tex $(SRCTEX)/Fixpoint.tex $(SRCTEX)/Membership.tex  $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
+paper.pdf: paper.tex $(SRCTEX)/RawSetO.tex $(SRCTEX)/Approx.tex $(SRCTEX)/Iteration.tex $(SRCTEX)/EquivalenceRelation.tex $(SRCTEX)/Variables.tex $(SRCTEX)/Env.tex $(SRCTEX)/SetO.tex $(SRCTEX)/Fixpoint.tex $(SRCTEX)/Membership.tex $(SRCTEX)/Later.tex  $(SRCTEX)/StepIndexedLogic2.tex $(PAPERTEX)/STLC2.tex $(PAPERTEX)/LogRel2.tex $(PAPERTEX)/STLCDeterministic2.tex $(PAPERTEX)/STLCBind2.tex $(PAPERTEX)/STLCSafe2.tex $(PAPERTEX)/STLCTypeSafe.tex  $(PAPERTEX)/SILIntro.tex
 	/Library/TeX/texbin/pdflatex paper
 	/Library/TeX/texbin/bibtex paper
 	/Library/TeX/texbin/pdflatex paper
@@ -46,7 +46,10 @@ $(SRCTEX)/Fixpoint.tex: $(SRCDIR)/Fixpoint.lagda
 $(SRCTEX)/Membership.tex: $(SRCDIR)/Membership.lagda
 	cd $(SRCDIR) ; agda --latex Membership.lagda
 
-$(SRCTEX)/StepIndexedLogic2.tex: $(SRCDIR)/RawSetO.lagda $(SRCDIR)/Approx.lagda $(SRCDIR)/Iteration.lagda $(SRCDIR)/Variables.lagda $(SRCDIR)/Env.lagda $(SRCDIR)/SetO.lagda $(SRCDIR)/StepIndexedLogic2.lagda
+$(SRCTEX)/Later.tex: $(SRCDIR)/Later.lagda
+	cd $(SRCDIR) ; agda --latex Later.lagda
+
+$(SRCTEX)/StepIndexedLogic2.tex: $(SRCDIR)/RawSetO.lagda $(SRCDIR)/Approx.lagda $(SRCDIR)/Iteration.lagda $(SRCDIR)/Variables.lagda $(SRCDIR)/Env.lagda $(SRCDIR)/SetO.lagda $(SRCDIR)/Membership.lagda $(SRCDIR)/Later.lagda $(SRCDIR)/StepIndexedLogic2.lagda
 	cd $(SRCDIR) ; agda --latex StepIndexedLogic2.lagda
 
 $(PAPERTEX)/SILIntro.tex: SILIntro.lagda $(SRCDIR)/StepIndexedLogic2.lagda

@@ -24,7 +24,7 @@ open import EquivalenceRelationProp using (subst; ≐-sym; ≐-refl)
 \end{code}
 \end{comment}
 
-\subsection{Semantics and Lemmas for Membership Connective}
+\subsection{Membership Connective: Semantics and Lemmas}
 
 The semantics of the SIL membership connective $\_∈\_$ is defined in
 terms of the following \textsf{lookup} function, which finds the
@@ -79,36 +79,37 @@ lookup-diff {C ∷ Γ} {t ∷ Δ} (sucᵒ x) zeroᵒ neq = refl
 lookup-diff {C ∷ Γ} {t ∷ Δ} (sucᵒ x) (sucᵒ y) neq = lookup-diff x y neq
 \end{code}
 
-
-
+The main event of this section is the following proof that
+\textsf{lookup} is wellformed. That is, we need to show that
+\textsf{lookup} of $x$ is wellformed with respect to every variable
+$y$ that is in scope. We proceed by cases on whether the time for
+$y$ is \textsf{Now} or \textsf{Later}. If the time is \textsf{Now},
+we need to show that the \textsf{lookup} of $x$ is nonexpansive in $y$,
+that is, \textsf{lookup x δ a ≡ₒ[ k ] lookup x (↓ᵈ j y δ′) a}.
+That follows from the above lemma \textsf{↓-lookup}.
+If the time for $y$ is \textsf{Later}, we need to show that the 
+\textsf{lookup} of $x$ is contractive in $y$, that is,
+\textsf{lookup x δ a ≡ₒ[ suc k ] lookup x (↓ᵈ j y δ) a}.
+That follows from the above lemma \textsf{lookup-diff}.
 
 \begin{code}
 wellformed-lookup : ∀{Γ}{A}{a} → (x : Γ ∋ A) → wellformed-prop (var-now Γ x) (λ δ → lookup x δ a)
-wellformed-lookup {a = a} zeroᵒ zeroᵒ = NE where
-  NE : nonexpansive zeroᵒ (λ {(P , δ) → P a})
-  NE (P , δ) j k k≤j  = ≡ₒ-sym (j≤k⇒↓kϕ≡[j]ϕ{j = k} (P a) k≤j)
-wellformed-lookup {a = a} zeroᵒ (sucᵒ y) rewrite timeof-later y = C
-  where
-  C : contractive (sucᵒ y) (λ {(P , δ) → P a})
-  C (P , δ) j k k≤j = ≡ₒ-refl refl
-wellformed-lookup {a = a} (sucᵒ x) zeroᵒ = C
-  where
-  C : contractive zeroᵒ (λ (P , δ) → lookup x δ a)
-  C (P , δ) j k k≤j = ≡ₒ-refl refl
-wellformed-lookup {B ∷ Γ}{A}{a} (sucᵒ x) (sucᵒ y)
+wellformed-lookup {Γ}{A}{a} x y
     with timeof y (var-now Γ x) in eq-y
 ... | Now = SNE where
-    SNE : nonexpansive (sucᵒ y) (λ {(P , δ) → lookup x δ a})
-    SNE (P , δ) j k k≤j = ↓-lookup{k = k} x y k≤j 
+    SNE : nonexpansive y (λ { δ → lookup x δ a})
+    SNE δ j k k≤j = ↓-lookup{k = k} x y k≤j
 ... | Later = SC where
     timeof-diff : ∀{Γ}{Δ : Times Γ}{A}{B} (x : Γ ∋ A) (y : Γ ∋ B) → timeof x Δ ≡ Now → timeof y Δ ≡ Later
        → timeof x Δ ≢ timeof y Δ
     timeof-diff x y eq1 eq2 rewrite eq1 | eq2 = λ ()
-    SC : contractive (sucᵒ y) (λ {(P , δ) → lookup x δ a})
-    SC (P , δ) j k k≤j =
+    SC : contractive y (λ { δ → lookup x δ a})
+    SC δ j k k≤j =
       let eq = (lookup-diff{Γ}{δ = δ}{j} x y (timeof-diff x y (timeof-var-now x) eq-y)) in
       subst (λ X → (lookup x δ a) ≡ₒ[ suc k ] (X a)) (≐-sym (≐-refl eq)) (≡ₒ-refl refl)
 \end{code}
+
+We finish this section with a straightforward proof that \textsf{lookup} is congruent.
 
 \begin{code}
 congruent-lookup : ∀{Γ}{A} (x : Γ ∋ A) (a : A) → congruent (λ δ → lookup x δ a)
