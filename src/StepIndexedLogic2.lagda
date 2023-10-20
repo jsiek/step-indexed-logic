@@ -56,12 +56,12 @@ open import Fixpoint
 open import Membership
 open import Later
 open import RecPred
-open import Forall
-open import Exists
-open import Pure
 open import Conjunction
 open import Disjunction
 open import Implication
+open import Forall
+open import Exists
+open import Pure
 open import Let
 \end{code}
 \end{comment}

@@ -26,7 +26,7 @@ module Fixpoint where
 \end{code}
 \end{comment}
 
-\subsection{Lemmas for the Fixpoint Theorem}
+\subsection{Semantics of Recursive Predicates, Lemmas for Fixpoint Theorem}
 \label{sec:fixpoint-lemmas}
 
 In this section we prove the three key technical lemmas that build up

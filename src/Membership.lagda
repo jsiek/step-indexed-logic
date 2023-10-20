@@ -24,7 +24,7 @@ open import EquivalenceRelationProp using (subst; ≐-sym; ≐-refl)
 \end{code}
 \end{comment}
 
-\subsection{Membership: Semantics and Lemmas}
+\subsection{Membership: Semantics, Downward Closed, Wellformed, and Congruent}
 
 The semantics of the SIL membership connective $\_∈\_$ is defined in
 terms of the following \textsf{lookup} function, which finds the
