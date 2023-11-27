@@ -22,6 +22,9 @@
 \usepackage{rotating}
 \usepackage{wasysym}
 \usepackage{ulem}
+\usepackage{newunicodechar}
+\newunicodechar{⦉}{\ensuremath{\llparenthesis}} % Z notation...
+\newunicodechar{⦊}{\ensuremath{\rrparenthesis}} % Z notation...
 
 \usepackage{enumitem}
 \setitemize{label=\usebeamerfont*{itemize item}%
@@ -284,7 +287,9 @@ November 2023 \\
   \mid \Box \app M \mid V \app \Box
 \end{array}
 \]
-Substitution: $\qquad N[M]$ \\
+Substitution: $\qquad N[M]$  \\
+$\qquad${\footnotesize (In $N$, replace variable $0$ with $M$ and decrement
+ all free variables.)} \\
 
 Reduction
 \begin{align*}
@@ -292,7 +297,7 @@ Reduction
   (\lam{N}) \app W &\longrightarrow N[W]\\
   \case{\zero}{M}{N} &\longrightarrow M \\
   \case{\suc{V}}{M}{N} &\longrightarrow N[V] \\
-  F[M] &\longrightarrow F[N] & \text{if } M \longrightarrow N
+  F ⦉ M ⦊ &\longrightarrow F ⦉ N ⦊ & \text{if } M \longrightarrow N
 \end{align*}
 
 }
@@ -368,12 +373,14 @@ Reduction
 
   \begin{itemize}
   \item Define two relations that generalize the theorem you'd like to
-    prove: one on types and values $\mathcal{V}(A,V)$
-    and the other on types and terms $\mathcal{E}(A,M)$.
-  \item Extend the $\mathcal{E}$ relation to open terms.
+    prove: one on types and closed values $\mathcal{V}(A,V)$
+    and the other on types and closed terms $\mathcal{E}(A,M)$.
+  \item Extend the $\mathcal{E}$ relation to open terms.\\
+    (Let $\sigma$ be a substitution, i.e. a mapping of variables to terms,
+     represented as a sequence of terms.)
     \begin{align*}
       \mathcal{G}(\Gamma, \sigma) &=
-        \mathcal{V}(A_i,\sigma_i) \text{ for all } A_i \in \Gamma \\
+        \forall A_i \in \Gamma, \mathcal{V}(A_i,\sigma_i)  \\
         \Gamma \models M : A &=
         \forall \gamma,
       \mathcal{G}(\Gamma,\sigma) \text{ implies }
