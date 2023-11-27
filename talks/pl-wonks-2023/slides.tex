@@ -1,0 +1,252 @@
+\documentclass[12pt]{beamer}
+%\usecolortheme{seagull}
+%\usecolortheme{wolverine} yuk
+%\usecolortheme{beetle}
+\usecolortheme{dove} % black on white
+\usepackage[T1]{fontenc}
+\usepackage{garamond}
+\usefonttheme{serif}
+\usepackage{multicol}
+\usepackage{pifont}
+\usepackage{etex}
+\usepackage{graphicx}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{semantic}
+\usepackage[all]{xy}
+\usepackage{color}
+\usepackage{listings}
+\usepackage{fancybox}
+\usepackage{stmaryrd}
+\usepackage{rotating}
+\usepackage{wasysym}
+\usepackage{ulem}
+
+\usepackage{enumitem}
+\setitemize{label=\usebeamerfont*{itemize item}%
+  \usebeamercolor[fg]{itemize item}
+  \usebeamertemplate{itemize item}}
+  \setlist{itemsep=1ex}
+
+
+
+\newcommand{\Gbox}[1]{\colorbox{lightgray}{#1}}
+\newcommand{\Rbox}[1]{\colorbox{pink}{#1}}
+
+\newcommand{\featstart}{\hfill}
+\newcommand{\featend}{\hfill\hfill}
+\newcommand{\feat}[1]{{\featstart#1\featend}}
+
+\newcommand{\Topcircle}{\begin{turn}{270}\Leftcircle\end{turn}}
+\newcommand{\BOTTOMCIRCLE}{\begin{turn}{270}\RIGHTCIRCLE\end{turn}}
+\newcommand{\halfcircle}{\parbox{0in}{\Topcircle}\parbox{1.65ex}{\BOTTOMCIRCLE}{}}
+
+\newcommand{\featY}{\feat{\CIRCLE}} % Has feature fully
+\newcommand{\featP}{\feat{\halfcircle}} % Has feature partially
+\newcommand{\featN}{\feat{\Circle}} % Does not have feature
+
+
+\newcommand{\labeltag}[1]{\label{#1}\tag{\textsc{#1}}}
+\newcommand{\type}{\vdash}
+\newcommand{\typeS}{\vdash_{STLC}}
+\newcommand{\typeG}{\vdash}
+\newcommand{\typeCC}{\vdash_{C}}
+
+\newcommand{\evall}{\Downarrow }
+\newcommand{\evallS}{\Downarrow_{STLC} }
+\newcommand{\evallG}{\Downarrow}
+\newcommand{\evallCC}{\Downarrow_{C}}
+\newcommand{\evallD}{\Downarrow_{DTLC}}
+
+\newcommand{\reduce}{\longrightarrow}
+\newcommand{\becomes}{\longrightarrow}
+
+\newcommand{\EE}{{\cal E}}
+\newcommand{\FF}{{\cal F}}
+\newcommand{\Hole}{\Box}
+
+\newcommand{\divergeG}{\Uparrow}
+\newcommand{\subtype}{<:}
+\newcommand{\consis}{\sim}
+
+\newcommand{\embed}[1]{\lceil #1 \rceil}
+\newcommand{\bl}[1]{{\color{blue} #1}}
+\newcommand{\rd}[1]{{\color{red} #1}}
+\newcommand{\pr}[1]{{\color{purple} #1}}
+\newcommand{\kw}[1]{\mathtt{#1}}
+
+\newcommand{\labels}[1]{\mathit{labels}(#1)}
+\newcommand{\static}[2]{\mathit{static}(#1,#2)}
+\newcommand{\safe}[1]{\mathrel{\mathit{safe}} #1}
+\newcommand{\lo}[1]{\overline{#1}}
+\newcommand{\rng}[1]{\mathit{rng}(#1)}
+
+\newcommand{\semi}{\mathbin{;}}
+\newcommand{\id}{\key{id}}
+\newcommand{\Id}[1]{\id_{#1}}
+\newcommand{\fail}[3]{\bot^{#1}_{#2 \Rightarrow #3}}
+\newcommand{\Fail}[1]{\bot^{#1}}
+\newcommand{\FAIL}[3]{\bot^{#2}}
+\newcommand{\qu}[2]{{{#2}\query^{#1}}}
+\newcommand{\pl}[1]{{#1\pling}}
+\newcommand{\query}{\mathtt{?}}
+\newcommand{\pling}{\mathtt{!}}
+
+\newcommand{\bcfun}[1]{\langle\!\langle #1 \rangle\!\rangle}
+\newcommand{\MergeT}{\sqcap}
+\newcommand{\RefC}[1]{\key{Ref}(#1)}
+\newcommand{\error}{\key{error}}
+\newcommand{\rtti}[2]{#1(#2)_{\mathsf{rtti}}}
+\newcommand{\val}[2]{#1(#2)_{\mathsf{val}}}
+
+\newcommand{\Obj}{\key{Obj}}
+\newcommand{\String}{\key{String}}
+\newcommand{\Double}{\key{Double}}
+
+%\newcommand{\If}[3]{\key{if}\,#1\key{if}\,#2\key{if}#3}
+
+
+\newcommand{\ba}{\begin{array}}
+\newcommand{\ea}{\end{array}}
+\newenvironment{stack}{\ba{@{}l@{}}}{\ea}
+\newenvironment{branch}{\left\{\ba{@{}l@{\qquad}l@{}}}{\ea\right\}}
+\newenvironment{syntax}{\[\ba{l@{\;\;}lcl}}{\ea\]}
+\newcommand{\dotspace}{.\,}
+\newcommand{\key}[1]{\ensuremath{\mathtt{#1}}}
+\newcommand{\Base}{B}
+\newcommand{\dyn}{\star}
+\newcommand{\Dyn}{\ensuremath{\star}}
+\newcommand{\Int}{\key{Int}}
+\newcommand{\Float}{\key{float}}
+\newcommand{\Bool}{\key{Bool}}
+\newcommand{\Str}{\key{String}}
+%\newcommand{\Ref}{\key{Ref}\,}
+\newcommand{\lam}[1]{\lambda #1 \dotspace}
+\newcommand{\Lam}[1]{\Lambda #1 \dotspace}
+\newcommand{\by}{\mapsto}
+\newcommand{\app}{\;\,}
+\newcommand{\tapp}{\;\,}
+\newcommand{\of}{{:}}
+\newcommand{\tu}{{\to}}
+\newcommand{\To}{\Rightarrow}
+\newcommand{\Let}{\key{let}\;}
+\newcommand{\Letrec}{\key{let}\,\key{rec}\;}
+\newcommand{\In}{\key{in}\;}
+\newcommand{\If}{\key{if}\;}
+\newcommand{\Then}{\;\key{then}\;}
+\newcommand{\Else}{\;\key{else}\;}
+\newcommand{\True}{\key{true}}
+\newcommand{\False}{\key{false}}
+\newcommand{\as}{\mathrel{\key{as}}}
+\newcommand{\op}{\mathit{op}}
+\newcommand{\dom}[1]{\mathit{dom}(#1)}
+\newcommand{\cod}[1]{\mathit{cod}(#1)}
+\newcommand{\blame}[1]{\key{blame}\,#1}
+\newcommand{\pblame}[2]{\key{blame}\,#1@#2}
+\newcommand{\ledyn}{\sqsubseteq}
+\newcommand{\IS}{\mathrel{\mathtt{is}}}
+\newcommand{\cast}[1]{\overset{#1}{\Rightarrow}}
+%\newcommand{\mkcast}[1]{\langle\!\langle#1\rangle\!\rangle}
+\newcommand{\mkcast}[1]{(#1)}
+\newcommand{\alloc}{\key{ref}\,}
+\newcommand{\deref}{\texttt{!}}
+\newcommand{\update}{\mathrel{\texttt{:=}}}
+\newcommand{\all}[1]{\forall #1.\,}
+\newcommand{\ftv}[1]{\mathrm{ftv}(#1)}
+\newcommand{\CAST}[1]{\langle #1 \rangle}
+\newcommand{\new}[1]{\nu #1.\;}
+\newcommand{\case}[3]{\key{case}\,#1\,\key{of}\,\key{inl}\,x\Rightarrow\,#2\,| \,\key{inr}\,x\Rightarrow \,#3}
+\newcommand{\join}[2]{#1 \sqcup #2 }
+\newcommand{\meet}[2]{#1 \sqcap #2 }
+
+\newcommand*\oldmacro{}%
+\let\oldmacro\insertshorttitle%
+\renewcommand*\insertshorttitle{%
+  \oldmacro\hfill%
+  \insertframenumber\,/\,\inserttotalframenumber}
+
+\setbeamertemplate{navigation symbols}{}
+\setbeamertemplate{footline}[frame number]
+
+%\newtheorem{definition}{Definition}
+\newtheorem{conjecture}[theorem]{\translate{Conjecture}}
+\newtheorem{proposition}[theorem]{\translate{Proposition}}
+
+\lstdefinestyle{basic}{
+%showstringspaces=false,
+language=Python,
+columns=fullflexible,
+%basicstyle=\sffamily\small,%
+basicstyle=\ttfamily,%
+%columns=fixed,
+%basewidth=0.49em,
+%lineskip=0pt,
+%escapechar=@,xleftmargin=1pc,%
+keywordstyle=\ttfamily,
+mathescape=true,%
+moredelim=**[is][\color{blue}]{@}{@},
+moredelim=[is][\color{red}]{|}{|},
+moredelim=[is][\color{blue}]{~}{~},
+%commentstyle=\rmfamily,%
+%morekeywords={return,fix,var,proc,fun,func},%
+%deletekeywords={int,bool}
+}
+\lstset{style=basic}
+
+\garamond
+
+\title[Type Safety via Step-Index Logic]{Introduction to Step-Indexed Logical Relations: Type Safety for STLC + fix}
+\author{Jeremy G. Siek \\[1ex]
+ Indiana University, Bloomington
+}
+\date{}
+%% \institute{\normalsize 
+%%  Indiana University, Bloomington
+%% }
+
+% 3 hours
+
+%\newcommand\footnotemark{}
+%\renewcommand\footnoterule{}
+\setbeamercolor{footnote mark}{fg=white}
+
+\begin{document}
+
+%===============================================================================
+\frame{
+\titlepage
+
+\vspace{-40pt}
+\begin{tabular}{ccc}
+\begin{minipage}{0.2\textwidth}
+  %\includegraphics[height=2in]{knight}
+  image
+\end{minipage}
+&
+\begin{minipage}{0.45\textwidth}
+\begin{center}
+PL Wonks \\
+November 2023 \\
+\ \\
+\ \\
+\ \\
+\ \\
+\end{center}
+\end{minipage}
+&
+\begin{minipage}{0.2\textwidth}
+  %\includegraphics[height=2in]{peltast}
+  image
+\end{minipage}
+\end{tabular}
+
+}
+%===============================================================================
+\frame{
+\frametitle{TBD}
+
+}
+%===============================================================================
+
+\end{document}
