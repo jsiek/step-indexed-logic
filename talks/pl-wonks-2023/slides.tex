@@ -118,11 +118,12 @@
 \newcommand{\dyn}{\star}
 \newcommand{\Dyn}{\ensuremath{\star}}
 \newcommand{\Int}{\key{Int}}
+\newcommand{\Nat}{\mathbb{N}}
 \newcommand{\Float}{\key{float}}
 \newcommand{\Bool}{\key{Bool}}
 \newcommand{\Str}{\key{String}}
 %\newcommand{\Ref}{\key{Ref}\,}
-\newcommand{\lam}[1]{\lambda #1 \dotspace}
+\newcommand{\lam}[1]{\lambda #1}
 \newcommand{\Lam}[1]{\Lambda #1 \dotspace}
 \newcommand{\by}{\mapsto}
 \newcommand{\app}{\;\,}
@@ -138,6 +139,8 @@
 \newcommand{\Else}{\;\key{else}\;}
 \newcommand{\True}{\key{true}}
 \newcommand{\False}{\key{false}}
+\newcommand{\zero}{\key{zero}}
+\newcommand{\suc}[1]{\key{suc}(#1)}
 \newcommand{\as}{\mathrel{\key{as}}}
 \newcommand{\op}{\mathit{op}}
 \newcommand{\dom}[1]{\mathit{dom}(#1)}
@@ -156,7 +159,7 @@
 \newcommand{\ftv}[1]{\mathrm{ftv}(#1)}
 \newcommand{\CAST}[1]{\langle #1 \rangle}
 \newcommand{\new}[1]{\nu #1.\;}
-\newcommand{\case}[3]{\key{case}\,#1\,\key{of}\,\key{inl}\,x\Rightarrow\,#2\,| \,\key{inr}\,x\Rightarrow \,#3}
+\newcommand{\case}[3]{\key{case}\,#1\,#2\,#3}
 \newcommand{\join}[2]{#1 \sqcup #2 }
 \newcommand{\meet}[2]{#1 \sqcap #2 }
 
@@ -196,7 +199,7 @@ moredelim=[is][\color{blue}]{~}{~},
 
 \garamond
 
-\title[Type Safety via Step-Index Logic]{Introduction to Step-Indexed Logical Relations: Type Safety for STLC + fix}
+\title[Type Safety via Step-Index Logic]{Intro. to Step-Indexed Logical Relations: Type Safety for STLC + fix}
 \author{Jeremy G. Siek \\[1ex]
  Indiana University, Bloomington
 }
@@ -221,7 +224,8 @@ moredelim=[is][\color{blue}]{~}{~},
 \begin{tabular}{ccc}
 \begin{minipage}{0.2\textwidth}
   %\includegraphics[height=2in]{knight}
-  image
+  %image
+  \ 
 \end{minipage}
 &
 \begin{minipage}{0.45\textwidth}
@@ -237,16 +241,153 @@ November 2023 \\
 &
 \begin{minipage}{0.2\textwidth}
   %\includegraphics[height=2in]{peltast}
-  image
+  %image
+  \ 
 \end{minipage}
 \end{tabular}
 
 }
 %===============================================================================
 \frame{
-\frametitle{TBD}
+\frametitle{Outline}
+
+\begin{itemize}
+\item Review of
+  \begin{itemize}
+    \item STLC + fix
+    \item Type Safety via Progress and Preservation
+  \end{itemize}
+\item The Logical Relations Recipe
+\item Strawman Logical Relation for Type Safety
+\item Step-indexed Logical Relation for Type Safety
+\item Proof of the Fundamental Lemma
+  \begin{itemize}  
+  \item Proof of the Bind Lemma
+  \item Proof of the Compatibility Lemmas
+  \end{itemize}
+\item Proof of Type Safety
+\end{itemize}
 
 }
 %===============================================================================
+\frame{
+\frametitle{Review: STLC + fix}
 
+\[
+\begin{array}{llcl}
+\text{types} & A,B &::=& \Nat \mid A \to B \\
+\text{terms} & L,M,N &::= & \zero \mid \suc{M} \mid \case{L}{M}{N} \mid \\
+  &&& i \mid \lam{N} \mid L \app N
+      \mid \mu N \\
+\text{values} & V,W & ::= & \zero \mid \suc{V} \mid \lam{N} \mid \mu V \\
+\text{frames} & F & ::= & \suc{\Box} \mid \case{\Box}{M}{N}
+  \mid \Box \app M \mid V \app \Box
+\end{array}
+\]
+Substitution: $\qquad N[M]$ \\
+
+Reduction
+\begin{align*}
+  (\mu V) \app W &\longrightarrow V[\mu V] \app W \\
+  (\lam{N}) \app W &\longrightarrow N[W]\\
+  \case{\zero}{M}{N} &\longrightarrow M \\
+  \case{\suc{V}}{M}{N} &\longrightarrow N[V] \\
+  F[M] &\longrightarrow F[N] & \text{if } M \longrightarrow N
+\end{align*}
+
+}
+%===============================================================================
+\frame{
+\frametitle{Review: STLC + fix}
+
+%% \[
+%% \begin{array}{llcl}
+%% \text{type env.} & \Gamma &::=& A_0, \ldots, A_n
+%% \end{array}
+%% \]
+
+\fbox{$\Gamma \vdash^\mathcal{V} V : A$}
+\begin{gather*}
+  \inference{}
+            {\Gamma \vdash^\mathcal{V} \zero : \Nat}
+            \quad
+  \inference{\Gamma \vdash^\mathcal{V} V : \Nat}
+            {\Gamma \vdash^\mathcal{V} \suc{V} : \Nat}
+            \\[2ex]
+  \inference{\Gamma,A \vdash^\mathcal{V} N : B}{\Gamma \vdash^\mathcal{V} \lam{N} : A \to B}
+  \inference{\Gamma,A \to B \vdash^\mathcal{V} V : A \to B}{\Gamma \vdash^\mathcal{V} \mu{V} : A \to B}
+\end{gather*}
+
+\fbox{$\Gamma \vdash M : A$}
+\begin{gather*}
+  \inference{\Gamma \vdash^{\mathcal{V}} V : A}{\Gamma \vdash V : A}
+  \quad
+  \inference{}
+            {A_n,\ldots,A_0 \vdash i : A_i}(0 \le i \le n)
+            \\[2ex]
+  \inference{\Gamma \vdash L : A \to B & \Gamma \vdash M : A}
+            {\Gamma \vdash L \app M : B}
+            \\[1ex]
+  \inference{\Gamma \vdash M : \Nat}
+            {\Gamma \vdash \suc{M} : \Nat}
+  \quad
+            \inference{\Gamma \vdash L : \Nat \\
+              \Gamma \vdash M : A &
+              \Gamma,\Nat \vdash N : A}
+                      {\Gamma \vdash \case{L}{M}{N} : A}
+\end{gather*}
+
+}
+
+%===============================================================================
+\frame{
+  \frametitle{Review: Type Safety via Progress \& Preservation}
+
+  \begin{lemma}[Progress]
+    If $\Gamma \vdash M : A$ then either
+    $M$ is a value or
+    $M \longrightarrow N$ for some $N$.
+  \end{lemma}
+
+  \begin{lemma}[Presevation]
+    If $\Gamma \vdash M : A$ and $M \longrightarrow N$ then
+    $\Gamma \vdash N : A$.
+  \end{lemma}
+
+  \begin{theorem}[Type Safety]
+    If $\;\vdash M : A$ then either
+    $M \longrightarrow^{*} V$ for some $V$
+    or $M$ diverges.
+  \end{theorem}
+
+}
+
+%===============================================================================
+\frame{
+  \frametitle{The Logical Relations Recipe}
+
+  \begin{itemize}
+  \item Define two relations that generalize the theorem you'd like to
+    prove: one on types and values $\mathcal{V}(A,V)$
+    and the other on types and terms $\mathcal{E}(A,M)$.
+  \item Extend the $\mathcal{E}$ relation to open terms.
+    \begin{align*}
+      \mathcal{G}(\Gamma, \sigma) &=
+        \mathcal{V}(A_i,\sigma_i) \text{ for all } A_i \in \Gamma \\
+        \Gamma \models M : A &=
+        \forall \gamma,
+      \mathcal{G}(\Gamma,\sigma) \text{ implies }
+      \mathcal{E}(A, \sigma(M))
+    \end{align*}
+    
+  \item Prove the Fundamental Lemma, that\\
+    (1) $\Gamma \vdash^{\mathcal{V}} V : A$ implies $\Gamma \models V : A$ and\\
+    (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
+
+  \item Prove that $\mathcal{E}(A,M)$ implies your theorem.
+    
+  \end{itemize}
+}  
+
+%===============================================================================
 \end{document}
