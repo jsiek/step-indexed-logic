@@ -23,8 +23,26 @@
 \usepackage{wasysym}
 \usepackage{ulem}
 \usepackage{newunicodechar}
+\newunicodechar{⊢}{\ensuremath{\vdash}}
+\newunicodechar{⊧}{\ensuremath{\models}}
+\newunicodechar{ᵒ}{\ensuremath{^\circ}}
+\newunicodechar{▷}{\ensuremath{\rhd}}
+\newunicodechar{Γ}{\ensuremath{\Gamma}}
+\newunicodechar{σ}{\ensuremath{\sigma}}
+\newunicodechar{μ}{\ensuremath{\mu}}
+\newunicodechar{λ}{\ensuremath{\lambda}}
+\newunicodechar{ϕ}{\ensuremath{\phi}}
+\newunicodechar{ψ}{\ensuremath{\psi}}
 \newunicodechar{⦉}{\ensuremath{\llparenthesis}} % Z notation...
 \newunicodechar{⦊}{\ensuremath{\rrparenthesis}} % Z notation...
+\newunicodechar{↑}{\ensuremath{\uparrow}}
+\newunicodechar{↓}{\ensuremath{\downarrow}}
+\newunicodechar{→}{\ensuremath{\rightarrow}}
+\newunicodechar{⇒}{\ensuremath{\Rightarrow}}
+\newunicodechar{∀}{\ensuremath{\mathnormal\forall}}
+\newunicodechar{∃}{\ensuremath{\exists}}
+\newunicodechar{ℕ}{\ensuremath{\mathbb{N}}}
+\newunicodechar{𝔹}{\ensuremath{\mathbb{B}}}
 
 \usepackage{enumitem}
 \setitemize{label=\usebeamerfont*{itemize item}%
@@ -77,6 +95,7 @@
 \newcommand{\bl}[1]{{\color{blue} #1}}
 \newcommand{\rd}[1]{{\color{red} #1}}
 \newcommand{\pr}[1]{{\color{purple} #1}}
+\newcommand{\gr}[1]{{\color{green} #1}}
 \newcommand{\kw}[1]{\mathtt{#1}}
 
 \newcommand{\labels}[1]{\mathit{labels}(#1)}
@@ -106,6 +125,11 @@
 \newcommand{\Obj}{\key{Obj}}
 \newcommand{\String}{\key{String}}
 \newcommand{\Double}{\key{Double}}
+
+\newcommand{\OR}{\mathop{\mathsf{or}ᵒ}}
+\newcommand{\AND}{\mathop{\mathsf{and}ᵒ}}
+\newcommand{\EX}{\mathop{∃ᵒ}}
+\newcommand{\ALL}{\mathop{∀ᵒ}}
 
 %\newcommand{\If}[3]{\key{if}\,#1\key{if}\,#2\key{if}#3}
 
@@ -263,6 +287,7 @@ November 2023 \\
 \item The Logical Relations Recipe
 \item Strawman Logical Relation for Type Safety
 \item Step-indexed Logical Relation for Type Safety
+\item A Step-indexed Logic
 \item Proof of the Fundamental Lemma
   \begin{itemize}  
   \item Proof of the Bind Lemma
@@ -280,7 +305,7 @@ November 2023 \\
 \begin{array}{llcl}
 \text{types} & A,B &::=& \Nat \mid A \to B \\
 \text{terms} & L,M,N &::= & \zero \mid \suc{M} \mid \case{L}{M}{N} \mid \\
-  &&& i \mid \lam{N} \mid L \app N
+  &&& i \mid \lam{N} \mid L \app M
       \mid \mu N \\
 \text{values} & V,W & ::= & \zero \mid \suc{V} \mid \lam{N} \mid \mu V \\
 \text{frames} & F & ::= & \suc{\Box} \mid \case{\Box}{M}{N}
@@ -305,12 +330,6 @@ Reduction
 \frame{
 \frametitle{Review: STLC + fix}
 
-%% \[
-%% \begin{array}{llcl}
-%% \text{type env.} & \Gamma &::=& A_0, \ldots, A_n
-%% \end{array}
-%% \]
-
 \fbox{$\Gamma \vdash^\mathcal{V} V : A$}
 \begin{gather*}
   \inference{}
@@ -328,7 +347,7 @@ Reduction
   \inference{\Gamma \vdash^{\mathcal{V}} V : A}{\Gamma \vdash V : A}
   \quad
   \inference{}
-            {A_n,\ldots,A_0 \vdash i : A_i}(0 \le i \le n)
+            {Γ \vdash i : Γ_i}
             \\[2ex]
   \inference{\Gamma \vdash L : A \to B & \Gamma \vdash M : A}
             {\Gamma \vdash L \app M : B}
@@ -338,7 +357,7 @@ Reduction
   \quad
             \inference{\Gamma \vdash L : \Nat \\
               \Gamma \vdash M : A &
-              \Gamma,\Nat \vdash N : A}
+              \Nat,\Gamma \vdash N : A}
                       {\Gamma \vdash \case{L}{M}{N} : A}
 \end{gather*}
 
@@ -369,32 +388,258 @@ Reduction
 
 %===============================================================================
 \frame{
+  \frametitle{Aside: de Bruijn variables and substitutions}
+
+  A substitution $\sigma$ is a mapping of variables to terms. \\[1ex]
+
+  We use de Bruijn variables, so they are numbers: $0, 1, 2, \ldots$ \\[1ex]
+  
+  We represent a substitution as a sequence of terms:
+  \[
+  \sigma = M_0, M_1, M_2, \ldots
+  \]
+  Applying a substitution to a term: \fbox{$σ(M)$}
+  {\small
+  \begin{align*}
+    σ(\zero) &=  \zero \\
+    σ(\suc{M}) &=  \suc{σ(M)} \\
+    σ(\case{L}{M}{N}) &= \case{σ(L)}{σ(M)}{\mathsf{ext}(σ)(N)}\\
+      & \text{where  } \mathsf{ext}(σ) = 0, ↑ σ_0, ↑ σ_1, … \\
+    σ(i) &= σ_i \\
+    σ(\lam{N}) &= \lam{\,\mathsf{ext}(σ)(N)} \\
+    σ(L \app M) &= σ(L) \app σ(M) \\
+    σ(μ N) &= μ \,\mathsf{ext}(σ)(N)
+  \end{align*}
+  }  
+}
+
+%===============================================================================
+\frame{
   \frametitle{The Logical Relations Recipe}
 
   \begin{itemize}
-  \item Define two relations that generalize the theorem you'd like to
-    prove: one on types and closed values $\mathcal{V}(A,V)$
-    and the other on types and closed terms $\mathcal{E}(A,M)$.
-  \item Extend the $\mathcal{E}$ relation to open terms.\\
-    (Let $\sigma$ be a substitution, i.e. a mapping of variables to terms,
-     represented as a sequence of terms.)
+  \item Define two functions that generalize the theorem you'd like to
+    prove: one maps types to a predicate on closed values $\mathcal{V}(A)(V)$
+    and the other maps types to a predicate on closed terms $\mathcal{E}(A)(M)$.
+  \item Extend the $\mathcal{V}$ and $\mathcal{E}$ functions to open terms:
     \begin{align*}
-      \mathcal{G}(\Gamma, \sigma) &=
-        \forall A_i \in \Gamma, \mathcal{V}(A_i,\sigma_i)  \\
+      \mathcal{G}(\Gamma)(\sigma) &=
+        \forall A_i \in \Gamma, \mathcal{V}(A_i)(\sigma_i)  \\
+        \Gamma \models^{\mathcal{V}} V : A &=
+           \forall \sigma,
+           \mathcal{G}(\Gamma)(\sigma) \text{ implies }
+           \mathcal{V}(A)(\sigma(V)) \\
         \Gamma \models M : A &=
-        \forall \gamma,
-      \mathcal{G}(\Gamma,\sigma) \text{ implies }
-      \mathcal{E}(A, \sigma(M))
+           \forall \sigma,
+           \mathcal{G}(\Gamma)(\sigma) \text{ implies }
+           \mathcal{E}(A)(\sigma(M))
     \end{align*}
     
   \item Prove the Fundamental Lemma, that\\
-    (1) $\Gamma \vdash^{\mathcal{V}} V : A$ implies $\Gamma \models V : A$ and\\
+    (1) $\Gamma \vdash^{\mathcal{V}} V : A$ implies $\Gamma \models^{\mathcal{V}} V : A$ and\\
     (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
 
-  \item Prove that $\mathcal{E}(A,M)$ implies your theorem.
+  \item Prove that $\mathcal{E}(A)(M)$ implies your theorem.
     
   \end{itemize}
 }  
 
+%===============================================================================
+\frame{
+  \frametitle{Strawman Logical Relation for Type Safety}
+
+  \fbox{$\mathcal{E}(A)(M) : 𝔹$} \qquad  ``Progress and Preservation''
+  \[
+  \mathcal{E}(A)(M) = 
+  \begin{array}{l}
+    \mathcal{V}(A)(M) \mathop{\mathsf{or}} ∃ M', M \longrightarrow M' \\
+    \mathop{\mathsf{and}} ∀ M', M \longrightarrow M' \Rightarrow \mathcal{E}(A)(M')
+  \end{array}
+  \]
+  \fbox{$\mathcal{V}(A)(V) : 𝔹$}
+  \begin{align*}
+    \mathcal{V}(\Nat)(\zero) &= \mathsf{true} \\
+    \mathcal{V}(\Nat)(\suc{V}) &= \mathcal{V}(\Nat)(V) \\
+    \mathcal{V}(A → B)(\lam{N}) &= 
+      \forall W, \mathcal{V}(A)(W) \Rightarrow \mathcal{E}(B)(N[W]) \\
+    \mathcal{V}(A → B)(μ V) &= \mathcal{V}(\rd{A → B})(V[μ V]) \\
+    \mathcal{V}(A)(V) &= \mathsf{false} \qquad \text{otherwise} 
+  \end{align*}
+  \footnote{\rd{Argument of recursion is not smaller.}}
+}
+%===============================================================================
+\frame{
+  \frametitle{Step-indexed Logical Relation for Type Safety}
+  \fbox{$\mathcal{E}(A)(M) : ℕ → 𝔹$}
+  \[
+  \mathcal{E}(A)(M) = 
+  \begin{array}{l}
+    \mathcal{V}(A)(M) \OR \EX M', M \longrightarrow M' \\
+    \AND \ALL M', M \longrightarrow M' \Rightarrowᵒ \mathop{▷ᵒ} \mathcal{E}(A)(M')
+  \end{array}
+  \]
+  \fbox{$\mathcal{V}(A)(V) : ℕ → 𝔹$}
+  \begin{align*}
+    \mathcal{V}(\Nat)(\zero) &= \mathsf{true}ᵒ \\
+    \mathcal{V}(\Nat)(\suc{V}) &= \mathcal{V}(\Nat)(V) \\
+    \mathcal{V}(A → B)(\lam{N}) &= 
+      \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W) \Rightarrowᵒ \mathop{▷ᵒ} \mathcal{E}(B)(N[W]) \\
+    \mathcal{V}(A → B)(μ V) &= \mathop{▷ᵒ} \mathcal{V}(A → B)(V[μ V]) \\
+    \mathcal{V}(A)(V) &= \mathsf{false}ᵒ \qquad \text{otherwise} 
+  \end{align*}
+  The $\mathcal{E}$ and $\mathcal{V}$ functions terminate because the
+  step-index gets smaller in the recursive calls thanks to ▷ᵒ.
+
+}
+%===============================================================================
+\frame{
+  \frametitle{A Step-indexed Logic}
+
+  \fbox{$ϕ,ψ : ℕ → 𝔹$}
+  \begin{align*}
+    \mathsf{true}ᵒ(k) &= \mathsf{true} \\
+    \mathsf{false}ᵒ(k) &= \mathsf{false} \\
+    (ϕ \AND ψ)(k) &=  ϕ(k) \text{ and } ψ(k) \\
+    (∀x, P(x))(k) &=  ∀x, P(x)(k) \\
+    (\mathop{▷ᵒ} ϕ)(k) &= ∀ j, j < k ⇒ ϕ(j) \\
+    \vdots
+  \end{align*}
+
+  \fbox{$ψ_1,\ldots,ψ_n ⊢ᵒ ϕ$}
+  \[
+  ψ_1,\ldots,ψ_n ⊢ᵒ ϕ \quad=\quad
+    ∀ k, ψ_1(k) \text{ and } \cdots\; ψ_n(k) ⇒ ϕ(k)
+  \] 
+  
+}
+
+%===============================================================================
+\frame{
+  \frametitle{Recipe: extend $\mathcal{V}$ and $\mathcal{E}$ to open terms}
+
+    \begin{align*}
+      \mathcal{G}(A_1,\ldots,A_n)(\sigma) &=
+         \mathcal{V}(A_1)(\sigma_0), \ldots, \mathcal{V}(A_n)(\sigma_n)   \\
+      \Gamma \models^{\mathcal{V}} V : A &=
+        \forall \sigma,
+        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} \mathcal{V}(A)(\sigma(V))\\
+      \Gamma \models M : A &=
+        \forall \sigma,
+        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} \mathcal{E}(A)(\sigma(M))
+    \end{align*}
+  
+}
+%===============================================================================
+\frame{
+  \frametitle{Recipe: prove the Fundamental Lemma}
+
+  \begin{lemma}[Fundamental] \normalfont
+    (1) $\Gamma \vdash^{\mathcal{V}} V : A$
+        implies $\Gamma \models^{\mathcal{V}} V : A$ and\\
+    (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
+  \end{lemma}
+
+  The proof is by mutual induction on $\Gamma \vdash^{\mathcal{V}} V : A$
+  and $\Gamma \vdash M : A$.
+
+  By tradition, each case of the proof is proved by a separate lemma.
+  These lemmas are called the ``compatibility'' lemmas.
+
+}  
+%===============================================================================
+\frame{
+  \frametitle{Compatibility Lemmas}
+
+  \footnote{Some compatibility lemmas are easy.}
+  
+  \begin{lemma}[Compatibility for \zero]
+    $Γ \models^{\mathcal{V}} \zero : ℕ$.
+  \end{lemma}
+  \begin{proof}
+    Let $σ$ be a substitution.
+    We need to show that
+    \[
+    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(ℕ)(σ(\zero))
+    \]
+    which is equivalent to 
+    \[
+    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathsf{true}ᵒ
+    \]
+    which is trivially true.
+  \end{proof}
+}
+%===============================================================================
+\frame{
+  \frametitle{Compatibility Lemmas, continued}
+
+  \begin{lemma}[Compatibility for \suc{V}]
+    If $Γ \models^{\mathcal{V}} V : ℕ$,
+    then $Γ \models^{\mathcal{V}} \suc{V} : ℕ$.
+  \end{lemma}
+  \begin{proof}
+    Let $σ$ be a substitution.
+    We need to show that
+    \[
+    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(ℕ)(σ(\suc{V}))
+    \]
+    which is equivalent to 
+    \[
+    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(ℕ)(σ(V))
+    \]
+    which we obtain from the premise.
+  \end{proof}
+}
+%===============================================================================
+\frame{
+  \frametitle{Compatibility Lemmas, continued}
+
+  \begin{lemma}[Compatibility for $\lam{N}$]
+    If $A,Γ \models N : B$,
+    then $Γ \models^{\mathcal{V}} \lam{N} : A → B$.
+  \end{lemma}
+  \begin{proof}
+    Let $σ$ be a substitution.
+    We need to show that
+    \[
+    \mathcal{G}(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W)
+         \Rightarrowᵒ \mathop{▷ᵒ} \mathcal{E}(B)(\mathsf{ext}(σ)(N)[W])
+    \]
+    Let $W$ be a value and assume $\mathop{▷ᵒ} \mathcal{V}(A)(W)$.
+    From the premise $A,Γ ⊧ N : B$ we have
+    $\mathcal{V}(A,W),\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{E}(B)((W,σ)(N))$
+    and therefore
+  $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A,W) \mathop{⇒ᵒ} \mathcal{E}(B)((W,σ)(N))$.
+    With the assumption, we have $\mathop{▷ᵒ} \mathcal{E}(B)((W,σ)(N))$.
+    We conclude via the following equality
+    \begin{align*}
+      \mathsf{ext}(σ)(N)[W] &= (W, ↓ ↑ σ_0, ↓ ↑ σ_1, …)(N) \\
+                            &=  (W, σ)(N)
+    \end{align*}
+  \end{proof}
+}
+%===============================================================================
+\frame{
+  \frametitle{Aside: L\"ob Induction}
+  {\Large
+  \[
+  \inference{▷ᵒ ϕ, \mathcal{P} ⊢ᵒ ϕ}
+            {\mathcal{P} ⊢ᵒ ϕ}
+  \]
+  }
+  
+  \footnote{Equivalent to strong induction on the step index.}
+}
+%===============================================================================
+\frame{
+  \frametitle{Compatibility Lemmas, continued}
+
+  \begin{lemma}[Compatibility for $μ \,V$]
+    If $A→B,Γ \models^{\mathcal{V}} V : A → B$,
+    then $Γ \models^{\mathcal{V}} μ \,V : A → B$.
+  \end{lemma}
+  \begin{proof}
+
+  \end{proof}
+}
 %===============================================================================
 \end{document}
