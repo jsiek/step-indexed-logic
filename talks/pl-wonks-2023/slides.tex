@@ -498,13 +498,14 @@ Reduction
 }
 %===============================================================================
 \frame{
-  \frametitle{A Step-indexed Logic}
+  \frametitle{A Step-indexed Logic (SIL)}
 
   \fbox{$ϕ,ψ : ℕ → 𝔹$}
   \begin{align*}
     \mathsf{true}ᵒ(k) &= \mathsf{true} \\
     \mathsf{false}ᵒ(k) &= \mathsf{false} \\
     (ϕ \AND ψ)(k) &=  ϕ(k) \text{ and } ψ(k) \\
+    (ϕ \OR ψ)(k) &=  ϕ(k) \text{ or } ψ(k) \\
     (∀x, P(x))(k) &=  ∀x, P(x)(k) \\
     (\mathop{▷ᵒ} ϕ)(k) &= ∀ j, j < k ⇒ ϕ(j) \\
     \vdots
@@ -518,6 +519,28 @@ Reduction
   
 }
 
+%===============================================================================
+\frame{
+  \frametitle{A Step-indexed Logic (SIL)}
+
+  Proof rules regarding the ``later`` operator ▷ᵒ:
+  \begin{gather*}
+    \inference{𝒫 ⊢ᵒ ϕ}{𝒫 ⊢ᵒ ▷ᵒ ϕ}
+    \quad
+    \inference{𝒫 ⊢ᵒ ▷ᵒ (ϕ ⇒ᵒ ψ)}
+              {𝒫 ⊢ᵒ ▷ᵒ ϕ ⇒ᵒ ▷ᵒ ψ}
+    \quad
+    \cdots
+    \\[1ex]
+    \inference{𝒫 ⊢ᵒ ▷ᵒ ϕ & ϕ,𝒫 ⊢ᵒ ψ}
+              {𝒫 ⊢ᵒ ▷ᵒ ψ}
+  \end{gather*}
+  L\"ob Induction:
+  \[
+  \inference{▷ᵒ ϕ, 𝒫 ⊢ᵒ ϕ}
+            {𝒫 ⊢ᵒ ϕ}
+  \]
+}  
 %===============================================================================
 \frame{
   \frametitle{Recipe: extend $\mathcal{V}$ and $ℰ$ to open terms}
@@ -544,7 +567,7 @@ Reduction
     (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
   \end{lemma}
 
-  The proof is by mutual induction on $\Gamma \vdash^{\mathcal{V}} V : A$
+  Proceed by mutual induction on $\Gamma \vdash^{\mathcal{V}} V : A$
   and $\Gamma \vdash M : A$.
 
   By tradition, each case of the proof is proved by a separate lemma.
@@ -570,7 +593,7 @@ Reduction
     \[
     \mathcal{G}(Γ)(σ) ⊢ᵒ \mathsf{true}ᵒ
     \]
-    which is trivially true.
+    which is trivial to prove.
   \end{proof}
 }
 %===============================================================================
@@ -609,11 +632,9 @@ Reduction
     \mathcal{G}(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W)
          \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(\mathsf{ext}(σ)(N)[W])
     \]
-    Let $W$ be a value and assume $\mathop{▷ᵒ} \mathcal{V}(A)(W)$.
+    Let $W$ be a value and assume $\mathop{▷ᵒ} \mathcal{V}(A)(W)$.\\
     From the premise $A,Γ ⊧ N : B$ we have
-    $\mathcal{V}(A,W),\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$
-    and therefore
-  $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A,W) \mathop{⇒ᵒ} ℰ(B)((W,σ)(N))$.
+    $\mathcal{V}(A)(W),\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$.\\
     With the assumption, we have $\mathop{▷ᵒ} ℰ(B)((W,σ)(N))$.
     We conclude via the following equality
     \begin{align*}
@@ -621,18 +642,6 @@ Reduction
                             &=  (W, σ)(N)
     \end{align*}
   \end{proof}
-}
-%===============================================================================
-\frame{
-  \frametitle{Aside: L\"ob Induction}
-  {\Large
-  \[
-  \inference{▷ᵒ ϕ, 𝒫 ⊢ᵒ ϕ}
-            {𝒫 ⊢ᵒ ϕ}
-  \]
-  }
-  
-  \footnote{Equivalent to strong induction on the step index.}
 }
 %===============================================================================
 \frame{
@@ -715,10 +724,10 @@ Reduction
   \begin{proof}
     Let $σ$ be a substitution. We need to prove that\\
     $\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)(σ(L) \app σ(M))$.\\
-    We apply the Bind Lemma to $L$ and $M$ to obtain
+    We apply the Bind Lemma to $σ(L)$ and $σ(M)$ to obtain
     $σ(L) \longrightarrow^{*} V$, $σ(M) \longrightarrow^{*} W$,
     $𝒱(A{→}B)(V)$, $𝒱(A)(W)$, and
-    it suffices to prove $ℰ(B)(V \app W)$,
+    it remains to prove $ℰ(B)(V \app W)$,
     which we obtain by the previous lemma.
   \end{proof}
 }  
