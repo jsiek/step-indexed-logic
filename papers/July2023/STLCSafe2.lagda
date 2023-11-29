@@ -84,7 +84,7 @@ compatible-λ {Γ}{A}{B}{N} ⊨N γ = substᵒ (≡ᵒ-sym 𝒱-fun) (Λᵒ[ W ]
 A fixpoint value is well-behaved if the underlying value is
 well-behaved.  The proof of this compatibility lemma is interesting
 because it goes by \textsf{lobᵒ} induction. To prove that $𝒱⟦ A ⇒ B⟧
-\, μ V'$ where $V' = ⟪ γ ⟫ V$, we need to prove that $▷ᵒ 𝒱⟦ A ⇒ B ⟧ \,
+\, μ V'$ where $V' = ⟪ ext γ ⟫ V$, we need to prove that $▷ᵒ 𝒱⟦ A ⇒ B ⟧ \,
 V'[ μ V' ]$. This is equivalent to $▷ᵒ 𝒱⟦ A ⇒ B ⟧ \, ⟪ μ V' • γ ⟫ V$,
 using the substitution lemma again from the ABT.
 We obtain this later fact by noting that
@@ -96,7 +96,8 @@ and that γ is well-behaved.
 compatible-μ : ∀{Γ}{A}{B}{V} → Value V  →  ((A ⇒ B) ∷ Γ) ⊨ⱽ V ⦂ (A ⇒ B)
    → Γ ⊨ⱽ (μ V) ⦂ (A ⇒ B)
 compatible-μ {Γ}{A}{B}{V} v ⊨V γ =
-  lobᵒ (substᵒ (≡ᵒ-sym 𝒱-μ) (pureᵒI (subst-preserves-value (ext γ) _ v) ,ᵒ ▷𝒱V))
+  let xx = (substᵒ (≡ᵒ-sym 𝒱-μ) (pureᵒI (subst-preserves-value (ext γ) _ v) ,ᵒ ▷𝒱V)) in
+  lobᵒ xx
   where
   V' = ⟪ ext γ ⟫ V
   ▷𝒱V : ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (μ V')) ∷ 𝓖⟦ Γ ⟧ γ ⊢ᵒ ▷ᵒ (𝒱⟦ A ⇒ B ⟧ (⟪ μ V' • γ ⟫ V))

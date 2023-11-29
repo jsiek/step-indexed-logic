@@ -27,6 +27,8 @@
 \newunicodechar{⊧}{\ensuremath{\models}}
 \newunicodechar{ᵒ}{\ensuremath{^\circ}}
 \newunicodechar{▷}{\ensuremath{\rhd}}
+\newunicodechar{α}{\ensuremath{\alpha}}
+\newunicodechar{β}{\ensuremath{\beta}}
 \newunicodechar{Γ}{\ensuremath{\Gamma}}
 \newunicodechar{σ}{\ensuremath{\sigma}}
 \newunicodechar{μ}{\ensuremath{\mu}}
@@ -43,6 +45,9 @@
 \newunicodechar{∃}{\ensuremath{\exists}}
 \newunicodechar{ℕ}{\ensuremath{\mathbb{N}}}
 \newunicodechar{𝔹}{\ensuremath{\mathbb{B}}}
+\newunicodechar{ℰ}{\ensuremath{\mathcal{E}}}
+\newunicodechar{𝒱}{\ensuremath{\mathcal{V}}}
+\newunicodechar{𝒫}{\ensuremath{\mathcal{P}}}
 
 \usepackage{enumitem}
 \setitemize{label=\usebeamerfont*{itemize item}%
@@ -312,9 +317,8 @@ November 2023 \\
   \mid \Box \app M \mid V \app \Box
 \end{array}
 \]
-Substitution: $\qquad N[M]$  \\
-$\qquad${\footnotesize (In $N$, replace variable $0$ with $M$ and decrement
- all free variables.)} \\
+Substitution: $\quad N[M]$ \quad{\footnotesize (Replace $0$ with $M$ in $N$, decrement free vars.)} \\
+Plug: $\qquad\qquad F ⦉ M ⦊$ \quad{\footnotesize (Replace $\Box$ with $M$ in $F$.)}
 
 Reduction
 \begin{align*}
@@ -420,8 +424,8 @@ Reduction
   \begin{itemize}
   \item Define two functions that generalize the theorem you'd like to
     prove: one maps types to a predicate on closed values $\mathcal{V}(A)(V)$
-    and the other maps types to a predicate on closed terms $\mathcal{E}(A)(M)$.
-  \item Extend the $\mathcal{V}$ and $\mathcal{E}$ functions to open terms:
+    and the other maps types to a predicate on closed terms $ℰ(A)(M)$.
+  \item Extend the $\mathcal{V}$ and $ℰ$ functions to open terms:
     \begin{align*}
       \mathcal{G}(\Gamma)(\sigma) &=
         \forall A_i \in \Gamma, \mathcal{V}(A_i)(\sigma_i)  \\
@@ -432,14 +436,14 @@ Reduction
         \Gamma \models M : A &=
            \forall \sigma,
            \mathcal{G}(\Gamma)(\sigma) \text{ implies }
-           \mathcal{E}(A)(\sigma(M))
+           ℰ(A)(\sigma(M))
     \end{align*}
     
   \item Prove the Fundamental Lemma, that\\
     (1) $\Gamma \vdash^{\mathcal{V}} V : A$ implies $\Gamma \models^{\mathcal{V}} V : A$ and\\
     (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
 
-  \item Prove that $\mathcal{E}(A)(M)$ implies your theorem.
+  \item Prove that $ℰ(A)(M)$ implies your theorem.
     
   \end{itemize}
 }  
@@ -448,12 +452,12 @@ Reduction
 \frame{
   \frametitle{Strawman Logical Relation for Type Safety}
 
-  \fbox{$\mathcal{E}(A)(M) : 𝔹$} \qquad  ``Progress and Preservation''
+  \fbox{$ℰ(A)(M) : 𝔹$} \qquad  ``Progress and Preservation''
   \[
-  \mathcal{E}(A)(M) = 
+  ℰ(A)(M) = 
   \begin{array}{l}
     \mathcal{V}(A)(M) \mathop{\mathsf{or}} ∃ M', M \longrightarrow M' \\
-    \mathop{\mathsf{and}} ∀ M', M \longrightarrow M' \Rightarrow \mathcal{E}(A)(M')
+    \mathop{\mathsf{and}} ∀ M', M \longrightarrow M' \Rightarrow ℰ(A)(M')
   \end{array}
   \]
   \fbox{$\mathcal{V}(A)(V) : 𝔹$}
@@ -461,7 +465,7 @@ Reduction
     \mathcal{V}(\Nat)(\zero) &= \mathsf{true} \\
     \mathcal{V}(\Nat)(\suc{V}) &= \mathcal{V}(\Nat)(V) \\
     \mathcal{V}(A → B)(\lam{N}) &= 
-      \forall W, \mathcal{V}(A)(W) \Rightarrow \mathcal{E}(B)(N[W]) \\
+      \forall W, \mathcal{V}(A)(W) \Rightarrow ℰ(B)(N[W]) \\
     \mathcal{V}(A → B)(μ V) &= \mathcal{V}(\rd{A → B})(V[μ V]) \\
     \mathcal{V}(A)(V) &= \mathsf{false} \qquad \text{otherwise} 
   \end{align*}
@@ -470,12 +474,12 @@ Reduction
 %===============================================================================
 \frame{
   \frametitle{Step-indexed Logical Relation for Type Safety}
-  \fbox{$\mathcal{E}(A)(M) : ℕ → 𝔹$}
+  \fbox{$ℰ(A)(M) : ℕ → 𝔹$}
   \[
-  \mathcal{E}(A)(M) = 
+  ℰ(A)(M) = 
   \begin{array}{l}
     \mathcal{V}(A)(M) \OR \EX M', M \longrightarrow M' \\
-    \AND \ALL M', M \longrightarrow M' \Rightarrowᵒ \mathop{▷ᵒ} \mathcal{E}(A)(M')
+    \AND \ALL M', M \longrightarrow M' \Rightarrowᵒ \mathop{▷ᵒ} ℰ(A)(M')
   \end{array}
   \]
   \fbox{$\mathcal{V}(A)(V) : ℕ → 𝔹$}
@@ -483,11 +487,11 @@ Reduction
     \mathcal{V}(\Nat)(\zero) &= \mathsf{true}ᵒ \\
     \mathcal{V}(\Nat)(\suc{V}) &= \mathcal{V}(\Nat)(V) \\
     \mathcal{V}(A → B)(\lam{N}) &= 
-      \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W) \Rightarrowᵒ \mathop{▷ᵒ} \mathcal{E}(B)(N[W]) \\
+      \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W) \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(N[W]) \\
     \mathcal{V}(A → B)(μ V) &= \mathop{▷ᵒ} \mathcal{V}(A → B)(V[μ V]) \\
     \mathcal{V}(A)(V) &= \mathsf{false}ᵒ \qquad \text{otherwise} 
   \end{align*}
-  The $\mathcal{E}$ and $\mathcal{V}$ functions terminate because the
+  The $ℰ$ and $\mathcal{V}$ functions terminate because the
   step-index gets smaller in the recursive calls thanks to ▷ᵒ.
 
 }
@@ -515,7 +519,7 @@ Reduction
 
 %===============================================================================
 \frame{
-  \frametitle{Recipe: extend $\mathcal{V}$ and $\mathcal{E}$ to open terms}
+  \frametitle{Recipe: extend $\mathcal{V}$ and $ℰ$ to open terms}
 
     \begin{align*}
       \mathcal{G}(A_1,\ldots,A_n)(\sigma) &=
@@ -525,7 +529,7 @@ Reduction
         \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} \mathcal{V}(A)(\sigma(V))\\
       \Gamma \models M : A &=
         \forall \sigma,
-        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} \mathcal{E}(A)(\sigma(M))
+        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} ℰ(A)(\sigma(M))
     \end{align*}
   
 }
@@ -602,14 +606,14 @@ Reduction
     We need to show that
     \[
     \mathcal{G}(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W)
-         \Rightarrowᵒ \mathop{▷ᵒ} \mathcal{E}(B)(\mathsf{ext}(σ)(N)[W])
+         \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(\mathsf{ext}(σ)(N)[W])
     \]
     Let $W$ be a value and assume $\mathop{▷ᵒ} \mathcal{V}(A)(W)$.
     From the premise $A,Γ ⊧ N : B$ we have
-    $\mathcal{V}(A,W),\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{E}(B)((W,σ)(N))$
+    $\mathcal{V}(A,W),\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$
     and therefore
-  $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A,W) \mathop{⇒ᵒ} \mathcal{E}(B)((W,σ)(N))$.
-    With the assumption, we have $\mathop{▷ᵒ} \mathcal{E}(B)((W,σ)(N))$.
+  $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A,W) \mathop{⇒ᵒ} ℰ(B)((W,σ)(N))$.
+    With the assumption, we have $\mathop{▷ᵒ} ℰ(B)((W,σ)(N))$.
     We conclude via the following equality
     \begin{align*}
       \mathsf{ext}(σ)(N)[W] &= (W, ↓ ↑ σ_0, ↓ ↑ σ_1, …)(N) \\
@@ -622,8 +626,8 @@ Reduction
   \frametitle{Aside: L\"ob Induction}
   {\Large
   \[
-  \inference{▷ᵒ ϕ, \mathcal{P} ⊢ᵒ ϕ}
-            {\mathcal{P} ⊢ᵒ ϕ}
+  \inference{▷ᵒ ϕ, 𝒫 ⊢ᵒ ϕ}
+            {𝒫 ⊢ᵒ ϕ}
   \]
   }
   
@@ -638,8 +642,83 @@ Reduction
     then $Γ \models^{\mathcal{V}} μ \,V : A → B$.
   \end{lemma}
   \begin{proof}
-
+    Let $σ$ be a substitution.
+    We need to show that \\
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A → B)(μ\,V')$
+    where $V' = \mathsf{ext}(σ)(V)$. \\
+    We proceed by L\"ob induction, so we may assume \\
+    $\mathop{▷ᵒ} \mathcal{V}(A → B)(μ\,V')$ \qquad\qquad (IH)  \\
+    From the premise of this lemma we have \\
+    $\mathcal{G}(A→B, Γ)(σ') ⊢ᵒ \mathcal{V}(A → B, σ'(V))$ 
+    where $σ' = (μ\,V',σ)$, \\
+    and therefore \\
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A→B)(μ\,V') ⇒ \mathcal{V}(A → B)(σ'(V))$. \\
+    Together with (IH), we have \\
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathop{▷ᵒ} \mathcal{V}(A → B)(σ'(V))$\\
+    which is equivalent to our goal.
   \end{proof}
 }
+%===============================================================================
+\frame{
+  \frametitle{Bind Lemma}
+
+  Many of the compatibility lemmas involve terms that have subterms.
+  For example, the term $\suc{M}$ has subterm $M$.
+  We'll know that $ℰ(ℕ)(M)$ and want to show $ℰ(ℕ)(\suc{M})$.
+  From $ℰ(ℕ)(M)$ we can deduce that either $M$ diverges or
+  $M \longrightarrow^{*} V$ where $𝒱(ℕ)(V)$ for some $V$.
+  If $M$ diverges, so does $\suc{M}$. If $M$ reduces to $V$,
+  then to prove $ℰ(ℕ)(\suc{M})$ it suffices to prove $ℰ(ℕ)(\suc{V})$.
+
+  Generalizing this reasoning to any frame $F$ with subterm $M$
+  gives us the following Bind lemma.
+
+  \begin{lemma}[Bind]
+    If $𝒫 ⊢ᵒ ℰ(B)(M)$ \\
+    and $𝒫 ⊢ᵒ ∀ᵒ V, M \longrightarrow^{*} V ⇒ᵒ 𝒱(B)(V) ⇒ᵒ ℰ(A)(F⦉ V ⦊)$ \\
+    then $𝒫 ⊢ᵒ ℰ(A)(F ⦉ M ⦊)$.
+  \end{lemma}
+
+}
+%===============================================================================
+\frame{
+  \frametitle{Compatibility Lemmas, continued}
+  \small  
+  \begin{lemma}
+    If $𝒱(A{→}B)(V)$ and $𝒱(A)(W)$,
+    then $ℰ(B)(V \app W)$.
+  \end{lemma}
+  \begin{proof}
+    We proceed by L\"ob induction, so we may assume \\
+    $∀ᵒ V W, ▷ᵒ 𝒱(A{→}B)(V) \AND ▷ᵒ 𝒱(A)(W) ⇒ᵒ ▷ᵒ ℰ(B)(V \app W)$.
+    From $𝒱(A{→}B)(V)$ we know that either $V=λN$ or $V=μ\,V'$.\\
+    Suppose $V=λN$. We have progress because $(λN) W \longrightarrow N[W]$.
+    We have preservation because $𝒱(A{→}B)(λN)$ with premise $𝒱(A)(W)$
+    tells us that $▷ᵒ ℰ(B)(N[W])$. \\
+    Suppose $V=μ\,V'$. We have progress:
+    $(μ\,V') W \longrightarrow V'[μ\,V']\,W$. \\
+    For preservation we need to show $▷ᵒ ℰ(B)(V'[μ\,V'] \, W)$. \\
+    From $𝒱(A{→}B)(μ\,V')$ we have $▷ᵒ 𝒱(A{→}B)(V'[μ\,V'])$
+    and from $𝒱(A)(W)$ we have $▷ᵒ 𝒱(A)(W)$. So the induction hypothesis
+    allows us to conclude $▷ᵒ ℰ(B)(V'[μ\,V'] \, W)$.
+  \end{proof}
+}
+%===============================================================================
+\frame{
+  \frametitle{Compatibility Lemmas, continued}
+  \begin{lemma}[Compatibility for application]
+    If $Γ \models L : A → B$ and $Γ ⊧ M : A$,
+    then $Γ \models L \app M : B$.
+  \end{lemma}
+  \begin{proof}
+    Let $σ$ be a substitution. We need to prove that\\
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)(σ(L) \app σ(M))$.\\
+    We apply the Bind Lemma to $L$ and $M$ to obtain
+    $σ(L) \longrightarrow^{*} V$, $σ(M) \longrightarrow^{*} W$,
+    $𝒱(A{→}B)(V)$, $𝒱(A)(W)$, and
+    it suffices to prove $ℰ(B)(V \app W)$,
+    which we obtain by the above lemma.
+  \end{proof}
+}  
 %===============================================================================
 \end{document}
