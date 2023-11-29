@@ -23,6 +23,7 @@
 \usepackage{wasysym}
 \usepackage{ulem}
 \usepackage{newunicodechar}
+\newunicodechar{∅}{\ensuremath{\emptyset}}
 \newunicodechar{⊢}{\ensuremath{\vdash}}
 \newunicodechar{⊧}{\ensuremath{\models}}
 \newunicodechar{ᵒ}{\ensuremath{^\circ}}
@@ -700,12 +701,13 @@ Reduction
     For preservation we need to show $▷ᵒ ℰ(B)(V'[μ\,V'] \, W)$. \\
     From $𝒱(A{→}B)(μ\,V')$ we have $▷ᵒ 𝒱(A{→}B)(V'[μ\,V'])$
     and from $𝒱(A)(W)$ we have $▷ᵒ 𝒱(A)(W)$. So the induction hypothesis
-    allows us to conclude $▷ᵒ ℰ(B)(V'[μ\,V'] \, W)$.
+    gives us $▷ᵒ ℰ(B)(V'[μ\,V'] \, W)$.
   \end{proof}
 }
 %===============================================================================
 \frame{
   \frametitle{Compatibility Lemmas, continued}
+  
   \begin{lemma}[Compatibility for application]
     If $Γ \models L : A → B$ and $Γ ⊧ M : A$,
     then $Γ \models L \app M : B$.
@@ -717,7 +719,30 @@ Reduction
     $σ(L) \longrightarrow^{*} V$, $σ(M) \longrightarrow^{*} W$,
     $𝒱(A{→}B)(V)$, $𝒱(A)(W)$, and
     it suffices to prove $ℰ(B)(V \app W)$,
-    which we obtain by the above lemma.
+    which we obtain by the previous lemma.
+  \end{proof}
+}  
+%===============================================================================
+\frame{
+  \frametitle{Recipe: $ℰ(A)(M)$ implies Type Safety}
+
+  \begin{lemma}[Multi-step Preservation]
+    If $M \longrightarrow^{*} N$ and $ℰ(A)(M)$,
+    then $ℰ(A)(N)$.
+  \end{lemma}
+  \begin{proof}
+    Proceed by induction on the reduction sequence,
+    using the preservation part of $ℰ$ at each step.
+  \end{proof}
+  
+  \begin{theorem}[Type Safety]
+    If $\,∅ ⊢ M : A$ and $M \longrightarrow^{*} N$, \\
+    then $N$ is a value or $N \longrightarrow N'$ for some $N'$.
+  \end{theorem}
+  \begin{proof}
+    Apply the Fundamental Lemma to obtain $ℰ(A)(M)$.
+    Then by Multi-step Preservation, we have $ℰ(A)(N)$.
+    We conclude using the progress part of $ℰ(A)(N)$.
   \end{proof}
 }  
 %===============================================================================
