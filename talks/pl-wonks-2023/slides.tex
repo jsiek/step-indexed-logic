@@ -335,21 +335,21 @@ Reduction
 \frame{
 \frametitle{Review: STLC + fix}
 
-\fbox{$\Gamma \vdash^\mathcal{V} V : A$}
+\fbox{$\Gamma \vdash^𝒱 V : A$}
 \begin{gather*}
   \inference{}
-            {\Gamma \vdash^\mathcal{V} \zero : \Nat}
+            {\Gamma \vdash^𝒱 \zero : \Nat}
             \quad
-  \inference{\Gamma \vdash^\mathcal{V} V : \Nat}
-            {\Gamma \vdash^\mathcal{V} \suc{V} : \Nat}
+  \inference{\Gamma \vdash^𝒱 V : \Nat}
+            {\Gamma \vdash^𝒱 \suc{V} : \Nat}
             \\[2ex]
-  \inference{\Gamma,A \vdash^\mathcal{V} N : B}{\Gamma \vdash^\mathcal{V} \lam{N} : A \to B}
-  \inference{\Gamma,A \to B \vdash^\mathcal{V} V : A \to B}{\Gamma \vdash^\mathcal{V} \mu{V} : A \to B}
+  \inference{\Gamma,A \vdash^𝒱 N : B}{\Gamma \vdash^𝒱 \lam{N} : A \to B}
+  \inference{\Gamma,A \to B \vdash^𝒱 V : A \to B}{\Gamma \vdash^𝒱 \mu{V} : A \to B}
 \end{gather*}
 
 \fbox{$\Gamma \vdash M : A$}
 \begin{gather*}
-  \inference{\Gamma \vdash^{\mathcal{V}} V : A}{\Gamma \vdash V : A}
+  \inference{\Gamma \vdash^{𝒱} V : A}{\Gamma \vdash V : A}
   \quad
   \inference{}
             {Γ \vdash i : Γ_i}
@@ -424,16 +424,16 @@ Reduction
 
   \begin{itemize}
   \item Define two functions that generalize the theorem you'd like to
-    prove: one maps types to a predicate on closed values $\mathcal{V}(A)(V)$
+    prove: one maps types to a predicate on closed values $𝒱(A)(V)$
     and the other maps types to a predicate on closed terms $ℰ(A)(M)$.
-  \item Extend the $\mathcal{V}$ and $ℰ$ functions to open terms:
+  \item Extend the $𝒱$ and $ℰ$ functions to open terms:
     \begin{align*}
       \mathcal{G}(\Gamma)(\sigma) &=
-        \forall A_i \in \Gamma, \mathcal{V}(A_i)(\sigma_i)  \\
-        \Gamma \models^{\mathcal{V}} V : A &=
+        \forall A_i \in \Gamma, 𝒱(A_i)(\sigma_i)  \\
+        \Gamma \models^{𝒱} V : A &=
            \forall \sigma,
            \mathcal{G}(\Gamma)(\sigma) \text{ implies }
-           \mathcal{V}(A)(\sigma(V)) \\
+           𝒱(A)(\sigma(V)) \\
         \Gamma \models M : A &=
            \forall \sigma,
            \mathcal{G}(\Gamma)(\sigma) \text{ implies }
@@ -441,7 +441,7 @@ Reduction
     \end{align*}
     
   \item Prove the Fundamental Lemma, that\\
-    (1) $\Gamma \vdash^{\mathcal{V}} V : A$ implies $\Gamma \models^{\mathcal{V}} V : A$ and\\
+    (1) $\Gamma \vdash^{𝒱} V : A$ implies $\Gamma \models^{𝒱} V : A$ and\\
     (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
 
   \item Prove that $ℰ(A)(M)$ implies your theorem.
@@ -457,18 +457,18 @@ Reduction
   \[
   ℰ(A)(M) = 
   \begin{array}{l}
-    \mathcal{V}(A)(M) \mathop{\mathsf{or}} ∃ M', M \longrightarrow M' \\
+    𝒱(A)(M) \mathop{\mathsf{or}} ∃ M', M \longrightarrow M' \\
     \mathop{\mathsf{and}} ∀ M', M \longrightarrow M' \Rightarrow ℰ(A)(M')
   \end{array}
   \]
-  \fbox{$\mathcal{V}(A)(V) : 𝔹$}
+  \fbox{$𝒱(A)(V) : 𝔹$}
   \begin{align*}
-    \mathcal{V}(\Nat)(\zero) &= \mathsf{true} \\
-    \mathcal{V}(\Nat)(\suc{V}) &= \mathcal{V}(\Nat)(V) \\
-    \mathcal{V}(A → B)(\lam{N}) &= 
-      \forall W, \mathcal{V}(A)(W) \Rightarrow ℰ(B)(N[W]) \\
-    \mathcal{V}(A → B)(μ V) &= \mathcal{V}(\rd{A → B})(V[μ V]) \\
-    \mathcal{V}(A)(V) &= \mathsf{false} \qquad \text{otherwise} 
+    𝒱(\Nat)(\zero) &= \mathsf{true} \\
+    𝒱(\Nat)(\suc{V}) &= 𝒱(\Nat)(V) \\
+    𝒱(A → B)(\lam{N}) &= 
+      \forall W, 𝒱(A)(W) \Rightarrow ℰ(B)(N[W]) \\
+    𝒱(A → B)(μ V) &= 𝒱(\rd{A → B})(V[μ V]) \\
+    𝒱(A)(V) &= \mathsf{false} \qquad \text{otherwise} 
   \end{align*}
   \footnote{\rd{Argument of recursion is not smaller.}}
 }
@@ -479,20 +479,20 @@ Reduction
   \[
   ℰ(A)(M) = 
   \begin{array}{l}
-    \mathcal{V}(A)(M) \OR \EX M', M \longrightarrow M' \\
+    𝒱(A)(M) \OR \EX M', M \longrightarrow M' \\
     \AND \ALL M', M \longrightarrow M' \Rightarrowᵒ \mathop{▷ᵒ} ℰ(A)(M')
   \end{array}
   \]
-  \fbox{$\mathcal{V}(A)(V) : ℕ → 𝔹$}
+  \fbox{$𝒱(A)(V) : ℕ → 𝔹$}
   \begin{align*}
-    \mathcal{V}(\Nat)(\zero) &= \mathsf{true}ᵒ \\
-    \mathcal{V}(\Nat)(\suc{V}) &= \mathcal{V}(\Nat)(V) \\
-    \mathcal{V}(A → B)(\lam{N}) &= 
-      \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W) \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(N[W]) \\
-    \mathcal{V}(A → B)(μ V) &= \mathop{▷ᵒ} \mathcal{V}(A → B)(V[μ V]) \\
-    \mathcal{V}(A)(V) &= \mathsf{false}ᵒ \qquad \text{otherwise} 
+    𝒱(\Nat)(\zero) &= \mathsf{true}ᵒ \\
+    𝒱(\Nat)(\suc{V}) &= 𝒱(\Nat)(V) \\
+    𝒱(A → B)(\lam{N}) &= 
+      \forallᵒ W, \mathop{▷ᵒ} 𝒱(A)(W) \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(N[W]) \\
+    𝒱(A → B)(μ V) &= \mathop{▷ᵒ} 𝒱(A → B)(V[μ V]) \\
+    𝒱(A)(V) &= \mathsf{false}ᵒ \qquad \text{otherwise} 
   \end{align*}
-  The $ℰ$ and $\mathcal{V}$ functions terminate because the
+  The $ℰ$ and $𝒱$ functions terminate because the
   step-index gets smaller in the recursive calls thanks to ▷ᵒ.
 
 }
@@ -543,14 +543,14 @@ Reduction
 }  
 %===============================================================================
 \frame{
-  \frametitle{Recipe: extend $\mathcal{V}$ and $ℰ$ to open terms}
+  \frametitle{Recipe: extend $𝒱$ and $ℰ$ to open terms}
 
     \begin{align*}
       \mathcal{G}(A_1,\ldots,A_n)(\sigma) &=
-         \mathcal{V}(A_1)(\sigma_0), \ldots, \mathcal{V}(A_n)(\sigma_n)   \\
-      \Gamma \models^{\mathcal{V}} V : A &=
+         𝒱(A_1)(\sigma_0), \ldots, 𝒱(A_n)(\sigma_n)   \\
+      \Gamma \models^{𝒱} V : A &=
         \forall \sigma,
-        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} \mathcal{V}(A)(\sigma(V))\\
+        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} 𝒱(A)(\sigma(V))\\
       \Gamma \models M : A &=
         \forall \sigma,
         \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} ℰ(A)(\sigma(M))
@@ -562,12 +562,12 @@ Reduction
   \frametitle{Recipe: prove the Fundamental Lemma}
 
   \begin{lemma}[Fundamental] \normalfont
-    (1) $\Gamma \vdash^{\mathcal{V}} V : A$
-        implies $\Gamma \models^{\mathcal{V}} V : A$ and\\
+    (1) $\Gamma \vdash^{𝒱} V : A$
+        implies $\Gamma \models^{𝒱} V : A$ and\\
     (2) $\Gamma \vdash M : A$ implies $\Gamma \models M : A$.
   \end{lemma}
 
-  Proceed by mutual induction on $\Gamma \vdash^{\mathcal{V}} V : A$
+  Proceed by mutual induction on $\Gamma \vdash^{𝒱} V : A$
   and $\Gamma \vdash M : A$.
 
   By tradition, each case of the proof is proved by a separate lemma.
@@ -581,13 +581,13 @@ Reduction
   \footnote{Some compatibility lemmas are easy.}
   
   \begin{lemma}[Compatibility for \zero]
-    $Γ \models^{\mathcal{V}} \zero : ℕ$.
+    $Γ \models^{𝒱} \zero : ℕ$.
   \end{lemma}
   \begin{proof}
     Let $σ$ be a substitution.
     We need to show that
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(ℕ)(σ(\zero))
+    \mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(\zero))
     \]
     which is equivalent to 
     \[
@@ -601,18 +601,18 @@ Reduction
   \frametitle{Compatibility Lemmas, continued}
 
   \begin{lemma}[Compatibility for \suc{V}]
-    If $Γ \models^{\mathcal{V}} V : ℕ$,
-    then $Γ \models^{\mathcal{V}} \suc{V} : ℕ$.
+    If $Γ \models^{𝒱} V : ℕ$,
+    then $Γ \models^{𝒱} \suc{V} : ℕ$.
   \end{lemma}
   \begin{proof}
     Let $σ$ be a substitution.
     We need to show that
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(ℕ)(σ(\suc{V}))
+    \mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(\suc{V}))
     \]
     which is equivalent to 
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(ℕ)(σ(V))
+    \mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(V))
     \]
     which we obtain from the premise.
   \end{proof}
@@ -623,18 +623,18 @@ Reduction
 
   \begin{lemma}[Compatibility for $\lam{N}$]
     If $A,Γ \models N : B$,
-    then $Γ \models^{\mathcal{V}} \lam{N} : A → B$.
+    then $Γ \models^{𝒱} \lam{N} : A → B$.
   \end{lemma}
   \begin{proof}
     Let $σ$ be a substitution.
     We need to show that
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} \mathcal{V}(A)(W)
+    \mathcal{G}(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} 𝒱(A)(W)
          \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(\mathsf{ext}(σ)(N)[W])
     \]
-    Let $W$ be a value and assume $\mathop{▷ᵒ} \mathcal{V}(A)(W)$.\\
+    Let $W$ be a value and assume $\mathop{▷ᵒ} 𝒱(A)(W)$.\\
     From the premise $A,Γ ⊧ N : B$ we have
-    $\mathcal{V}(A)(W),\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$.\\
+    $𝒱(A)(W),\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$.\\
     With the assumption, we have $\mathop{▷ᵒ} ℰ(B)((W,σ)(N))$.
     We conclude via the following equality
     \begin{align*}
@@ -648,23 +648,23 @@ Reduction
   \frametitle{Compatibility Lemmas, continued}
 
   \begin{lemma}[Compatibility for $μ \,V$]
-    If $A→B,Γ \models^{\mathcal{V}} V : A → B$,
-    then $Γ \models^{\mathcal{V}} μ \,V : A → B$.
+    If $A→B,Γ \models^{𝒱} V : A → B$,
+    then $Γ \models^{𝒱} μ \,V : A → B$.
   \end{lemma}
   \begin{proof}
     Let $σ$ be a substitution.
     We need to show that \\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A → B)(μ\,V')$
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(A → B)(μ\,V')$
     where $V' = \mathsf{ext}(σ)(V)$. \\
     We proceed by L\"ob induction, so we may assume \\
-    $\mathop{▷ᵒ} \mathcal{V}(A → B)(μ\,V')$ \qquad\qquad (IH)  \\
+    $\mathop{▷ᵒ} 𝒱(A → B)(μ\,V')$ \qquad\qquad (IH)  \\
     From the premise of this lemma we have \\
-    $\mathcal{G}(A→B, Γ)(σ') ⊢ᵒ \mathcal{V}(A → B, σ'(V))$ 
+    $\mathcal{G}(A→B, Γ)(σ') ⊢ᵒ 𝒱(A → B, σ'(V))$ 
     where $σ' = (μ\,V',σ)$, \\
     and therefore \\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathcal{V}(A→B)(μ\,V') ⇒ \mathcal{V}(A → B)(σ'(V))$. \\
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(A→B)(μ\,V') ⇒ 𝒱(A → B)(σ'(V))$. \\
     Together with (IH), we have \\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathop{▷ᵒ} \mathcal{V}(A → B)(σ'(V))$\\
+    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathop{▷ᵒ} 𝒱(A → B)(σ'(V))$\\
     which is equivalent to our goal.
   \end{proof}
 }
@@ -754,5 +754,22 @@ Reduction
     We conclude using the progress part of $ℰ(A)(N)$.
   \end{proof}
 }  
+%===============================================================================
+\frame{
+  \frametitle{Conclusion}
+
+\begin{itemize}
+\item Logical Relations Recipe:\\
+  Define $𝒱(A)(V)$ and $ℰ(A)(M)$.\\
+  Extend $𝒱$ and $ℰ$ to open terms.\\
+  Prove the Fundamental Lemma. \\
+  Prove that $ℰ$ implies your theorem.
+\item A Step-Indexed Logic:\\
+  Enables the definition of recursive predicates ($𝒱$ and $ℰ$)
+  on full-featured programming languages. \\
+  Hides the bookkeeping of the step indexing.\\
+  Automates the proofs of monotonicity of $𝒱$ and $ℰ$.
+\end{itemize}
+}
 %===============================================================================
 \end{document}
