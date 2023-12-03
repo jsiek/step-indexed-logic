@@ -49,6 +49,7 @@
 \newunicodechar{ℰ}{\ensuremath{\mathcal{E}}}
 \newunicodechar{𝒱}{\ensuremath{\mathcal{V}}}
 \newunicodechar{𝒫}{\ensuremath{\mathcal{P}}}
+\newunicodechar{𝒢}{\ensuremath{\mathcal{G}}}
 
 \usepackage{enumitem}
 \setitemize{label=\usebeamerfont*{itemize item}%
@@ -424,15 +425,15 @@ Reduction
     and the other maps types to a predicate on closed terms $ℰ(A)(M)$.
   \item Extend the $𝒱$ and $ℰ$ functions to open terms:
     \begin{align*}
-      \mathcal{G}(\Gamma)(\sigma) &=
+      𝒢(\Gamma)(\sigma) &=
         \forall A_i \in \Gamma, 𝒱(A_i)(\sigma_i)  \\
         \Gamma \models^{𝒱} V : A &=
            \forall \sigma,
-           \mathcal{G}(\Gamma)(\sigma) \text{ implies }
+           𝒢(\Gamma)(\sigma) \text{ implies }
            𝒱(A)(\sigma(V)) \\
         \Gamma \models M : A &=
            \forall \sigma,
-           \mathcal{G}(\Gamma)(\sigma) \text{ implies }
+           𝒢(\Gamma)(\sigma) \text{ implies }
            ℰ(A)(\sigma(M))
     \end{align*}
     
@@ -502,7 +503,7 @@ Reduction
     \mathsf{false}ᵒ(k) &= \mathsf{false} \\
     (ϕ \AND ψ)(k) &=  ϕ(k) \text{ and } ψ(k) \\
     (ϕ \OR ψ)(k) &=  ϕ(k) \text{ or } ψ(k) \\
-    (∀x, P(x))(k) &=  ∀x, P(x)(k) \\
+    (∀ᵒ x, P(x))(k) &=  ∀x, P(x)(k) \\
     (\mathop{▷ᵒ} ϕ)(k) &= ∀ j, j < k ⇒ ϕ(j) \\
     \vdots
   \end{align*}
@@ -542,14 +543,14 @@ Reduction
   \frametitle{Recipe: extend $𝒱$ and $ℰ$ to open terms}
 
     \begin{align*}
-      \mathcal{G}(A_1,\ldots,A_n)(\sigma) &=
+      𝒢(A_1,\ldots,A_n)(\sigma) &=
          𝒱(A_1)(\sigma_0), \ldots, 𝒱(A_n)(\sigma_n)   \\
       \Gamma \models^{𝒱} V : A &=
         \forall \sigma,
-        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} 𝒱(A)(\sigma(V))\\
+        𝒢(\Gamma)(\sigma) \mathop{⊢ᵒ} 𝒱(A)(\sigma(V))\\
       \Gamma \models M : A &=
         \forall \sigma,
-        \mathcal{G}(\Gamma)(\sigma) \mathop{⊢ᵒ} ℰ(A)(\sigma(M))
+        𝒢(\Gamma)(\sigma) \mathop{⊢ᵒ} ℰ(A)(\sigma(M))
     \end{align*}
   
 }
@@ -583,11 +584,11 @@ Reduction
     Let $σ$ be a substitution.
     We need to show that
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(\zero))
+    𝒢(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(\zero))
     \]
     which is equivalent to 
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ \mathsf{true}ᵒ
+    𝒢(Γ)(σ) ⊢ᵒ \mathsf{true}ᵒ
     \]
     which is trivial to prove.
   \end{proof}
@@ -604,11 +605,11 @@ Reduction
     Let $σ$ be a substitution.
     We need to show that
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(\suc{V}))
+    𝒢(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(\suc{V}))
     \]
     which is equivalent to 
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(V))
+    𝒢(Γ)(σ) ⊢ᵒ 𝒱(ℕ)(σ(V))
     \]
     which we obtain from the premise.
   \end{proof}
@@ -625,12 +626,12 @@ Reduction
     Let $σ$ be a substitution.
     We need to show that
     \[
-    \mathcal{G}(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} 𝒱(A)(W)
+    𝒢(Γ)(σ) ⊢ᵒ \forallᵒ W, \mathop{▷ᵒ} 𝒱(A)(W)
          \Rightarrowᵒ \mathop{▷ᵒ} ℰ(B)(\mathsf{ext}(σ)(N)[W])
     \]
     Let $W$ be a value and assume $\mathop{▷ᵒ} 𝒱(A)(W)$.\\
     From the premise $A,Γ ⊧ N : B$ we have
-    $𝒱(A)(W),\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$.\\
+    $𝒱(A)(W),𝒢(Γ)(σ) ⊢ᵒ ℰ(B)((W,σ)(N))$.\\
     With the assumption, we have $\mathop{▷ᵒ} ℰ(B)((W,σ)(N))$.
     We conclude via the following equality
     \begin{align*}
@@ -643,24 +644,24 @@ Reduction
 \frame{
   \frametitle{Compatibility Lemmas, continued}
 
-  \begin{lemma}[Compatibility for $μ \,V$]
+  \begin{lemma}[Compatibility for $μ V$]
     If $A→B,Γ \models^{𝒱} V : A → B$,
-    then $Γ \models^{𝒱} μ \,V : A → B$.
+    then $Γ \models^{𝒱} μ V : A → B$.
   \end{lemma}
   \begin{proof}
     Let $σ$ be a substitution.
     We need to show that \\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(A → B)(μ\,V')$
+    $𝒢(Γ)(σ) ⊢ᵒ 𝒱(A → B)(μ\,V')$
     where $V' = \mathsf{ext}(σ)(V)$. \\
     We proceed by L\"ob induction, so we may assume \\
     $\mathop{▷ᵒ} 𝒱(A → B)(μ\,V')$ \qquad\qquad (IH)  \\
     From the premise of this lemma we have \\
-    $\mathcal{G}(A→B, Γ)(σ') ⊢ᵒ 𝒱(A → B, σ'(V))$ 
-    where $σ' = (μ\,V',σ)$, \\
-    and therefore \\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ 𝒱(A→B)(μ\,V') ⇒ 𝒱(A → B)(σ'(V))$. \\
+    $𝒢(A→B, Γ)(σ') ⊢ᵒ 𝒱(A → B, σ'(V))$ 
+    where $σ' = (μ\,V',σ)$. \\
+    which is equivalent to \\
+    $𝒱(A→B)(μ\,V'),𝒢(Γ)(σ) ⊢ᵒ 𝒱(A → B)(σ'(V))$. \\
     Together with (IH), we have \\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ \mathop{▷ᵒ} 𝒱(A → B)(σ'(V))$\\
+    $𝒢(Γ)(σ) ⊢ᵒ \mathop{▷ᵒ} 𝒱(A → B)(σ'(V))$\\
     which is equivalent to our goal.
   \end{proof}
 }
@@ -719,7 +720,7 @@ Reduction
   \end{lemma}
   \begin{proof}
     Let $σ$ be a substitution. We need to prove that\\
-    $\mathcal{G}(Γ)(σ) ⊢ᵒ ℰ(B)(σ(L) \app σ(M))$.\\
+    $𝒢(Γ)(σ) ⊢ᵒ ℰ(B)(σ(L) \app σ(M))$.\\
     We apply the Bind Lemma to $σ(L)$ and $σ(M)$ to obtain
     $σ(L) \longrightarrow^{*} V$, $σ(M) \longrightarrow^{*} W$,
     $𝒱(A{→}B)(V)$, $𝒱(A)(W)$, and
@@ -767,5 +768,55 @@ Reduction
   Automates the proofs of monotonicity of $𝒱$ and $ℰ$.
 \end{itemize}
 }
+%===============================================================================
+%% \frame{
+%% }  
+%% %===============================================================================
+%% \frame{
+%%   \frametitle{Alternative proof}
+%%   \small
+%%   \begin{lemma}[Compatibility for application]
+%%     If $Γ \models L : A → B$ and $Γ ⊧ M : A$,
+%%     then $Γ \models L \app M : B$.
+%%   \end{lemma}
+%%   \begin{proof}
+%%     Let $σ$ be a substitution. We need to prove that\\
+%%     $𝒢(Γ)(σ) ⊢ᵒ ℰ(B)(σ(L) \app σ(M))$.\\
+%%     First we show progress for $σ(L) \app σ(M)$.
+%%     From the first premise we have
+%%     $𝒢(Γ)(σ) ⊢ᵒ ℰ(A → B)(σ(L))$.
+%%     By the progress aspect of $ℰ$, either (1) $σ(L) \longrightarrow L'$ for some $L'$
+%%     or (2) $σ(L)$ is a value $V$ with $𝒱(A→B)(V)$.
+%%     Suppose (1). Then $σ(L) \app σ(M) \longrightarrow L' \app σ(M)$. \\
+%%     Suppose (2). From the second premise we have
+%%     $𝒢(Γ)(σ) ⊢ᵒ ℰ(A)(σ(M))$.
+%%     By the progress aspect of $ℰ$, either (3) $σ(M) \longrightarrow M'$ for some $M'$
+%%     or (4) $σ(M)$ is a value $W$ with $𝒱(A)(W)$. \\
+%%     Suppose (3). Then $V \app σ(M) \longrightarrow V \app M'$. \\
+%%     Suppose (4). We apply the previous lemma, using $𝒱(A→B)(V)$ and $𝒱(A)(W)$,
+%%     to obtain $ℰ(B)(V \app W)$, which implies progress for $V \app W$.
+
+%%   \end{proof}
+%% }  
+%% %===============================================================================
+%% \frame{
+%%   \frametitle{Alternative proof, continued}
+%%   \small
+%%   \begin{lemma}[Compatibility for application]
+%%     If $Γ \models L : A → B$ and $Γ ⊧ M : A$,
+%%     then $Γ \models L \app M : B$.
+%%   \end{lemma}
+%%   \begin{proof}
+%%     Let $σ$ be a substitution. We need to prove that\\
+%%     $𝒢(Γ)(σ) ⊢ᵒ ℰ(B)(σ(L) \app σ(M))$.\\
+%%     \vdots 
+%%     Next we show preservation for $σ(L) \app σ(M)$.
+%%     So we have $σ(L) \app σ(M) \longrightarrow N$
+%%     and need to show $▷ᵒ ℰ(B)(N)$. We proceed by cases on the reduction.
+    
+%%     UNDER CONSTRUCTION
+    
+%%   \end{proof}
+%% }  
 %===============================================================================
 \end{document}
