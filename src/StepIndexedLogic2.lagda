@@ -46,7 +46,7 @@ open import EquivalenceRelationProp public
 
 open import PropP
 open import StrongInduction
-open import Variables public
+open import SILVariables public
 open import Env public
 open import RawSetO
 open import Approx
@@ -67,6 +67,13 @@ open import Let
 \end{comment}
 
 \begin{code}
+record Setⁱ : Set₁ where
+  field
+    # : Setₒ
+    down : downClosed #
+    tz : # 0
+open Setⁱ public
+  
 abstract
 
  {---------------------- Membership in Recursive Predicate --------------------}
@@ -133,7 +140,9 @@ abstract
   #∃ᵒ≡ : ∀{Γ}{Δ : Times Γ}{A : Set}{Sᵃ : A → Setᵒ Γ Δ}{δ}{k}
      → (# (∃ᵒ Sᵃ) δ k) ≡ (Σₚ[ a ∈ A ] (# (Sᵃ a) δ k))
   #∃ᵒ≡ = refl
-  
+
+  cong-∃ᵒ : ∀{Γ Δ}{A}{ϕᵃ ψᵃ : A → Setᵒ Γ Δ} → (∀ a → ϕᵃ a ≡ᵒ ψᵃ a) → ∃ᵒ ϕᵃ ≡ᵒ ∃ᵒ ψᵃ 
+  cong-∃ᵒ{Γ}{Δ} ϕ=ψ = ⇔⇒≡ᵒ λ δ k → cong-∃ (λ a k₁ → let ϕa=ψa = ϕ=ψ a in ≡ᵒ⇒⇔{δ = δ}{k = k} ϕa=ψa) k
 
 {---------------------- Pure (Set) ------------------------------------}
 
@@ -152,6 +161,24 @@ abstract
 
   #pureᵖ≡ : ∀{p}{Γ}{δ : RecEnv Γ}{k} → # (p ᵖ) δ (suc k) ≡ p
   #pureᵖ≡ = refl
+
+{---------------------- Indexed Set ------------------------------------}
+
+  wellformed-indexed : ∀{Γ}{A}{Δ : Times Γ} (S : Setⁱ) (x : Γ ∋ A)
+                     → wellformed-var x (timeof x Δ) (λ δ → # S)
+  wellformed-indexed {Γ}{A}{Δ} S x
+      with timeof x Δ
+  ... | Now = λ δ j k k≤j → ≡ₒ-refl refl
+  ... | Later = λ δ j k k≤j → ≡ₒ-refl refl
+
+  _ⁱ : ∀{Γ} → Setⁱ → Setᵒ Γ (laters Γ)
+  S ⁱ = record { # = (λ δ → # S) ;
+                 down = (λ δ dc-δ n Sn k k≤n → down S n Sn k k≤n) ;
+                 wellformed = wellformed-indexed S ;
+                 congr = (λ δ=δ′ → ≡ₒ-refl refl) }
+
+  #indexedᵒ≡ : ∀{S}{Γ}{δ : RecEnv Γ}{k} → # (S ⁱ) δ k ≡ # S k
+  #indexedᵒ≡ = refl
 
 {---------------------- False -----------------------------------------}
 
@@ -319,7 +346,7 @@ abstract
 Setᵏ : Set₁
 Setᵏ = Setᵒ [] []
 
-private variable ϕ ϕ′ ψ ψ′ þ : Setᵏ
+private variable ϕ ϕ′ ψ ψ′ þ σ : Setᵏ
 private variable 𝒫 : List Setᵏ
 private variable p : Set
 private variable A B C : Set
@@ -437,6 +464,13 @@ abstract
       with 𝒫⊢ϕ⊎ψ n ⊨𝒫n
   ... | inj₁ₚ ϕn = ϕ∷𝒫⊢þ n (ϕn ,ₚ ⊨𝒫n)
   ... | inj₂ₚ ψn = ψ∷𝒫⊢þ n (ψn ,ₚ ⊨𝒫n)
+
+  case3ᵒ : 𝒫 ⊢ᵒ ϕ ⊎ᵒ ψ ⊎ᵒ þ  →  ϕ ∷ 𝒫 ⊢ᵒ σ  →  ψ ∷ 𝒫 ⊢ᵒ σ  →  þ ∷ 𝒫 ⊢ᵒ σ →  𝒫 ⊢ᵒ σ
+  case3ᵒ 𝒫⊢ϕ⊎ψ⊎þ ϕ∷𝒫⊢σ ψ∷𝒫⊢σ þ∷𝒫⊢σ n ⊨𝒫n
+      with 𝒫⊢ϕ⊎ψ⊎þ n ⊨𝒫n
+  ... | inj₁ₚ ϕn = ϕ∷𝒫⊢σ n (ϕn ,ₚ ⊨𝒫n)
+  ... | inj₂ₚ (inj₁ₚ ψn) = ψ∷𝒫⊢σ n (ψn ,ₚ ⊨𝒫n)
+  ... | inj₂ₚ (inj₂ₚ þn) = þ∷𝒫⊢σ n (þn ,ₚ ⊨𝒫n)
 
 abstract
   downClosed-Πᵏ : (𝒫 : List Setᵏ) → downClosed (# (Πᵏ 𝒫) ttᵖ)

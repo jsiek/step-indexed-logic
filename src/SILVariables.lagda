@@ -5,7 +5,7 @@ open import Data.List using (List; []; _∷_)
 import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; refl; cong₂)
 
-module Variables where
+module SILVariables where
 \end{code}
 \end{comment}
 

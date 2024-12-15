@@ -28,9 +28,9 @@ alternative would be to use the \textsf{Set} type, but we were forced
 to use \textsf{Prop} for technical reasons that we discuss in due
 course.)
 
-In general, when a SIL proposition is true at a given time must also
+In general, when a SIL proposition is true at a given time, it must also
 be true at all later times (at smaller step indices). Thus, we require
-that they must be downward closed.
+that step-indexed proposition be downward closed.
 
 \begin{code}
 downClosed : Setₒ → Prop

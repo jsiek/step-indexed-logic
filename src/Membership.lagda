@@ -13,7 +13,7 @@ import Relation.Binary.PropositionalEquality as Eq
 open Eq using (_≡_; _≢_; refl; sym)
 
 open import PropP
-open import Variables
+open import SILVariables
 open import Env
 open import RawSetO
 open import Approx

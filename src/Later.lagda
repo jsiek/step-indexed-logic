@@ -5,7 +5,7 @@
 open import Data.Nat using (ℕ; zero; suc; _+_)
 
 open import PropP
-open import Variables
+open import SILVariables
 open import RawSetO
 open import SetO
 open import Approx

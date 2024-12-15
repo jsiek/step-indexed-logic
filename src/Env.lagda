@@ -14,7 +14,7 @@ open import EquivalenceRelation using (EquivalenceRelation; _⇔_; ⩦-refl; ⩦
 open import RawSetO
 open import Approx
 open import Iteration
-open import Variables
+open import SILVariables
 
 module Env where
 \end{code}

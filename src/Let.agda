@@ -9,7 +9,7 @@ open Eq using (_≡_; refl; sym; trans)
 open import PropP
 open import RawSetO
 open import SetO
-open import Variables
+open import SILVariables
 open import Env
 open import Approx
 open import EquivalenceRelationProp

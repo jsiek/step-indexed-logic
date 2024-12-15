@@ -4,7 +4,7 @@ open import Relation.Binary.PropositionalEquality using (refl)
 
 open import PropP
 open import RawSetO
-open import Variables
+open import SILVariables
 open import Env
 
 module Pure where

@@ -15,7 +15,7 @@ open import EquivalenceRelationProp using (EquivalenceRelation; _⇔_; ⩦-refl;
 open import RawSetO
 open import Approx
 open import Iteration
-open import Variables
+open import SILVariables
 open import Env
 
 module SetO where
@@ -27,7 +27,7 @@ module SetO where
 To save the user of SIL the trouble of proving that their formulas are
 downward closed, wellformed, and congruent, we package the SIL logical
 connectives into a record that combines their meaning (the embedding
-in Agda) with proofs that their meaning has these three properties.
+in Agda) with proofs that their meaning satisfies this triad of properties.
 So the type of a SIL proposition is given by the following definition
 of \textsf{Setᵒ}.
 
