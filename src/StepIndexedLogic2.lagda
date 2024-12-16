@@ -67,11 +67,11 @@ open import Let
 \end{comment}
 
 \begin{code}
+-- The following Setⁱ is experimental. May not be useful. -Jeremy
 record Setⁱ : Set₁ where
   field
     # : Setₒ
     down : downClosed #
-    tz : # 0
 open Setⁱ public
   
 abstract
@@ -314,6 +314,10 @@ abstract
      → letᵒ P (p ᵖ) ≡ p ᵖ
   let-pureᵖ = refl
 
+  let-indexedⁱ : ∀{A : Set}{P : A → Setᵒ [] []}{S : Setⁱ}
+    → letᵒ P (S ⁱ) ≡ S ⁱ 
+  let-indexedⁱ = refl
+
   let-⊥ᵒ : ∀{A}{P : A → Setᵒ [] []}
      → letᵒ P ⊥ᵒ ≡ ⊥ᵒ
   let-⊥ᵒ = refl
@@ -348,6 +352,7 @@ abstract
 {-# REWRITE let-∈ #-}
 {-# REWRITE let-pureᵒ #-}
 {-# REWRITE let-pureᵖ #-}
+{-# REWRITE let-indexedⁱ #-}
 {-# REWRITE let-×ᵒ #-}
 {-# REWRITE let-⊎ᵒ #-}
 {-# REWRITE let-→ᵒ #-}
@@ -428,13 +433,25 @@ abstract
   pureᵒI s n ⊨𝒫n = squash s
 
   pureᵒE : 𝒫 ⊢ᵒ p ᵒ  →  (p → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
-  pureᵒE {𝒫} {p} {R} ⊢p p→⊢R n 𝒫n 
+  pureᵒE {𝒫} {p} ⊢p p→⊢R n 𝒫n 
      with ⊢p n 𝒫n
   ... | squash r = p→⊢R r n 𝒫n
 
   pureᵒE[] : [] ⊢ᵒ p ᵒ  →  Squash p
   pureᵒE[] ⊢pᵒ = ⊢pᵒ 0 (squash tt)
 
+  {- Not sure about this. -Jeremy -}
+  indexedᵒI : ∀{S : Setⁱ} → (∀ n → # (Πᵏ 𝒫) ttᵖ n → # S n) → 𝒫 ⊢ᵒ S ⁱ
+  indexedᵒI f n ⊨𝒫n = f n ⊨𝒫n 
+
+{-
+  indexedᵒE : ∀{S} → 𝒫 ⊢ᵒ S ⁱ →  (∀ n → # S (suc n) → 𝒫 ⊢ᵒ þ)  →  𝒫 ⊢ᵒ þ
+  indexedᵒE {þ = þ}{S = S} ⊢S S→⊢R zero 𝒫n =
+    let xx = # þ (Level.lift tt) in
+      {!!}
+  indexedᵒE {S = S} ⊢S S→⊢R (suc n) 𝒫n = {!!}
+  --S→⊢R n (⊢S n 𝒫n) n 𝒫n
+-}
   pureᵖI : ∀{p : Prop} → p → 𝒫 ⊢ᵒ p ᵖ
   pureᵖI s n ⊨𝒫n = s
 
@@ -498,6 +515,10 @@ abstract
   →ᵒE : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ ψ
   →ᵒE {𝒫} 𝒫⊢ϕ→ψ 𝒫⊢ϕ n ⊨𝒫n = let ϕn = 𝒫⊢ϕ n ⊨𝒫n in 𝒫⊢ϕ→ψ n ⊨𝒫n n (≤-reflₚ{n}) ϕn
 
+  →ᵒI-rev : 𝒫 ⊢ᵒ ϕ →ᵒ ψ  →  ϕ ∷ 𝒫 ⊢ᵒ ψ
+  →ᵒI-rev {𝒫 = 𝒫} ϕ→ψ n (ϕn ,ₚ 𝒫n) =
+      ϕ→ψ n 𝒫n n (≤-reflₚ{n}) ϕn
+  
 abstract
   monoᵒ : 𝒫 ⊢ᵒ ϕ  →  𝒫 ⊢ᵒ  ▷ᵒ ϕ
   monoᵒ {𝒫} ⊢ϕ k ⊨𝒫k j j<k =
